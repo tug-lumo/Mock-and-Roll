@@ -1,4 +1,17 @@
-# Lumostage Stage Configurator — build kit
+# Lumostage Stage Configurator
+
+Browser-based planner for the Lumostage LED volume: lay out sets and vehicles, look through a
+virtual camera, check reflections, and print shot sheets.
+
+- **Run locally:** `pythonw serve.py` → http://127.0.0.1:8137/
+- **Deploy:** push to GitHub → Cloudflare Pages + Access. See [docs/deploy.md](docs/deploy.md).
+- **Spec / as-built notes:** [docs/brief.md](docs/brief.md)
+
+The app is `index.html` (vanilla Three.js r128, bundled in `vendor/`); brand assets in `brand/`.
+
+---
+
+## Original build kit
 
 Everything from the planning conversation, packaged for a Claude Code session.
 Unpack this into the folder the session will run in — `docs/` and `.claude/`

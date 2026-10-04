@@ -1,0 +1,12 @@
+# Build output (Cloudflare Pages builds its own copy)
+dist/
+
+# Phone-viewer publishes from this PC — local data, not source
+published/
+
+# Local tooling / per-machine settings
+.claude/settings.local.json
+.claude/skills/
+.agents/
+skills-lock.json
+__pycache__/
