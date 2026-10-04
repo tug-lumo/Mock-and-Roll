@@ -29,7 +29,7 @@ eyepoint, the same idea a real volume uses.
 | **Brightness** | LED output, 20–200%. |
 | **Play / Pause / Restart / Remove** | Video transport; Remove takes it off every surface. |
 
-The environment shows up everywhere the stage is drawn: Walk/Plan/Lens views, the glossy floor,
+The environment shows up everywhere the stage is drawn: Walk/Plan views and the Viewfinder, the glossy floor,
 live car/subway reflections, and **Print shot**. A layout remembers which library environment it
 used, where it was shown, and its turn/horizon/brightness.
 

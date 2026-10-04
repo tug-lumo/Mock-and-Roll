@@ -170,7 +170,7 @@
   #inspector .tools .seg { width: 100%; }
   #inspector .tools .seg button { flex: 1; justify-content: center; }
 
-  /* Lens view action bar (Camera View only) */
+  /* Viewfinder action bar (only while looking through the camera) */
   #lensBar {
     position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 18;
     display: flex; gap: 6px; padding: 6px; background: rgba(20,22,26,.92); border: 1px solid var(--line); border-radius: 12px;
@@ -358,7 +358,7 @@
     <div class="seg" role="group" aria-label="View">
       <button id="camOrbit" class="active" title="Walk around the stage — drag to look, W A S D to move"><svg><use href="#i-walk"/></svg>Walk</button>
       <button id="camTop" title="Plan view, straight down — drag to pan, scroll to zoom"><svg><use href="#i-plan"/></svg>Plan</button>
-      <button id="camViewBtn" title="Look through the film camera's lens"><svg><use href="#i-lens"/></svg>Lens</button>
+      <button id="camViewBtn" title="Viewfinder — see exactly what the film camera sees"><svg><use href="#i-lens"/></svg>Viewfinder</button>
     </div>
     <span class="spacer"></span>
     <span id="modeBadge"></span>
@@ -419,10 +419,10 @@
       <section data-sec="led"><div id="ledBody"></div></section>
       <section data-sec="camera">
         <div class="subhead">Film camera</div>
-        <div class="field"><span>Camera</span><select id="camPick" title="The camera Lens view, saved shots and prints act on"></select></div>
+        <div class="field"><span>Camera</span><select id="camPick" title="The camera the Viewfinder, saved shots and prints act on"></select></div>
         <div class="field"><span>Lens</span><button id="lensBtn" title="Choose a lens (L, or Select on a gamepad)">—</button></div>
         <label class="setToggle editOnly"><input type="checkbox" id="frustChk"><span>Show its field of view on stage</span></label>
-        <div class="btnRow"><button class="primary" id="lookBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-lens"/></svg>Look through lens</button></div>
+        <div class="btnRow"><button class="primary" id="lookBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-lens"/></svg>Open viewfinder</button></div>
 
         <div class="subhead">Saved shots</div>
         <select id="shotSel" style="width:100%" title="Saved shots and marks, grouped by sequence"></select>
@@ -437,7 +437,7 @@
         </div>
 
         <div class="subhead">Share</div>
-        <div class="btnRow"><button id="shotPrint" title="One image: lens view, stage plan and camera info"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-print"/></svg>Print shot (PNG)</button></div>
+        <div class="btnRow"><button id="shotPrint" title="One image: viewfinder frame, stage plan and camera info"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-print"/></svg>Print shot (PNG)</button></div>
       </section>
     </div>
   </aside>
@@ -470,13 +470,13 @@
   <div id="padReticle" class="hidden"><span class="lbl"></span></div>
   <div id="collHud" class="hidden"></div>
 
-  <!-- Lens view actions (shown only while looking through the camera) -->
+  <!-- Viewfinder actions (shown only while looking through the camera) -->
   <div id="lensBar" class="hidden">
     <button id="lbLens" title="Lens menu (L)">Lens</button>
     <button class="primary editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
     <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
-    <button id="lbPrint" title="Image with lens view, stage plan and camera info">Print shot</button>
-    <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit lens</button>
+    <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
+    <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit viewfinder</button>
   </div>
 
   <!-- First run: three things to know, then out of the way -->
@@ -486,7 +486,7 @@
     <ol>
       <li><b>1</b><span>Drag to look around; <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk. <strong>Plan</strong> shows it from above.</span></li>
       <li><b>2</b><span>Open <strong>Add</strong> or <strong>Stage</strong> on the left to bring in decks, sets and props, then drag them into place.</span></li>
-      <li><b>3</b><span>Open <strong>Camera</strong> to pick a lens, look through it, and save or print the shot.</span></li>
+      <li><b>3</b><span>Open <strong>Camera</strong> to pick a lens, open the <strong>Viewfinder</strong>, and save or print the shot.</span></li>
     </ol>
     <div class="btnRow"><button class="ghost" id="welcomeHelp">All controls</button><button class="primary" id="welcomeOk">Got it</button></div>
   </div>
@@ -513,7 +513,7 @@
           <dt><kbd>Shift</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Turn 15°</dd>
           <dt><kbd>Del</kbd></dt><dd>Remove</dd>
           <dt><kbd>Esc</kbd></dt><dd>Deselect</dd></dl>
-          <h3>Lens view</h3><dl>
+          <h3>Viewfinder</h3><dl>
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · drag</dt><dd>Move / aim the camera</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
           <dt><kbd>L</kbd></dt><dd>Lens menu</dd>
@@ -526,7 +526,7 @@
           <dt>R1 hold</dt><dd>Grab what's under the crosshair</dd>
           <dt>R1 + D-pad ← →</dt><dd>Turn the held piece</dd>
           <dt>X</dt><dd>Put the film camera here</dd>
-          <dt>Y</dt><dd>Lens view</dd>
+          <dt>Y</dt><dd>Viewfinder</dd>
           <dt>Select</dt><dd>Lens menu</dd>
           <dt>Start / LB</dt><dd>Save shot / mark</dd>
           <dt>R3</dt><dd>Print shot</dd>
@@ -703,7 +703,18 @@
           { seat: "rear left",       x:  2.2, y: 3.9, z:  2.0, rotationDeg: 90 },
           { seat: "rear right",      x:  2.2, y: 3.9, z: -2.0, rotationDeg: 90 }
         ] },
-      { assetId: "human_standing", name: "Human — standing (generic)", category: "human", heightFt: 5.75, model: "assets/human_standing.glb" }
+      { assetId: "human_standing", name: "Human — standing (generic)", category: "human", heightFt: 5.75, model: "assets/human_standing.glb" },
+      // Low-poly people (free_pack_lowpoly_people.glb, split by tools/split-glb.py into assets/people/).
+      // Each is scaled uniformly to heightFt (adjustable per instance); 0° faces +Z (toward the
+      // shooting floor / camera side). widthFt/depthFt are the footprint at that height.
+      { assetId: "person_01", name: "Seated — reading", category: "person", pose: "seated", heightFt: 4.25, widthFt: 2.2, depthFt: 2.55, model: "assets/people/person-01.glb" },
+      { assetId: "person_02", name: "Seated — leaning forward", category: "person", pose: "seated", heightFt: 4.3, widthFt: 2.05, depthFt: 2.15, model: "assets/people/person-02.glb" },
+      { assetId: "person_03", name: "Woman — short dress", category: "person", pose: "standing", heightFt: 5.5, widthFt: 2.0, depthFt: 2.1, model: "assets/people/person-03.glb" },
+      { assetId: "person_04", name: "Woman — hand on hip", category: "person", pose: "standing", heightFt: 5.6, widthFt: 2.2, depthFt: 1.0, model: "assets/people/person-04.glb" },
+      { assetId: "person_05", name: "Man — on the phone", category: "person", pose: "standing", heightFt: 5.9, widthFt: 1.9, depthFt: 1.2, model: "assets/people/person-05.glb" },
+      { assetId: "person_06", name: "Man — hands on hips", category: "person", pose: "standing", heightFt: 5.95, widthFt: 2.4, depthFt: 1.3, model: "assets/people/person-06.glb" },
+      { assetId: "person_07", name: "Man — arms crossed", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.95, depthFt: 1.2, model: "assets/people/person-07.glb" },
+      { assetId: "person_08", name: "Man — standing", category: "person", pose: "standing", heightFt: 5.8, widthFt: 1.8, depthFt: 2.5, model: "assets/people/person-08.glb" }
     ],
     // First load is the BASE VOLUME only (main wall + rolling walls + ceiling + studio + pillar),
     // plus one camera to look through. Sets/humans are added on demand (Sets menu / Piece Library).
@@ -1341,6 +1352,42 @@
     return g;
   }
 
+  // ---- Library people (catalog .glb files shipped in assets/people/) -------------------
+  const urlModelCache = {};                                // url -> Promise<template|null>
+  function loadModelUrl(url) {
+    if (!urlModelCache[url]) {
+      urlModelCache[url] = new Promise(res => {
+        if (!gltfLoader) return res(null);
+        gltfLoader.load(url, gl => res(fixModelColors(gl.scene)), undefined, err => {
+          console.warn("Lumostage: couldn't load " + url + " — " + (err && err.message ? err.message : err)); res(null);
+        });
+      });
+    }
+    return urlModelCache[url];
+  }
+  function personHeight(entry, pa) { return pa.heightFt > 0 ? pa.heightFt : entry.heightFt; }
+  // Ghost box at true size immediately (placeable/selectable), swapped for the model when loaded:
+  // scaled uniformly so the figure is exactly its height, centred, feet on the floor.
+  function buildPerson(entry, pa) {
+    const h = personHeight(entry, pa), k = h / entry.heightFt;
+    const g = buildBox({ lengthFt: (entry.widthFt || 2) * k, widthFt: (entry.depthFt || 1.2) * k, heightFt: h }, 0x8a909a);
+    g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.3; o.material.depthWrite = false; } });
+    loadModelUrl(entry.model).then(tpl => {
+      if (!tpl || !g.parent) return;
+      const m = tpl.clone(true);
+      m.traverse(n => { n.userData.sharedModel = true; });
+      const bb0 = new THREE.Box3().setFromObject(m), sz = bb0.getSize(new THREE.Vector3());
+      m.scale.setScalar(h / (sz.y || 1));
+      const holder = new THREE.Group(); holder.add(m); holder.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(holder), c = bb.getCenter(new THREE.Vector3());
+      m.position.set(-c.x, -bb.min.y, -c.z);
+      g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
+      g.add(holder);
+      g.userData.hasModel = true;
+    });
+    return g;
+  }
+
   function importGlbFile(file) {
     if (!gltfLoader) { toast("Model loader unavailable"); return; }
     if (!/\.glb$/i.test(file.name)) { toast("Use a .glb file (single-file glTF)"); return; }
@@ -1840,6 +1887,8 @@
     let g, modelSrc = entry;   // where to read model/modelReady from (variant overrides entry)
     if (entry.custom) {
       return buildCustomModel(entry, pa);
+    } else if (entry.category === "person") {
+      return buildPerson(entry, pa);
     } else if (entry.assetId === "subwayCar") {
       g = buildSubwayCar(entry, pa);
       attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // stainless shell mirrors the volume
@@ -2347,6 +2396,7 @@
         ? fieldHTML("deckL", "Length", toDisplay(cur.lengthFt)) + fieldHTML("deckW", "Width", toDisplay(cur.widthFt))
         : "") +
       (customFitHTML(cur)) +
+      personFieldHTML(cur) +
       reflectHTML(cur) +
       (selected.kind === "rollingWall"
         ? '<div class="field"><span>Deployed</span><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '></div>' +
@@ -2420,7 +2470,7 @@
       fieldHTML("camTilt", "Tilt (° up)", camVal(cur, "tiltDeg"), true) +
       (marks ? '<div class="field"><span>Jump to</span><select id="camMark"><option value="">A set vantage…</option>' + marks + '</select></div>' : "") +
       '<label class="setToggle"><input type="checkbox" id="camFrustum" ' + (config.showFrustums ? "checked" : "") + '><span>Show field of view on stage</span></label>' +
-      '<div class="btnRow"><button id="camLook" class="primary">Look through lens</button></div>';
+      '<div class="btnRow"><button id="camLook" class="primary">Open viewfinder</button></div>';
   }
 
   function fieldHTML(id, label, val, isDeg) {
@@ -2465,6 +2515,13 @@
     });
   }
 
+  // Library people: real-world height (the figure scales uniformly to it).
+  function personFieldHTML(pa) {
+    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
+    if (!e || e.category !== "person") return "";
+    return '<div class="subhead">Figure</div>' + fieldHTML("personH", "Height", toDisplay(personHeight(e, pa)));
+  }
+
   function customFitHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
     if (!e || !e.custom) return "";
@@ -2487,6 +2544,7 @@
       return "Wall " + fmtLen(e.lengthFt) + " × " + fmtLen(e.heightFt) + (e.assetId === "cornerPillar" ? " × " + fmtLen(e.widthFt) : "") +
         "<br>on deck " + fmtLen(d.lengthFt) + " × " + fmtLen(d.widthFt) + " × " + fmtLen(d.heightFt) + " · total H " + fmtLen(d.heightFt + e.heightFt);
     }
+    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (e.pose || "figure") + "<br>low-poly figure · scaled to height";
     if (e.custom) {
       return "L " + fmtLen(pa.lengthFt) + " × W " + fmtLen(pa.widthFt) + " × H " + fmtLen(pa.heightFt) + "<br>imported model · scaled uniformly";
     }
@@ -2526,6 +2584,14 @@
     };
     [dL, dW].forEach(el => el && el.addEventListener("change", applyDeckDims));
     wireReflectFields();
+    const ph = document.getElementById("personH");
+    if (ph) ph.addEventListener("change", () => {
+      const pa = cfgForSelected(); if (!pa) return;
+      const v = fromDisplay(parseFloat(ph.value));
+      if (!(v > 1 && v < 9)) { renderInspector(); toast("Height should be between 1 and 9 ft"); return; }
+      const uid = pa._uid; pa.heightFt = Math.round(v * 100) / 100;
+      rebuildPlaced(); reselectUid(uid); scheduleAutosave();
+    });
     // Imported model: pick which real dimension you know, enter it, the model scales uniformly.
     const fitAxis = document.getElementById("fitAxis"), fitVal = document.getElementById("fitVal");
     const applyFit = (axisChanged) => {
@@ -3054,7 +3120,7 @@
       c.drawImage(planImg, COLX, HEAD);
       c.strokeRect(COLX, HEAD, PLAN_W, PLAN_H);
       c.fillStyle = "#9aa0ac"; c.font = "600 16px Segoe UI, sans-serif"; c.fillText("STAGE PLAN (top-down)", COLX, HEAD - 8);
-      c.fillText("LENS VIEW", P + SHOT_W - 90, HEAD - 8);
+      c.fillText("VIEWFINDER", P + SHOT_W - 90, HEAD - 8);
       let y = infoTop;
       c.fillStyle = "#ffd24a"; c.font = "600 24px Segoe UI, sans-serif"; c.fillText("CAMERA " + camNo, COLX, y); y += 40;
       info.forEach(([k, v]) => {
@@ -3640,16 +3706,17 @@
       { key: "glass-wall", label: "Glass walls" },
       { key: "set-piece", label: "Set pieces" },
       { key: "vehicle", label: "Vehicles" },
-      { key: "human", label: "People" },
+      { key: "human", label: "People", also: ["person"] },
       { key: "camera", label: "Cameras" }
     ];
     cats.forEach(cat => {
       // Hide any entry flagged deferred (rooftop set, door box).
-      const entries = config.assetCatalog.filter(e => e.category === cat.key && !(e.status && e.status.indexOf("deferred") !== -1));
+      const keys = [cat.key].concat(cat.also || []);
+      const entries = config.assetCatalog.filter(e => keys.indexOf(e.category) !== -1 && !(e.status && e.status.indexOf("deferred") !== -1));
       if (!entries.length) return;
       const gb = group(cat.key, cat.label, entries.length);
       entries.forEach(e => {
-        const sub = cat.key === "camera" ? "film camera with lens" : e.lengthFt ?ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
+        const sub = cat.key === "camera" ? "film camera with lens" : e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
         const row = item(gb, e.name.replace(/\s*\(.*\)$/, ""), sub);
         let sel = null;
         if (e.variants) {
@@ -4012,7 +4079,7 @@
   const PAD_DEAD = 0.15;
   const PAD_NEAR = 2.5;   // ft — the crosshair ignores anything closer (e.g. a camera parked at your eye)
   const PAD_HINT = {
-    fly: "Gamepad: sticks move & look · R1 grab · A plan view · X camera here · Y lens · ? all buttons",
+    fly: "Gamepad: sticks move & look · R1 grab · A plan view · X camera here · Y viewfinder · ? all buttons",
     top: "Gamepad: left stick pans · triggers zoom · R1 grab · A back to walk · ? all buttons"
   };
   // invertY: flight-style look (stick up = look down). A personal preference, so it's remembered
