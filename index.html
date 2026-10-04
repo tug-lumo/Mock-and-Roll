@@ -535,8 +535,9 @@
     </div>
   </div>
 
-  <!-- Shared picker for LED images/video -->
+  <!-- Shared pickers for LED images/video and 360° environments -->
   <input id="plateFile" type="file" accept="image/*,video/*" class="hidden">
+  <input id="envFile" type="file" accept="image/*,video/*" class="hidden">
 
   <div id="toast"></div>
   <div id="joy" class="hidden"><div class="knob"></div></div>
@@ -634,6 +635,9 @@
     migrations: { ceiling20: true },
     // Live reflections on vehicles / imported models / the subway shell (Settings → Reflections).
     reflections: { live: true, quality: "balanced", floor: "satin" },
+    // 360° environment on the LED surfaces (LED → 360° environment). libraryId points into
+    // environments/library.json|samples.json; local files aren't restorable after a refresh.
+    environment: { libraryId: null, surfaces: ["mainWall", "ceiling"], follow: "camera", yaw: 0, pitch: 0, brightness: 1, fixed: { x: 0, y: 5, z: 4 } },
     // "Sets" — the big pre-configured pieces that load in/out from the Sets menu rather than
     // living in the scene by default. Toggling one ON spawns a single instance at its home spot;
     // OFF removes it. The Piece Library stays alongside for placing multiples / custom sizes.
@@ -763,8 +767,9 @@
       if (n.geometry && !n.userData.sharedGeo) n.geometry.dispose();   // sharedGeo: per-copy materials, template geometry
       if (n.material) {
         if (Array.isArray(n.material)) n.material.forEach(m => m.dispose());
-        else n.material.dispose();
+        else if (!n.material.userData.sharedEnv) n.material.dispose();   // the 360° material is shared by all LED panels
       }
+      if (n.userData.flatMat) { n.userData.flatMat.dispose(); n.userData.flatMat = null; }   // panel's own material, set aside while showing 360°
     });
   }
   function panelsToFt(panels) { return panels * config.panelSizeM * FT_PER_M; }
@@ -858,6 +863,7 @@
     initPhone();        // phone = read-only viewer with touch gestures (no-op on desktop)
     applyUrlParams();  // share links: ?view (read-only) and ?config=<url> (auto-load a layout)
     applyMode();
+    loadEnvLibrary();  // 360° environments (environments/library.json + samples.json), restores the layout's pick
 
     window.addEventListener("resize", onResize);
     animate();
@@ -2984,11 +2990,11 @@
   function ledContentHTML() {
     const rows = [["mainWall", "Main wall"], ["ceiling", "Ceiling"]];
     (config.rollingWalls || []).forEach(rw => rows.push(["roll:" + rw.id, "Rolling wall " + (rw.defaultSide === "left" ? "(left)" : rw.defaultSide === "right" ? "(right)" : rw.id)]));
-    return '<div class="subhead">What each surface shows</div>' +
+    return '<hr><div class="subhead">What each surface shows</div>' +
       rows.map(r => '<div class="field"><span>' + r[1] + '</span><select class="plateSel" data-platekey="' + r[0] + '">' + plateOptionsHTML(r[0]) + '</select></div>').join("") +
-      '<div class="subhead">Add content</div>' +
-      '<div class="btnRow"><button class="plateAddBtn primary" data-platekey="mainWall">Add image or video…</button></div>' +
-      '<div class="hint">New content goes on the main wall; choose it for any other surface above. It\'s a flat check of framing, colour and scale — not a tracked render. Video up to 1080p plays smoothly.</div>';
+      '<div class="subhead">Add a flat plate</div>' +
+      '<div class="btnRow"><button class="plateAddBtn" data-platekey="mainWall">Add image or video…</button></div>' +
+      '<div class="hint">A flat plate is stretched across one surface (no perspective) — new ones go on the main wall; pick them for other surfaces above. Video up to 1080p plays smoothly.</div>';
   }
   function ceilingControlsHTML() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
@@ -3001,8 +3007,9 @@
   function renderSections() {
     const cb = document.getElementById("ceilBody"), lb = document.getElementById("ledBody");
     if (cb) cb.innerHTML = ceilingControlsHTML();
-    if (lb) lb.innerHTML = ledContentHTML();
+    if (lb) lb.innerHTML = envControlsHTML() + ledContentHTML();
     wireFixedControls();
+    wireEnvControls();
   }
 
   function wireFixedControls() {
@@ -3114,6 +3121,11 @@
     const s = ledSurfaces().find(s => s.key === key);
     if (s) applyPlateToMesh(s.mesh, wallPlates[i]);
     reconcilePlateVideos();
+    // Remember which surfaces show the 360° environment, so a saved layout brings it back there.
+    if (config.environment || wallPlates[i].kind === "env") {
+      const e = envCfg(), on = wallPlates[i].kind === "env";
+      e.surfaces = (e.surfaces || []).filter(k => k !== key).concat(on ? [key] : []);
+    }
     // The same surface can be edited from the LED section and a rolling wall's inspector — keep both in step.
     document.querySelectorAll('.plateSel[data-platekey="' + key + '"]').forEach(el => { el.value = String(i); });
   }
@@ -3130,13 +3142,20 @@
   function reconcilePlateVideos() {
     const used = {};
     Object.keys(surfacePlateIdx).forEach(k => { used[surfacePlateIdx[k]] = true; });
-    wallPlates.forEach((pl, i) => { if (pl.video) { if (used[i]) pl.video.play().catch(() => {}); else pl.video.pause(); } });
+    wallPlates.forEach((pl, i) => { if (pl.video) { if (used[i] && !pl.userPaused) pl.video.play().catch(() => {}); else pl.video.pause(); } });
   }
 
   // Show a plate self-lit (emissive) on a mesh — the way an LED surface reads, independent of
   // scene lighting. "None" restores that mesh's dark base emissive.
   function applyPlateToMesh(mesh, p) {
     if (!mesh || !mesh.parent || !mesh.material) return;  // may be detached after a model swap
+    // 360° environment: swap in the shared projection material (keeps the panel's own material aside).
+    if (p && p.kind === "env") {
+      if (!mesh.userData.flatMat) mesh.userData.flatMat = mesh.material;
+      mesh.material = envMaterialFor(mesh.userData.flatMat.side);
+      return;
+    }
+    if (mesh.userData.flatMat) { mesh.material = mesh.userData.flatMat; mesh.userData.flatMat = null; }
     const m = mesh.material;
     if (p && p.tex) {
       m.map = p.tex; m.emissiveMap = p.tex; m.emissive.setHex(0xffffff);
@@ -3146,6 +3165,232 @@
       m.emissive.setHex(mesh.userData.baseEmissive != null ? mesh.userData.baseEmissive : 0x0a0d12);
     }
     m.needsUpdate = true;
+  }
+
+  // ==================================================================
+  //  360° ENVIRONMENTS (one equirectangular image/video across every LED surface)
+  // ==================================================================
+  // Every LED pixel looks up the 360° frame along its own direction from an eyepoint, so the main
+  // wall, ceiling and rolling walls each show the right slice of the same world and stay seamless
+  // where they meet. Eyepoint options:
+  //   camera — the active film camera's lens (what a tracked volume renders: parallax follows it)
+  //   viewer — wherever you're standing in Walk view (explore how the world lines up)
+  //   fixed  — a fixed point on the stage (config.environment.fixed)
+  // A proxy can be a crop of the sphere (see tools/make-360-proxies.ps1); its lon/lat range tells
+  // the shader which part of the sphere the frame covers. Outside that range the panel shows black.
+  // Only one environment is loaded at a time; it's a plate in the shared pool (kind "env") so every
+  // surface's content dropdown can pick it, and the LED section offers a one-click "show on" list.
+  const ENV_DEFAULT = { libraryId: null, surfaces: ["mainWall", "ceiling"], follow: "camera", yaw: 0, pitch: 0, brightness: 1, fixed: { x: 0, y: 5, z: 4 } };
+  const envUniforms = {
+    map: { value: null },
+    origin: { value: new THREE.Vector3(0, 5, 4) },
+    yaw: { value: 0 },
+    pitch: { value: 0 },
+    brightness: { value: 1 },
+    range: { value: new THREE.Vector4(-Math.PI, Math.PI, -Math.PI / 2, Math.PI / 2) }   // lonMin, lonMax, latMin, latMax
+  };
+  const envMats = {};
+  const ENV_VERT = [
+    "varying vec3 vWorld;",
+    "void main() {",
+    "  vec4 wp = modelMatrix * vec4(position, 1.0);",
+    "  vWorld = wp.xyz;",
+    "  gl_Position = projectionMatrix * viewMatrix * wp;",
+    "}"].join("\n");
+  const ENV_FRAG = [
+    "uniform sampler2D map; uniform vec3 origin; uniform float yaw; uniform float pitch;",
+    "uniform float brightness; uniform vec4 range;",
+    "varying vec3 vWorld;",
+    "void main() {",
+    "  vec3 d = normalize(vWorld - origin);",
+    "  float cy = cos(yaw), sy = sin(yaw);",          // turn the world about the vertical axis
+    "  d = vec3(cy * d.x - sy * d.z, d.y, sy * d.x + cy * d.z);",
+    "  float cp = cos(pitch), sp = sin(pitch);",      // tilt the horizon
+    "  d = vec3(d.x, cp * d.y + sp * d.z, -sp * d.y + cp * d.z);",
+    "  float lon = atan(d.x, -d.z);",                 // 0 = straight ahead (-Z, into the volume), + = right
+    "  float lat = asin(clamp(d.y, -1.0, 1.0));",     // + = up
+    "  vec2 uv = vec2((lon - range.x) / (range.y - range.x), (lat - range.z) / (range.w - range.z));",
+    "  vec3 c = vec3(0.0);",
+    "  if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0) c = texture2D(map, uv).rgb;",
+    "  gl_FragColor = vec4(c * brightness, 1.0);",
+    "}"].join("\n");
+  function envMaterialFor(side) {
+    const k = side == null ? THREE.FrontSide : side;
+    if (!envMats[k]) {
+      envMats[k] = new THREE.ShaderMaterial({ uniforms: envUniforms, vertexShader: ENV_VERT, fragmentShader: ENV_FRAG, side: k });
+      envMats[k].userData.sharedEnv = true;              // shared by every LED mesh — never disposed with one
+    }
+    return envMats[k];
+  }
+  function envCfg() {
+    if (!config.environment) config.environment = deepClone(ENV_DEFAULT);
+    return config.environment;
+  }
+  function envPlateIndex() { return wallPlates.findIndex(p => p.kind === "env"); }
+  function envPlate() { const i = envPlateIndex(); return i < 0 ? null : wallPlates[i]; }
+
+  // Per frame: put the eyepoint where it should be and push the look controls.
+  const _envTmp = new THREE.Vector3();
+  function updateEnvironment() {
+    if (envPlateIndex() < 0) return;
+    const e = envCfg();
+    let o = null;
+    if (e.follow === "camera" || viewCamUid != null) {
+      const pa = activeCameraPA(), g = pa && placedGroupByUid[pa._uid];
+      if (g && g.userData.rig) { g.updateMatrixWorld(true); g.userData.rig.getWorldPosition(_envTmp); o = _envTmp; }
+    }
+    if (!o && e.follow === "viewer") o = camera.position;
+    if (!o) { const f = e.fixed || ENV_DEFAULT.fixed; o = _envTmp.set(f.x, f.y, f.z); }
+    envUniforms.origin.value.copy(o);
+    envUniforms.yaw.value = degToRad(e.yaw || 0);
+    envUniforms.pitch.value = degToRad(e.pitch || 0);
+    envUniforms.brightness.value = e.brightness != null ? e.brightness : 1;
+  }
+
+  // Library: environments/library.json (written by tools/make-360-proxies.ps1, local) plus
+  // environments/samples.json (small samples that ship with the app). Missing files are fine.
+  let envLibrary = [];
+  function loadEnvLibrary() {
+    const get = u => fetch(u, { cache: "no-cache" }).then(r => r.ok ? r.json() : []).catch(() => []);
+    return Promise.all([get("environments/library.json"), get("environments/samples.json")]).then(([a, b]) => {
+      const seen = {};
+      envLibrary = [].concat(Array.isArray(a) ? a : [], Array.isArray(b) ? b : [])
+        .filter(x => x && x.id && x.file && !seen[x.id] && (seen[x.id] = true));
+      renderSections();
+      // Restore the layout's environment if it came from the library.
+      const e = config.environment;
+      if (e && e.libraryId && !envPlate()) { const it = envLibrary.find(x => x.id === e.libraryId); if (it) loadEnvironment(it, true); }
+    });
+  }
+
+  // Load an environment (library item or local File). Replaces any previous one.
+  // item: { id, name, file|url, type: "video"|"image", lon: [min,max], lat: [min,max], yaw }
+  function loadEnvironment(item, restoring) {
+    const isFile = item instanceof File;
+    const name = isFile ? item.name.replace(/\.[^.]+$/, "") : (item.name || item.id);
+    const isVideo = isFile ? item.type.indexOf("video") === 0 : (item.type === "video" || /\.(mp4|webm|mov|m4v)$/i.test(item.file || ""));
+    const url = isFile ? URL.createObjectURL(item) : ("environments/" + item.file);
+    const lon = (!isFile && item.lon) || [-180, 180], lat = (!isFile && item.lat) || [-90, 90];
+    let tex, video = null;
+    const onReady = (w, h) => {
+      const max = renderer.capabilities.maxTextureSize;
+      if (w > max || h > max) toast("This " + w + "×" + h + " file is bigger than this device can show (" + max + " px) — run it through the proxy script.");
+      else if (isFile && Math.abs(w / h - 2) > 0.05 && lon[1] - lon[0] >= 359) toast("Heads up: a full 360° frame is 2:1 — this one is " + (w / h).toFixed(2) + ":1, so it may look stretched.");
+    };
+    if (isVideo) {
+      video = document.createElement("video");
+      video.src = url; video.loop = true; video.muted = true; video.playsInline = true; video.crossOrigin = "anonymous";
+      video.addEventListener("loadedmetadata", () => onReady(video.videoWidth, video.videoHeight));
+      video.addEventListener("canplay", () => reconcilePlateVideos());
+      video.addEventListener("error", () => toast("Couldn't play " + name + " — try the proxy script (H.264 MP4)."));
+      tex = new THREE.VideoTexture(video);
+    } else {
+      tex = new THREE.TextureLoader().load(url, t => { onReady(t.image.width, t.image.height); if (isFile) URL.revokeObjectURL(url); },
+        undefined, () => toast("Couldn't load " + name + "."));
+    }
+    tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;   // no mip seam where the sphere wraps
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    // Replace the old environment in place (same pool slot), or add a new slot.
+    let i = envPlateIndex();
+    const plate = { name: "360° · " + name, tex: tex, video: video, kind: "env", url: url, envId: isFile ? null : item.id };
+    if (i >= 0) {
+      const old = wallPlates[i];
+      if (old.video) { old.video.pause(); old.video.removeAttribute("src"); old.video.load(); }
+      if (old.tex) old.tex.dispose();
+      if (old.url && old.url.indexOf("blob:") === 0) URL.revokeObjectURL(old.url);
+      wallPlates[i] = plate;
+    } else { wallPlates.push(plate); i = wallPlates.length - 1; }
+    envUniforms.map.value = tex;
+    envUniforms.range.value.set(degToRad(lon[0]), degToRad(lon[1]), degToRad(lat[0]), degToRad(lat[1]));
+    const e = envCfg();
+    e.libraryId = isFile ? null : item.id;
+    if (!restoring && !isFile && item.yaw != null) e.yaw = item.yaw;
+    (e.surfaces || []).forEach(k => setSurfacePlate(k, i));    // show it where the layout wants it
+    reapplyAllSurfacePlates();
+    renderSections();
+    scheduleAutosave();
+    if (!restoring) toast("Loaded 360° environment: " + name + (isFile ? " (local file — reload it after a refresh)" : ""));
+  }
+
+  // "Show on" checkboxes: put the environment on / take it off one surface.
+  const envPrevPlate = {};
+  function setEnvOnSurface(key, on) {
+    const i = envPlateIndex(); if (i < 0) return;
+    const e = envCfg(), list = (e.surfaces || []).filter(k => k !== key);
+    if (on) {
+      if (surfacePlateIdx[key] !== i) envPrevPlate[key] = surfacePlateIdx[key] != null ? surfacePlateIdx[key] : 0;
+      setSurfacePlate(key, i); list.push(key);
+    } else {
+      const prev = envPrevPlate[key];
+      setSurfacePlate(key, prev != null && prev !== i && prev < wallPlates.length ? prev : (key === "mainWall" || key === "ceiling" ? 1 : 0));
+    }
+    e.surfaces = list;
+    scheduleAutosave();
+  }
+  function unloadEnvironment() {
+    const i = envPlateIndex(); if (i < 0) return;
+    const keep = (envCfg().surfaces || []).slice();          // the next environment goes back to the same surfaces
+    Object.keys(surfacePlateIdx).forEach(k => { if (surfacePlateIdx[k] === i) setEnvOnSurface(k, false); });
+    envCfg().surfaces = keep;
+    const old = wallPlates[i];
+    if (old.video) { old.video.pause(); old.video.removeAttribute("src"); old.video.load(); }
+    if (old.tex) old.tex.dispose();
+    wallPlates.splice(i, 1);
+    Object.keys(surfacePlateIdx).forEach(k => { if (surfacePlateIdx[k] > i) surfacePlateIdx[k]--; });
+    envUniforms.map.value = null;
+    const e = envCfg(); e.libraryId = null;
+    reapplyAllSurfacePlates(); renderSections(); scheduleAutosave();
+    toast("360° environment removed");
+  }
+
+  // The LED section's 360° group.
+  function envControlsHTML() {
+    const e = envCfg(), p = envPlate(), i = envPlateIndex();
+    const surf = [["mainWall", "Main wall"], ["ceiling", "Ceiling"]];
+    (config.rollingWalls || []).forEach(rw => surf.push(["roll:" + rw.id, "Rolling wall " + (rw.defaultSide === "left" ? "(left)" : rw.defaultSide === "right" ? "(right)" : rw.id)]));
+    const opt = (v, t, cur) => '<option value="' + v + '"' + (v === cur ? " selected" : "") + '>' + t + '</option>';
+    let h = '<div class="subhead">360° environment</div>';
+    if (envLibrary.length) {
+      h += '<div class="field"><span>Library</span><select id="envLib"><option value="">Choose…</option>' +
+        envLibrary.map(x => opt(x.id, escapeHtml(x.name || x.id), e.libraryId)).join("") + '</select></div>';
+    }
+    h += '<div class="btnRow"><button id="envFileBtn">Load 360° image or video…</button></div>';
+    if (!p) {
+      return h + '<div class="hint">One 360° frame spread across every LED surface, each panel showing the slice it would see. ' +
+        (envLibrary.length ? "" : "Run <b>tools/make-360-proxies.ps1</b> to build a library of ready-to-play proxies. ") + '</div>';
+    }
+    h += '<div class="dims" style="margin:8px 0 4px">Showing <b>' + escapeHtml(p.name.replace(/^360° · /, "")) + '</b></div>';
+    h += '<div class="subhead">Show on</div>' + surf.map(s =>
+      '<label class="setToggle"><input type="checkbox" class="envSurf" data-k="' + s[0] + '"' + (surfacePlateIdx[s[0]] === i ? " checked" : "") + '><span>' + s[1] + '</span></label>').join("");
+    h += '<div class="subhead">Projection</div>' +
+      '<div class="field"><span>Seen from</span><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
+      '<div class="field"><span>Turn</span><input type="range" id="envYaw" min="-180" max="180" step="1" value="' + (e.yaw || 0) + '" style="width:120px"><output id="envYawV">' + Math.round(e.yaw || 0) + '°</output></div>' +
+      '<div class="field" title="Raise (+) or lower (−) the world’s horizon"><span>Horizon</span><input type="range" id="envPitch" min="-45" max="45" step="0.5" value="' + (e.pitch || 0) + '" style="width:120px"><output id="envPitchV">' + (e.pitch || 0) + '°</output></div>' +
+      '<div class="field"><span>Brightness</span><input type="range" id="envBright" min="0.2" max="2" step="0.05" value="' + (e.brightness != null ? e.brightness : 1) + '" style="width:120px"><output id="envBrightV">' + Math.round((e.brightness != null ? e.brightness : 1) * 100) + '%</output></div>';
+    h += '<div class="btnRow">' + (p.video ? '<button id="envPlay">' + (p.video.paused ? "Play" : "Pause") + '</button><button id="envRestart">Restart</button>' : "") +
+      '<button id="envRemove" class="danger">Remove</button></div>';
+    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street or horizon with the set.</div>';
+    return h;
+  }
+  function wireEnvControls() {
+    const $ = id => document.getElementById(id);
+    const lib = $("envLib"); if (lib) lib.addEventListener("change", () => { const it = envLibrary.find(x => x.id === lib.value); if (it) loadEnvironment(it); });
+    const fb = $("envFileBtn"); if (fb) fb.addEventListener("click", () => $("envFile").click());
+    document.querySelectorAll(".envSurf").forEach(c => c.addEventListener("change", () => setEnvOnSurface(c.dataset.k, c.checked)));
+    const e = envCfg();
+    const slider = (id, key, fmt) => { const s = $(id), o = $(id + "V"); if (!s) return; s.addEventListener("input", () => { e[key] = parseFloat(s.value); if (o) o.textContent = fmt(e[key]); scheduleAutosave(); }); };
+    slider("envYaw", "yaw", v => Math.round(v) + "°");
+    slider("envPitch", "pitch", v => v + "°");
+    slider("envBright", "brightness", v => Math.round(v * 100) + "%");
+    const fo = $("envFollow"); if (fo) fo.addEventListener("change", () => { e.follow = fo.value; scheduleAutosave(); });
+    const p = envPlate();
+    const pl = $("envPlay"); if (pl && p && p.video) pl.addEventListener("click", () => {
+      p.userPaused = !p.video.paused;                     // remembered, so other LED changes don't restart it
+      if (p.userPaused) p.video.pause(); else p.video.play().catch(() => {});
+      pl.textContent = p.userPaused ? "Play" : "Pause";
+    });
+    const rs = $("envRestart"); if (rs && p && p.video) rs.addEventListener("click", () => { p.video.currentTime = 0; p.userPaused = false; p.video.play().catch(() => {}); if (pl) pl.textContent = "Pause"; });
+    const rm = $("envRemove"); if (rm) rm.addEventListener("click", unloadEnvironment);
   }
 
   // ==================================================================
@@ -3981,7 +4226,7 @@
     // frozen at whatever was saved. User layout (placedAssets, shots) and stage tweaks
     // (studio/pillar/fixedElements/rollingWalls) are preserved from the saved config.
     ["assetCatalog", "sets", "stageDeckPresets", "lensSetMm", "sensors"].forEach(k => { cfg[k] = deepClone(DEFAULT_CONFIG[k]); });
-    ["shots", "studio", "pillar", "customModels", "reflections"].forEach(k => { if (!cfg[k]) cfg[k] = deepClone(DEFAULT_CONFIG[k]); });
+    ["shots", "studio", "pillar", "customModels", "reflections", "environment"].forEach(k => { if (!cfg[k]) cfg[k] = deepClone(DEFAULT_CONFIG[k]); });
     if (cfg.showFrustums == null) cfg.showFrustums = DEFAULT_CONFIG.showFrustums;
     // One-time: the ceiling's starting height moved 12' → 20'. Lift saved layouts still on the old
     // default; a height someone deliberately set is left alone.
@@ -4010,6 +4255,11 @@
     renderInspector();
     refreshShotUI();
     syncSettingsUI();
+    // Bring back the layout's 360° environment when it came from the library.
+    const e = config.environment, cur = envPlate();
+    if (e && e.libraryId && envLibrary.length && (!cur || cur.envId !== e.libraryId)) {
+      const it = envLibrary.find(x => x.id === e.libraryId); if (it) loadEnvironment(it, true);
+    }
   }
 
   // ==================================================================
@@ -4042,7 +4292,7 @@
   const SECTIONS = {
     stage:  { title: "Stage",  sub: "The fixed LED volume, the ceiling, and pre-built sets." },
     add:    { title: "Add to stage", sub: "Place a piece, then drag it where you want it." },
-    led:    { title: "LED content", sub: "Images or video on the walls and ceiling." },
+    led:    { title: "LED content", sub: "A 360° world, or flat images and video, on the walls and ceiling." },
     camera: { title: "Camera", sub: "Lens, framing, saved shots and prints." }
   };
   let openSection = null;
@@ -4176,6 +4426,7 @@
     syncSettingsUI();
     // One shared file picker for LED content (buttons set the target surface first)
     document.getElementById("plateFile").addEventListener("change", e => { if (e.target.files[0]) addWallPlate(e.target.files[0], _plateTargetKey); e.target.value = ""; });
+    document.getElementById("envFile").addEventListener("change", e => { if (e.target.files[0]) loadEnvironment(e.target.files[0]); e.target.value = ""; });
     // Control hint: show on arrival / after switching view, fade once moving
     ["camOrbit", "camTop"].forEach(id => document.getElementById(id).addEventListener("click", nudgeNavHud));
     nudgeNavHud();
@@ -4255,6 +4506,7 @@
     pollGamepad(dt);
     updatePhone(dt);
     updateCollisionWarning();
+    updateEnvironment();               // 360° eyepoint + look controls, before anything renders the LEDs
     updateProbes(performance.now());   // reflections snapshot the stage before the frame is drawn
     if (viewCamUid != null) { updateCameraFPS(dt); renderCameraView(); return; }
     updateNav(dt);

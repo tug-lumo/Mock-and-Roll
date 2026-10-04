@@ -1,0 +1,12 @@
+[
+  {
+    "id": "sample-calibration-grid",
+    "name": "Calibration grid (sample)",
+    "file": "samples/calibration-grid.jpg",
+    "type": "image",
+    "lon": [-135, 135],
+    "lat": [-40, 80],
+    "yaw": 0,
+    "note": "Test pattern: FRONT should sit centred on the main wall with the seafoam horizon at lens height."
+  }
+]

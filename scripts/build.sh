@@ -9,6 +9,12 @@ cp index.html dist/
 cp -r vendor brand dist/
 [ -d assets ] && cp -r assets dist/
 [ -d layouts ] && cp -r layouts dist/
+# 360° environments: only the bundled samples ship (proxies are large, local media).
+if [ -f environments/samples.json ]; then
+  mkdir -p dist/environments
+  cp environments/samples.json dist/environments/
+  [ -d environments/samples ] && cp -r environments/samples dist/environments/
+fi
 # Long-cache the pinned library and brand files; always revalidate the app page itself.
 cat > dist/_headers <<'EOF'
 /vendor/*
