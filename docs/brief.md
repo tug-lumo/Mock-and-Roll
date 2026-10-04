@@ -1,4 +1,4 @@
-# Lumostage Stage Configurator — Build Brief
+# Mock & Roll (Lumostage Stage Configurator) — Build Brief
 
 Sep 24, 2026 · @Tug Phipps
 

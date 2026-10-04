@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lumostage Stage Configurator</title>
+<title>Mock &amp; Roll · Lumostage</title>
 <link rel="icon" type="image/svg+xml" href="brand/emblem.svg">
 <style>
   /* Lumostage brand palette (Brand Guide 2023): Dark #13191A · Light #F2F2F2 · Digital Blue #0060FE ·
@@ -354,7 +354,7 @@
 
   <header id="topbar">
     <div class="brand"><img src="brand/emblem.svg" alt="Lumostage" width="30" height="32"></div>
-    <div class="title">Lumostage <span>Stage</span></div>
+    <div class="title">Mock &amp; Roll <span>by Lumostage</span></div>
     <div class="seg" role="group" aria-label="View">
       <button id="camOrbit" class="active" title="Walk around the stage — drag to look, W A S D to move"><svg><use href="#i-walk"/></svg>Walk</button>
       <button id="camTop" title="Plan view, straight down — drag to pan, scroll to zoom"><svg><use href="#i-plan"/></svg>Plan</button>
@@ -481,7 +481,7 @@
 
   <!-- First run: three things to know, then out of the way -->
   <div id="welcome" class="hidden" role="note">
-    <img class="wlogo" src="brand/logo-negative.png" alt="Lumostage" width="120"><h3>Welcome to the stage configurator</h3>
+    <img class="wlogo" src="brand/logo-negative.png" alt="Lumostage" width="120"><h3>Welcome to Mock &amp; Roll</h3>
     <p>You're standing on the shooting floor, looking into the LED volume.</p>
     <ol>
       <li><b>1</b><span>Drag to look around; <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk. <strong>Plan</strong> shows it from above.</span></li>
@@ -549,7 +549,7 @@
   <script>
   "use strict";
   // ------------------------------------------------------------------
-  // Lumostage Stage Configurator — Phase 1 + Phase 2 + Phase 3 (camera/lens + shots)
+  // Mock & Roll (Lumostage stage configurator) — Phase 1 + Phase 2 + Phase 3 (camera/lens + shots)
   // Single-file, vanilla Three.js. All stage elements are data-driven
   // (see DEFAULT_CONFIG). Elements render as correctly-DIMENSIONED primitives
   // and are swapped for real glTF/GLB models when one is present (Phase 2,
@@ -2856,7 +2856,7 @@
       const title = (seq ? seq + " · " : "") + (shotName || "Shot");
       c.fillStyle = "#e6e8ec"; c.font = "600 38px Segoe UI, sans-serif"; c.fillText(title, P, 56);
       c.fillStyle = "#9aa0ac"; c.font = "20px Segoe UI, sans-serif";
-      c.fillText("Lumostage · CAM " + camNo + " · " + o.f + "mm " + o.S.name + " · " + new Date().toLocaleString(), P, 84);
+      c.fillText("Mock & Roll · Lumostage · CAM " + camNo + " · " + o.f + "mm " + o.S.name + " · " + new Date().toLocaleString(), P, 84);
       c.drawImage(shotImg, P, HEAD);
       c.strokeStyle = "#3a3f4b"; c.lineWidth = 2; c.strokeRect(P, HEAD, SHOT_W, SHOT_H);
       c.drawImage(planImg, COLX, HEAD);
@@ -2874,7 +2874,7 @@
       c.fillStyle = "#e6e8ec"; c.font = "16px Segoe UI, sans-serif";
       wrapText(c, pieceTxt, COLX + 180, y, COLW - 180, 22);
 
-      const fname = ("lumostage_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm").replace(/[^\w\-]+/g, "_") + ".png";
+      const fname = ("mock-and-roll_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm").replace(/[^\w\-]+/g, "_") + ".png";
       cv.toBlob(blob => {
         if (!blob) { toast("Print failed: couldn't encode the image"); return; }
         const url = URL.createObjectURL(blob), a = document.createElement("a");
@@ -3953,10 +3953,10 @@
     const blob = new Blob([JSON.stringify(exportConfig(), null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "lumostage-layout.json";
+    a.href = url; a.download = "mock-and-roll-layout.json";
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    toast("Saved lumostage-layout.json");
+    toast("Saved mock-and-roll-layout.json");
   }
 
   function loadJSONFile(file) {

@@ -1,4 +1,6 @@
-# Lumostage Stage Configurator
+# Mock & Roll
+
+*by Lumostage* — the stage configurator.
 
 Browser-based planner for the Lumostage LED volume: lay out sets and vehicles, look through a
 virtual camera, check reflections, and print shot sheets.

@@ -1,4 +1,4 @@
-# Deploying the Stage Configurator
+# Deploying Mock & Roll
 
 The configurator is a static site: everything (3D, reflections, camera tools) runs in the
 viewer's browser. Hosting = serving `index.html` + `vendor/` + `brand/` behind a login.
@@ -8,10 +8,10 @@ viewer's browser. Hosting = serving `index.html` + `vendor/` + `brand/` behind a
 
 ## 1. GitHub — one time
 
-1. Create a **private** repo on github.com, e.g. `lumostage/stage-configurator` (no README/licence — the project already has them).
+1. Create a **private** repo on github.com, e.g. `lumostage/mock-and-roll` (no README/licence — the project already has them).
 2. In this folder:
    ```
-   git remote add origin https://github.com/<org>/stage-configurator.git
+   git remote add origin https://github.com/<org>/mock-and-roll.git
    git push -u origin master
    ```
    Windows' Git Credential Manager pops up a GitHub sign-in the first time.
