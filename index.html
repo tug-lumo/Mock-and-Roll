@@ -569,6 +569,44 @@
   // entry's (or variant's) `model` path AND set `modelReady: true` on that same
   // entry/variant — no code change. Absent the flag, nothing is fetched and the
   // primitive renders. Humans stay an InstancedMesh and are not model-swapped.
+  // ---- Cast spots: named places on vehicles/sets where people can be switched on -------------
+  // A spot is in the host's local frame: { id, name, group, x, y (floor/seat level), z,
+  // rot (deg; figures face +Z at 0), pose: "seated"|"standing", figH? (figure height there) }.
+  const SUBWAY_BENCHES = [[-17.5, -10.1], [-3.5, 3.8], [9.9, 17.3]];   // bench X spans (floor plan)
+  function subwaySpots() {
+    const out = [], floorY = 2, W = 8, t = 0.25;
+    SUBWAY_BENCHES.forEach((span, bi) => {
+      [1, -1].forEach(side => {
+        const len = span[1] - span[0], n = Math.max(2, Math.round(len / 1.55)), sw = len / n;
+        const grp = "Bench " + (bi + 1) + (side > 0 ? "A" : "B");
+        for (let k = 0; k < n; k++) {
+          out.push({ id: "b" + (bi + 1) + (side > 0 ? "a" : "b") + (k + 1), name: grp + " · seat " + (k + 1), group: grp,
+            x: span[0] + sw * (k + 0.5), y: floorY, z: side * (W / 2 - t - 0.2 - 1.27), rot: side > 0 ? 180 : 0, pose: "seated" });
+        }
+      });
+    });
+    [[-7, 1.0, 180, "Door 1 · pole"], [-7, -1.0, 0, "Door 1 · pole (other side)"], [7, 1.0, 180, "Door 2 · pole"], [7, -1.0, 0, "Door 2 · pole (other side)"],
+     [-11, 0.4, 90, "Aisle · cab end"], [0, 0, 90, "Aisle · middle"], [13.6, 0, -90, "Aisle · flyaway end"]].forEach((s, i) => {
+      out.push({ id: "st" + (i + 1), name: s[3], group: "Standing", x: s[0], y: floorY, z: s[1], rot: s[2], pose: "standing" });
+    });
+    return out;
+  }
+  // Car seating fitted to a car's size. front: -1 = nose toward local -X (default), +1 = +X.
+  // Left-hand drive puts the driver on the occupant's left; rhd flips it.
+  function carSpots(L, W, H, front, rhd) {
+    front = front === 1 ? 1 : -1;
+    const left = -front, dz = 0.22 * W, figH = Math.max(3.2, Math.min(4.3, 0.8 * H)), y = Math.max(0.6, 0.18 * H);
+    const rot = front === -1 ? -90 : 90, fx = front * 0.08 * L, rx = -front * 0.17 * L;
+    const drv = (rhd ? -1 : 1) * left * dz;
+    return [
+      { id: "driver", name: "Driver", group: "Front", x: fx, y: y, z: drv, rot: rot, pose: "seated", figH: figH },
+      { id: "passenger", name: "Passenger", group: "Front", x: fx, y: y, z: -drv, rot: rot, pose: "seated", figH: figH },
+      { id: "rearL", name: "Rear L", group: "Rear", x: rx, y: y, z: left * dz, rot: rot, pose: "seated", figH: figH },
+      { id: "rearMid", name: "Rear Mid", group: "Rear", x: rx, y: y, z: 0, rot: rot, pose: "seated", figH: figH },
+      { id: "rearR", name: "Rear R", group: "Rear", x: rx, y: y, z: -left * dz, rot: rot, pose: "seated", figH: figH }
+    ];
+  }
+
   const DEFAULT_CONFIG = {
     units: "ft",
     panelSizeM: 0.5,
@@ -681,7 +719,7 @@
         lengthFt: 4, widthFt: 4, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 },
         dualMaterial: { front: "glass/frame", reverse: "brick", note: "one object — inner-corner faces read as frame, the outward reverse is a brick facade" },
         model: "assets/corner_pillar.glb" },
-      { assetId: "subwayCar", name: "Subway Car", category: "set-piece", lengthFt: 37, widthFt: 8, heightFt: 9.667,   // 37x8 per Subway Train Floor Plan v1
+      { assetId: "subwayCar", name: "Subway Car", category: "set-piece", spots: subwaySpots(), lengthFt: 37, widthFt: 8, heightFt: 9.667,   // 37x8 per Subway Train Floor Plan v1
         // heightFt is the car body, interior floor to roof; it rides on a 2ft air-caster undercarriage
         // (so the interior floor sits at stage-deck height and total height = undercarriageFt + heightFt).
         undercarriageFt: 2, interiorCeilingFt: 6.667, windowSillFt: 3.083,
@@ -694,7 +732,7 @@
           { name: "Interior, center aisle",    x: -14,   z: 0,   heightFt: 7, rotationDeg: 270, focusFt: 20 },
           { name: "Interior, looking out door", x: 7,    z: 2.5, heightFt: 7, rotationDeg: 0,   focusFt: 8 }
         ] },
-      { assetId: "sedan_generic", name: "Sedan (generic)", category: "vehicle", lengthFt: 15, widthFt: 6, heightFt: 5, model: "assets/sedan_generic.glb",
+      { assetId: "sedan_generic", name: "Sedan (generic)", category: "vehicle", car: { front: -1 }, lengthFt: 15, widthFt: 6, heightFt: 5, model: "assets/sedan_generic.glb",
         // Local frame: car faces -X (front seats forward of center), left-hand drive so driver is +Z.
         // y = seated eye height; rotationDeg = which way the seated figure faces relative to the car.
         seatAnchors: [
@@ -703,7 +741,7 @@
           { seat: "rear left",       x:  2.2, y: 3.9, z:  2.0, rotationDeg: 90 },
           { seat: "rear right",      x:  2.2, y: 3.9, z: -2.0, rotationDeg: 90 }
         ] },
-      { assetId: "human_standing", name: "Human — standing (generic)", category: "human", heightFt: 5.75, model: "assets/human_standing.glb" },
+      { assetId: "human_standing", name: "Human — standing (generic)", category: "human", status: "legacy", heightFt: 5.75, model: "assets/human_standing.glb" },
       // Low-poly people (free_pack_lowpoly_people.glb, split by tools/split-glb.py into assets/people/).
       // Each is scaled uniformly to heightFt (adjustable per instance); 0° faces +Z (toward the
       // shooting floor / camera side). widthFt/depthFt are the footprint at that height.
@@ -1365,17 +1403,29 @@
     }
     return urlModelCache[url];
   }
-  function personHeight(entry, pa) { return pa.heightFt > 0 ? pa.heightFt : entry.heightFt; }
+  function personHeight(entry, pa) {
+    if (pa.heightFt > 0) return pa.heightFt;
+    const sp = pa.pin && pinnedSpot(pa);                  // a spot can set the figure size (e.g. car seats)
+    return sp && sp.spot.figH ? sp.spot.figH : entry.heightFt;
+  }
   // Ghost box at true size immediately (placeable/selectable), swapped for the model when loaded:
   // scaled uniformly so the figure is exactly its height, centred, feet on the floor.
+  // A role colour repaints the figure and adds a floating name tag (main view only).
   function buildPerson(entry, pa) {
     const h = personHeight(entry, pa), k = h / entry.heightFt;
-    const g = buildBox({ lengthFt: (entry.widthFt || 2) * k, widthFt: (entry.depthFt || 1.2) * k, heightFt: h }, 0x8a909a);
+    const role = pa.role && pa.role.color ? pa.role : null;
+    const g = buildBox({ lengthFt: (entry.widthFt || 2) * k, widthFt: (entry.depthFt || 1.2) * k, heightFt: h }, role ? parseInt(role.color.slice(1), 16) : 0x8a909a);
     g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.3; o.material.depthWrite = false; } });
+    const addTag = () => { if (role && role.name) { const tg = makeNameTag(role.name, role.color); tg.position.y = h + 0.7; g.add(tg); } };
+    addTag();
     loadModelUrl(entry.model).then(tpl => {
       if (!tpl || !g.parent) return;
       const m = tpl.clone(true);
       m.traverse(n => { n.userData.sharedModel = true; });
+      if (role) {                                          // own material in the role colour
+        const mat = new THREE.MeshStandardMaterial({ color: parseInt(role.color.slice(1), 16), roughness: 0.55, side: THREE.DoubleSide });
+        m.traverse(n => { if (n.isMesh) { n.material = mat; n.userData.sharedModel = false; n.userData.sharedGeo = true; } });
+      }
       const bb0 = new THREE.Box3().setFromObject(m), sz = bb0.getSize(new THREE.Vector3());
       m.scale.setScalar(h / (sz.y || 1));
       const holder = new THREE.Group(); holder.add(m); holder.updateMatrixWorld(true);
@@ -1383,9 +1433,127 @@
       m.position.set(-c.x, -bb.min.y, -c.z);
       g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
       g.add(holder);
+      addTag();
       g.userData.hasModel = true;
     });
     return g;
+  }
+
+  // Floating name tag (canvas sprite). Layer 1 = main view only: never in the viewfinder,
+  // reflections or printed shots.
+  function makeNameTag(text, color) {
+    const c = document.createElement("canvas"), x = c.getContext("2d");
+    c.width = 512; c.height = 128;
+    x.font = "bold 56px Arial, Helvetica, sans-serif";
+    const w = Math.min(500, x.measureText(text).width + 90);
+    x.fillStyle = "rgba(19,25,26,0.88)";
+    const r = 30, x0 = (512 - w) / 2, y0 = 18, h = 92;
+    x.beginPath(); x.moveTo(x0 + r, y0); x.arcTo(x0 + w, y0, x0 + w, y0 + h, r); x.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+    x.arcTo(x0, y0 + h, x0, y0, r); x.arcTo(x0, y0, x0 + w, y0, r); x.fill();
+    x.fillStyle = color; x.beginPath(); x.arc(x0 + 44, 64, 16, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "#f2f2f2"; x.textBaseline = "middle"; x.fillText(text, x0 + 72, 66, w - 90);
+    const tex = new THREE.CanvasTexture(c);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    sp.scale.set(3.2, 0.8, 1); sp.renderOrder = 997; sp.layers.set(1); sp.raycast = function () {};
+    sp.userData.tag = true;
+    return sp;
+  }
+
+  // ---- Floors: what people / props settle onto ------------------------------------------
+  // Hosts declare walkable rectangles in their local frame (userData.walk: {x0,x1,z0,z1,y}) —
+  // stage decks, glass-wall decks, rolling-wall bases, the subway floor. Free-standing people
+  // and imported models sit on the highest one under them, unless given a manual elevation.
+  const _inv4 = new THREE.Matrix4(), _p3 = new THREE.Vector3();
+  function floorHeightAt(x, z, except) {
+    let best = 0;
+    selectableObjects.forEach(o => {
+      const walk = o.userData.walk;
+      if (o === except || !walk || !o.visible) return;
+      o.updateMatrixWorld(true);
+      _p3.set(x, 0, z).applyMatrix4(_inv4.copy(o.matrixWorld).invert());
+      walk.forEach(r => { if (_p3.x >= r.x0 && _p3.x <= r.x1 && _p3.z >= r.z0 && _p3.z <= r.z1) best = Math.max(best, r.y + o.position.y); });
+    });
+    return best;
+  }
+  function isElevatable(pa) {
+    const e = pa && catalogEntry(pa.assetId);
+    return !!(e && (e.category === "person" || e.custom) && !pa.pin);
+  }
+  function elevationFor(pa, g) {
+    return pa.elevFt != null && pa.elevFt !== "" ? +pa.elevFt : floorHeightAt(g.position.x, g.position.z, g);
+  }
+  // Re-settle every free person/prop (after a deck or vehicle moved underneath them).
+  function refreshElevations() {
+    config.placedAssets.forEach(pa => {
+      const g = placedGroupByUid[pa._uid];
+      if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g);
+    });
+    config.placedAssets.forEach(pa => { if (pa.key) syncCastTo(pa); });
+  }
+
+  // ---- Cast: people pinned to spots on a vehicle/set ------------------------------------
+  // A cast member is an ordinary person placement with pin = { host: <host key>, spot: <spot id>,
+  // dx, dz, drot } — nudges relative to the spot, in the host's frame. It follows the host when
+  // it moves/turns; dragging it more than 3 ft from its spot unpins it.
+  function spotsFor(pa) {
+    const e = pa && catalogEntry(pa.assetId);
+    if (!e) return null;
+    if (e.spots) return e.spots;
+    if (e.car) return carSpots(e.lengthFt, e.widthFt, e.heightFt, e.car.front, pa.car && pa.car.rhd);
+    if (e.custom && pa.car) return carSpots(pa.lengthFt || 15, pa.widthFt || 6, pa.heightFt || 5, pa.car.front, pa.car.rhd);
+    return null;
+  }
+  function ensureKey(pa) {
+    if (!pa.key) pa.key = "v" + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+    return pa.key;
+  }
+  function pinnedSpot(pa) {
+    if (!pa || !pa.pin) return null;
+    const host = config.placedAssets.find(p => p.key === pa.pin.host);
+    const sp = host && (spotsFor(host) || []).find(s => s.id === pa.pin.spot);
+    return sp ? { host: host, spot: sp } : null;
+  }
+  function castWorld(host, spot, pin) {
+    const hr = degToRad(host.rotationDeg || 0);
+    const off = new THREE.Vector3(spot.x + (pin.dx || 0), 0, spot.z + (pin.dz || 0)).applyAxisAngle(new THREE.Vector3(0, 1, 0), hr);
+    const hg = placedGroupByUid[host._uid];
+    return { x: round2(host.x + off.x), z: round2(host.z + off.z), y: (hg ? hg.position.y : 0) + spot.y,
+      rot: normDeg((host.rotationDeg || 0) + (spot.rot || 0) + (pin.drot || 0)) };
+  }
+  function placeCast(pa) {
+    const s = pinnedSpot(pa); if (!s) return false;
+    const w = castWorld(s.host, s.spot, pa.pin);
+    pa.x = w.x; pa.z = w.z; pa.rotationDeg = w.rot;
+    const g = placedGroupByUid[pa._uid];
+    if (g) { g.position.set(w.x, w.y, w.z); g.rotation.y = degToRad(w.rot); }
+    return true;
+  }
+  function syncCastTo(host) {
+    if (!host || !host.key) return;
+    config.placedAssets.forEach(pa => { if (pa.pin && pa.pin.host === host.key) placeCast(pa); });
+  }
+  function castOf(host) { return host && host.key ? config.placedAssets.filter(p => p.pin && p.pin.host === host.key) : []; }
+  // Default figure for a spot: seated poses alternate, standing poses rotate through the six.
+  function figureForSpot(spot, i) {
+    const people = config.assetCatalog.filter(e => e.category === "person");
+    const pool = people.filter(e => e.pose === spot.pose);
+    const list = pool.length ? pool : people;
+    return list.length ? list[i % list.length].assetId : null;
+  }
+  function setCastSpot(host, spotId, on) {
+    const spots = spotsFor(host) || [], sp = spots.find(s => s.id === spotId); if (!sp) return;
+    const key = ensureKey(host);
+    const existing = config.placedAssets.find(p => p.pin && p.pin.host === key && p.pin.spot === spotId);
+    if (on && !existing) {
+      const fig = figureForSpot(sp, spots.indexOf(sp)); if (!fig) return;
+      const pa = { assetId: fig, x: host.x, z: host.z, rotationDeg: 0, pin: { host: key, spot: spotId } };
+      config.placedAssets.push(pa);
+    } else if (!on && existing) {
+      config.placedAssets = config.placedAssets.filter(p => p !== existing);
+    }
+  }
+  function setCastMany(host, filterFn, on) {
+    (spotsFor(host) || []).filter(filterFn).forEach(sp => setCastSpot(host, sp.id, on));
   }
 
   function importGlbFile(file) {
@@ -1450,7 +1618,8 @@
       g.position.set(rw.x, 0, rw.z);
       g.rotation.y = degToRad(rw.rotationDeg || 0);
       g.visible = rw.deployed !== false;
-      g.userData = { kind: "rollingWall", id: rw.id, baseY: 0, ledMesh: wall, dims: { wallH, wallLen, thickness, deckLen, deckDepth, deckH } };
+      g.userData = { kind: "rollingWall", id: rw.id, baseY: 0, ledMesh: wall, dims: { wallH, wallLen, thickness, deckLen, deckDepth, deckH },
+        walk: [{ x0: -deckDepth, x1: 0, z0: -deckLen / 2, z1: deckLen / 2, y: deckH }] };   // people can stand on the base
       scene.add(g);
       selectableObjects.push(g);
       fitAndSwapModel(g, modelUrlIfReady(rw)); // Phase 2: real rolling-wall+deck module if provided
@@ -1682,6 +1851,9 @@
     const endGlass = add(new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.6), glass));
     endGlass.rotation.y = Math.PI / 2; endGlass.position.set(xEnd + 0.08, floorTop + 4.3, endLeaf.position.z);
 
+    // Walkable interior floor: people dragged inside settle at floor height (uc).
+    g.userData.walk = [{ x0: xb - 0.3, x1: xEnd - t, z0: -(W / 2 - t), z1: W / 2 - t, y: uc }];
+
     // ---- interior -----------------------------------------------------------------
     const ceil = add(new THREE.Mesh(new THREE.BoxGeometry(Ls - 0.2, 0.06, W - 2 * t), ceilMat));
     ceil.position.set(xs, ceilY, 0);
@@ -1713,7 +1885,7 @@
       disc.position.set(cx, ceilY - 0.06, 0);
     });
     // Benches (six, per the plan): cream base, molded orange bucket seats, seat fronts 2'1" off centre.
-    const benchSpans = [[-17.5, -10.1], [-3.5, 3.8], [9.9, 17.3]];
+    const benchSpans = SUBWAY_BENCHES;
     const seatH = 1.45, frontZ = 2.08, backZ = W / 2 - t;
     benchSpans.forEach(span => {
       [1, -1].forEach(side => {
@@ -1758,6 +1930,7 @@
     const d = entry.deck; if (!d) return 0;
     const m = new THREE.Mesh(new THREE.BoxGeometry(d.lengthFt, d.heightFt, d.widthFt), makeStandardMat(0x5a6270));
     m.position.y = d.heightFt / 2; g.add(m);
+    g.userData.walk = [{ x0: -d.lengthFt / 2, x1: d.lengthFt / 2, z0: -d.widthFt / 2, z1: d.widthFt / 2, y: d.heightFt }];
     return d.heightFt;
   }
 
@@ -1901,6 +2074,7 @@
       const L = pa.lengthFt || entry.defaultLengthFt || 8;
       const W = pa.widthFt || entry.defaultWidthFt || 8;
       g = buildBox({ lengthFt: L, widthFt: W, heightFt: entry.heightFt || 2 }, 0x5a6270);
+      g.userData.walk = [{ x0: -L / 2, x1: L / 2, z0: -W / 2, z1: W / 2, y: entry.heightFt || 2 }];
     } else if (entry.category === "vehicle") {
       g = buildBox({ lengthFt: entry.lengthFt, widthFt: entry.widthFt, heightFt: entry.heightFt }, 0x556677);
       // Ghosted so a seated figure inside stays visible.
@@ -1976,6 +2150,10 @@
       selectableObjects.push(g);
       placedGroupByUid[pa._uid] = g;
     });
+    // Free people/props settle on decks and floors; then cast members take their spots
+    // (spots whose vehicle or spot is gone release the person to stand free).
+    config.placedAssets.forEach(pa => { const g = placedGroupByUid[pa._uid]; if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g); });
+    config.placedAssets.forEach(pa => { if (pa.pin && !placeCast(pa)) delete pa.pin; });
     refreshCamPicker();
     refreshSetsMenu();
     if (typeof wallPlates !== "undefined") reapplyAllSurfacePlates(); // rolling-wall LED faces
@@ -2146,7 +2324,11 @@
       if (humanMesh && selected.instanceId != null) setHumanMatrix(selected.instanceId, cfg);
     } else if (selectedObject) {
       selectedObject.rotation.y = degToRad(deg);
+      const s = cfg.pin && pinnedSpot(cfg);
+      if (s) cfg.pin.drot = round2(normDeg(deg - (s.host.rotationDeg || 0) - (s.spot.rot || 0)));   // cast turns relative to its spot
       syncSeatedTo(cfg);
+      syncCastTo(cfg);                                      // a turning vehicle carries its cast
+      refreshElevations();
     }
     updateYawRing(false); updateInspectorFields(); scheduleAutosave();
   }
@@ -2310,7 +2492,22 @@
       g.position.set(x, g.userData.baseY || 0, z);
       g.rotation.set(0, degToRad(rot), 0);
       const cfg = cfgForSelected();
-      if (cfg) { cfg.x = x; cfg.z = z; cfg.rotationDeg = rot; syncSeatedTo(cfg); }
+      if (cfg && cfg.pin && pinnedSpot(cfg)) {
+        // Cast member: keep it pinned, storing the nudge relative to its spot (in the host frame);
+        // dragged more than 3 ft away it comes off the vehicle and stands free.
+        const s = pinnedSpot(cfg), hr = degToRad(s.host.rotationDeg || 0);
+        const loc = new THREE.Vector3(g.position.x - s.host.x, 0, g.position.z - s.host.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), -hr);
+        const dx = loc.x - s.spot.x, dz = loc.z - s.spot.z;
+        if (Math.hypot(dx, dz) > 3) {
+          delete cfg.pin; cfg.x = x; cfg.z = z; cfg.rotationDeg = rot;
+          toast("Unpinned — now standing free");
+          renderInspector();
+        } else {
+          cfg.pin.dx = round2(dx); cfg.pin.dz = round2(dz);
+          placeCast(cfg);
+        }
+      } else if (cfg) { cfg.x = x; cfg.z = z; cfg.rotationDeg = rot; syncSeatedTo(cfg); syncCastTo(cfg); }
+      refreshElevations();                                  // settle onto decks / floors under the new spot
     }
     updateInspectorFields();
     scheduleAutosave();
@@ -2397,6 +2594,7 @@
         : "") +
       (customFitHTML(cur)) +
       personFieldHTML(cur) +
+      castHTML(cur) +
       reflectHTML(cur) +
       (selected.kind === "rollingWall"
         ? '<div class="field"><span>Deployed</span><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '></div>' +
@@ -2515,11 +2713,114 @@
     });
   }
 
-  // Library people: real-world height (the figure scales uniformly to it).
+  // Hero-role palette (brand colours first). Background people stay neutral grey.
+  const ROLE_COLORS = [["#ff6169", "Salmon"], ["#00efea", "Seafoam"], ["#0060fe", "Blue"], ["#f2bf1b", "Yellow"],
+                       ["#3cb371", "Green"], ["#9b59d0", "Purple"], ["#f28c28", "Orange"], ["#ff7ec8", "Pink"]];
+
+  // Library people: figure swap, real-world height, role colour + name tag, elevation, pin status.
   function personFieldHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
     if (!e || e.category !== "person") return "";
-    return '<div class="subhead">Figure</div>' + fieldHTML("personH", "Height", toDisplay(personHeight(e, pa)));
+    const people = config.assetCatalog.filter(x => x.category === "person");
+    const figOpts = people.map(x => '<option value="' + x.assetId + '"' + (x.assetId === pa.assetId ? " selected" : "") + '>' + escapeHtml(x.name) + '</option>').join("");
+    const role = pa.role || {};
+    const sw = '<button class="roleSw" data-c="" title="Background (no role)" style="width:26px;height:26px;padding:0;border-radius:50%;background:#8a909a;' + (!role.color ? "box-shadow:var(--focus)" : "") + '"></button>' +
+      ROLE_COLORS.map(rc => '<button class="roleSw" data-c="' + rc[0] + '" title="' + rc[1] + '" style="width:26px;height:26px;padding:0;border-radius:50%;background:' + rc[0] + ';' + (role.color === rc[0] ? "box-shadow:var(--focus)" : "") + '"></button>').join("");
+    const s = pinnedSpot(pa);
+    let h = '<div class="subhead">Figure</div>' +
+      '<div class="field"><span>Model</span><select id="personFig">' + figOpts + '</select></div>' +
+      fieldHTML("personH", "Height", toDisplay(personHeight(e, pa))) +
+      '<div class="subhead">Role</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' + sw + '</div>' +
+      '<div class="field"><span>Name tag</span><input type="text" id="roleName" placeholder="e.g. Hero A" value="' + escapeHtml(role.name || "") + '" style="width:150px"' + (role.color ? "" : " disabled") + '></div>';
+    if (s) {
+      const he = catalogEntry(s.host.assetId);
+      h += '<div class="subhead">Placement</div><div class="dims" style="margin:0 0 6px">Pinned to <b>' + escapeHtml(he ? he.name : "vehicle") + '</b> · ' + escapeHtml(s.spot.name) +
+        '<br>Moves with it. Drag to nudge; drag over 3 ft away to free it.</div><div class="btnRow"><button id="unpinBtn">Unpin</button></div>';
+    } else {
+      const auto = pa.elevFt == null || pa.elevFt === "";
+      h += '<div class="subhead">Placement</div><div class="field"><span>Elevation</span><input type="number" id="elevFt" step="0.25" placeholder="auto" value="' + (auto ? "" : Math.round(toDisplay(+pa.elevFt) * 100) / 100) + '"></div>' +
+        '<div class="hint">' + (auto ? "Auto: stands on decks, rolling-wall bases and the subway floor when dragged over them." : "Fixed height. Clear the box to go back to auto.") + '</div>';
+    }
+    return h;
+  }
+
+  function wirePeopleAndCast() {
+    const $ = id => document.getElementById(id);
+    const redo = (pa, fn) => { const uid = pa._uid; fn(); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); };
+    const cur = () => cfgForSelected();
+    // Person: height, figure, role, elevation, unpin
+    const ph = $("personH");
+    if (ph) ph.addEventListener("change", () => {
+      const pa = cur(); if (!pa) return;
+      const v = fromDisplay(parseFloat(ph.value));
+      if (!(v > 1 && v < 9)) { renderInspector(); toast("Height should be between 1 and 9 ft"); return; }
+      redo(pa, () => { pa.heightFt = Math.round(v * 100) / 100; });
+    });
+    const pf = $("personFig");
+    if (pf) pf.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => { pa.assetId = pf.value; delete pa.heightFt; }); });
+    document.querySelectorAll(".roleSw").forEach(b => b.addEventListener("click", () => {
+      const pa = cur(); if (!pa) return;
+      redo(pa, () => {
+        if (!b.dataset.c) { delete pa.role; return; }
+        const used = config.placedAssets.filter(p => p.role && p.role.name).length;
+        pa.role = { color: b.dataset.c, name: (pa.role && pa.role.name) || ("Hero " + String.fromCharCode(65 + Math.min(25, used))) };
+      });
+    }));
+    const rn = $("roleName");
+    if (rn) rn.addEventListener("change", () => { const pa = cur(); if (pa && pa.role) redo(pa, () => { pa.role.name = rn.value.trim().slice(0, 24); }); });
+    const ef = $("elevFt");
+    if (ef) ef.addEventListener("change", () => {
+      const pa = cur(); if (!pa) return;
+      redo(pa, () => { if (ef.value === "") delete pa.elevFt; else pa.elevFt = Math.max(0, Math.round(fromDisplay(parseFloat(ef.value)) * 100) / 100); });
+    });
+    const up = $("unpinBtn");
+    if (up) up.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.pin; pa.x = snap(pa.x + 1.5); }); });
+    // Host: car seating for imported models, RHD, spot toggles, bulk fill/clear
+    const cs = $("carSeats");
+    if (cs) cs.addEventListener("change", () => { const pa = cur(); if (!pa) return; redo(pa, () => { if (cs.checked) pa.car = { front: -1, rhd: false }; else { castOf(pa).forEach(p => setCastSpot(pa, p.pin.spot, false)); delete pa.car; } }); });
+    const cf = $("carFront");
+    if (cf) cf.addEventListener("change", () => { const pa = cur(); if (pa && pa.car) redo(pa, () => { pa.car.front = +cf.value; }); });
+    const rh = $("carRhd");
+    if (rh) rh.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => { pa.car = Object.assign({ front: -1 }, pa.car || {}, { rhd: rh.checked }); }); });
+    document.querySelectorAll(".castSpot").forEach(c => c.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => setCastSpot(pa, c.dataset.s, c.checked)); }));
+    document.querySelectorAll(".castGrp").forEach(b => b.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, s => s.group === b.dataset.g, b.dataset.on === "1")); }));
+    const fs = $("castSeats"); if (fs) fs.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, s => s.pose === "seated", true)); });
+    const fa = $("castAll"); if (fa) fa.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, () => true, true)); });
+    const cc = $("castClear"); if (cc) cc.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, () => true, false)); });
+  }
+
+  // Cast panel for vehicles/sets with spots (and imported models switched to car seating).
+  function castHTML(pa) {
+    if (selected.kind !== "placed") return "";
+    const e = catalogEntry(pa.assetId); if (!e) return "";
+    let h = "";
+    if (e.custom) {
+      h += '<div class="subhead">Seating</div><label class="setToggle"><input type="checkbox" id="carSeats" ' + (pa.car ? "checked" : "") + '><span>This is a car — add seat spots</span></label>';
+      if (pa.car) {
+        h += '<div class="field"><span>Front faces</span><select id="carFront"><option value="-1"' + (pa.car.front !== 1 ? " selected" : "") + '>Left (−X)</option><option value="1"' + (pa.car.front === 1 ? " selected" : "") + '>Right (+X)</option></select></div>';
+      }
+    }
+    const spots = spotsFor(pa);
+    if (!spots) return h;
+    if (e.car || pa.car) h += '<label class="setToggle"><input type="checkbox" id="carRhd" ' + (pa.car && pa.car.rhd ? "checked" : "") + '><span>Right-hand drive</span></label>';
+    const key = pa.key, on = {};
+    castOf(pa).forEach(p => { on[p.pin.spot] = true; });
+    const groups = [];
+    spots.forEach(sp => { let gr = groups.find(g => g.name === sp.group); if (!gr) groups.push(gr = { name: sp.group, spots: [] }); gr.spots.push(sp); });
+    const count = Object.keys(on).length;
+    h += '<div class="subhead">Cast · ' + count + ' of ' + spots.length + ' spots filled</div>';
+    groups.forEach(gr => {
+      const short = gr.spots.length > 3;
+      h += '<div style="margin:0 0 8px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:4px"><span>' + escapeHtml(gr.name) + '</span>' +
+        '<span><button class="castGrp ghost" data-g="' + escapeHtml(gr.name) + '" data-on="1" style="padding:2px 6px">all</button><button class="castGrp ghost" data-g="' + escapeHtml(gr.name) + '" data-on="0" style="padding:2px 6px">none</button></span></div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px 10px">' +
+        gr.spots.map((sp, i) => '<label class="setToggle" style="padding:2px 0" title="' + escapeHtml(sp.name) + '"><input type="checkbox" class="castSpot" data-s="' + sp.id + '"' + (on[sp.id] ? " checked" : "") + '><span>' + escapeHtml(short ? String(i + 1) : sp.name) + '</span></label>').join("") +
+        '</div></div>';
+    });
+    const hasSeat = spots.some(s => s.pose === "seated"), hasStand = spots.some(s => s.pose === "standing");
+    h += '<div class="btnRow">' + (hasSeat ? '<button id="castSeats">Fill seats</button>' : "") + (hasStand && hasSeat ? '<button id="castAll">Fill all</button>' : "") + '<button id="castClear" class="danger">Clear</button></div>' +
+      '<div class="hint">Cast members move with the ' + (e.car || pa.car ? "car" : "set") + '. Select one to change its figure, give it a role colour, or nudge it.</div>';
+    return h;
   }
 
   function customFitHTML(pa) {
@@ -2584,14 +2885,7 @@
     };
     [dL, dW].forEach(el => el && el.addEventListener("change", applyDeckDims));
     wireReflectFields();
-    const ph = document.getElementById("personH");
-    if (ph) ph.addEventListener("change", () => {
-      const pa = cfgForSelected(); if (!pa) return;
-      const v = fromDisplay(parseFloat(ph.value));
-      if (!(v > 1 && v < 9)) { renderInspector(); toast("Height should be between 1 and 9 ft"); return; }
-      const uid = pa._uid; pa.heightFt = Math.round(v * 100) / 100;
-      rebuildPlaced(); reselectUid(uid); scheduleAutosave();
-    });
+    wirePeopleAndCast();
     // Imported model: pick which real dimension you know, enter it, the model scales uniformly.
     const fitAxis = document.getElementById("fitAxis"), fitVal = document.getElementById("fitVal");
     const applyFit = (axisChanged) => {
@@ -3079,6 +3373,14 @@
       pctx.beginPath(); pctx.arc(cpx[0], cpx[1], 7, 0, Math.PI * 2); pctx.fillStyle = "#ffd24a"; pctx.fill();
       pctx.strokeStyle = "#000"; pctx.lineWidth = 2; pctx.stroke();
       pctx.font = "600 15px Segoe UI, sans-serif"; pctx.fillStyle = "#ffd24a"; pctx.fillText("CAM " + camNo, cpx[0] + 11, cpx[1] + 18);
+      // Cast with roles: coloured dot + name on the plan (background people stay unmarked).
+      const roles = config.placedAssets.filter(p => p.role && p.role.color);
+      roles.forEach(p => {
+        const q = toPx(p.x, p.z);
+        pctx.beginPath(); pctx.arc(q[0], q[1], 6, 0, Math.PI * 2); pctx.fillStyle = p.role.color; pctx.fill();
+        pctx.strokeStyle = "#000"; pctx.lineWidth = 1.5; pctx.stroke();
+        if (p.role.name) { pctx.font = "600 12px Arial, sans-serif"; pctx.fillStyle = "#f2f2f2"; pctx.fillText(p.role.name, q[0] + 9, q[1] + 4); }
+      });
       // scale bar + labels
       const sb = 10 * ft; pctx.fillStyle = "#e6e8ec"; pctx.fillRect(16, PLAN_H - 22, sb, 4);
       pctx.font = "12px Segoe UI, sans-serif"; pctx.fillText(fmtLen(10), 16, PLAN_H - 28);
@@ -3101,7 +3403,7 @@
       const pieces = {};
       config.placedAssets.forEach(p => { if (p.assetId === "camera") return; const e = catalogEntry(p.assetId); const n = e ? e.name : p.assetId; pieces[n] = (pieces[n] || 0) + 1; });
       const pieceTxt = Object.keys(pieces).map(n => n + (pieces[n] > 1 ? " ×" + pieces[n] : "")).join(" · ") || "base volume only";
-      const LINE = 36, infoTop = HEAD + PLAN_H + 34, infoH = 40 + info.length * LINE + 90;
+      const LINE = 36, infoTop = HEAD + PLAN_H + 34, infoH = 40 + info.length * LINE + 90 + (roles.length ? 50 + roles.length * 26 : 0);
       const H = Math.max(HEAD + SHOT_H, infoTop + infoH) + P;
       const cv = document.createElement("canvas"); cv.width = 2400; cv.height = H;
       const c = cv.getContext("2d");
@@ -3131,6 +3433,14 @@
       y += 14; c.fillStyle = "#9aa0ac"; c.font = "18px Segoe UI, sans-serif"; c.fillText("On stage", COLX, y);
       c.fillStyle = "#e6e8ec"; c.font = "16px Segoe UI, sans-serif";
       wrapText(c, pieceTxt, COLX + 180, y, COLW - 180, 22);
+      if (roles.length) {                                     // who's who: role colour, name, figure
+        y += 62; c.fillStyle = "#9aa0ac"; c.font = "18px Arial, sans-serif"; c.fillText("Cast", COLX, y);
+        roles.forEach((p, i) => {
+          const yy = y + i * 26, e = catalogEntry(p.assetId);
+          c.beginPath(); c.arc(COLX + 188, yy - 6, 8, 0, Math.PI * 2); c.fillStyle = p.role.color; c.fill();
+          c.fillStyle = "#e6e8ec"; c.font = "600 17px Arial, sans-serif"; c.fillText((p.role.name || "Role") + "  ·  " + (e ? e.name : p.assetId), COLX + 204, yy);
+        });
+      }
 
       const fname = ("mock-and-roll_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm").replace(/[^\w\-]+/g, "_") + ".png";
       cv.toBlob(blob => {
@@ -3188,7 +3498,16 @@
     } else if (selectedObject) {
       selectedObject.position.set(x, selectedObject.userData.baseY, z);
       selectedObject.rotation.y = degToRad(r);
+      const s = cfg && cfg.pin && pinnedSpot(cfg);
+      if (s) {                                              // typed position on a cast member = new nudge
+        const loc = new THREE.Vector3(x - s.host.x, 0, z - s.host.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), -degToRad(s.host.rotationDeg || 0));
+        cfg.pin.dx = round2(loc.x - s.spot.x); cfg.pin.dz = round2(loc.z - s.spot.z);
+        cfg.pin.drot = round2(normDeg(r - (s.host.rotationDeg || 0) - (s.spot.rot || 0)));
+        placeCast(cfg);
+      }
       syncSeatedTo(cfg);
+      syncCastTo(cfg);
+      refreshElevations();
     }
     updateYawRing(false);
     scheduleAutosave();
@@ -3208,10 +3527,12 @@
 
   function removeSelected() {
     if (!isRemovable()) return;
-    config.placedAssets = config.placedAssets.filter(p => p._uid !== selected.uid);
+    const gone = getPlacedByUid(selected.uid), cast = castOf(gone);
+    // A vehicle/set takes its pinned cast with it.
+    config.placedAssets = config.placedAssets.filter(p => p._uid !== selected.uid && cast.indexOf(p) === -1);
     rebuildPlaced();
     scheduleAutosave();
-    toast("Removed from scene");
+    toast(cast.length ? "Removed (with " + cast.length + " cast)" : "Removed from scene");
   }
 
   function duplicateSelected() {
@@ -3712,7 +4033,8 @@
     cats.forEach(cat => {
       // Hide any entry flagged deferred (rooftop set, door box).
       const keys = [cat.key].concat(cat.also || []);
-      const entries = config.assetCatalog.filter(e => keys.indexOf(e.category) !== -1 && !(e.status && e.status.indexOf("deferred") !== -1));
+      // Hidden: deferred pieces, and the legacy cylinder human (still renders in old layouts).
+      const entries = config.assetCatalog.filter(e => keys.indexOf(e.category) !== -1 && !(e.status && (e.status.indexOf("deferred") !== -1 || e.status === "legacy")));
       if (!entries.length) return;
       const gb = group(cat.key, cat.label, entries.length);
       entries.forEach(e => {
@@ -4023,6 +4345,8 @@
       if (o === g || !o.visible) return;
       const pa = o.userData.kind === "placed" && getPlacedByUid(o.userData.uid);
       if (pa && pa.assetId === "camera") return;
+      const oe = pa && catalogEntry(pa.assetId);
+      if (oe && oe.category === "person") return;            // people don't count as obstacles
       const otherDeck = isDeckGroup(o);
       if (otherDeck !== meDeck && (otherDeck || meDeck)) return;   // standing on / holding up a deck is fine
       const ofp = footprintOf(o, COLL_TOL), ob = localBoxOfGroup(o);
@@ -4041,7 +4365,8 @@
   function updateCollisionWarning() {
     const g = selectedObject;
     const pa = g && g.userData.kind === "placed" && getPlacedByUid(g.userData.uid);
-    if (!g || mode !== "edit" || viewCamUid != null || (pa && pa.assetId === "camera")) { if (collSig) { collSig = ""; clearCollisionOutline(); } return; }
+    const pe = pa && catalogEntry(pa.assetId);
+    if (!g || mode !== "edit" || viewCamUid != null || (pa && pa.assetId === "camera") || (pe && pe.category === "person")) { if (collSig) { collSig = ""; clearCollisionOutline(); } return; }
     const sig = g.uuid + "|" + g.position.x.toFixed(2) + "|" + g.position.z.toFixed(2) + "|" + g.rotation.y.toFixed(3);
     if (sig === collSig) return;
     collSig = sig;
