@@ -12,7 +12,7 @@ viewer's browser. Hosting = serving `index.html` + `vendor/` + `brand/` behind a
 2. In this folder:
    ```
    git remote add origin https://github.com/<org>/mock-and-roll.git
-   git push -u origin master
+   git push -u origin main
    ```
    Windows' Git Credential Manager pops up a GitHub sign-in the first time.
 
@@ -23,7 +23,7 @@ After that, shipping a change is just `git push`.
 1. dash.cloudflare.com → sign up / sign in with the company Google account.
 2. **Workers & Pages → Create → Pages → Connect to Git** → authorise GitHub → pick the repo.
 3. Build settings:
-   - Production branch: `master`
+   - Production branch: `main`
    - Framework preset: **None**
    - Build command: `sh scripts/build.sh`
    - Build output directory: `dist`
