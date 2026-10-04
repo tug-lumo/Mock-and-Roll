@@ -681,18 +681,18 @@
         lengthFt: 4, widthFt: 4, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 },
         dualMaterial: { front: "glass/frame", reverse: "brick", note: "one object — inner-corner faces read as frame, the outward reverse is a brick facade" },
         model: "assets/corner_pillar.glb" },
-      { assetId: "subwayCar", name: "Subway Car", category: "set-piece", lengthFt: 36.167, widthFt: 8.5, heightFt: 9.667,
+      { assetId: "subwayCar", name: "Subway Car", category: "set-piece", lengthFt: 37, widthFt: 8, heightFt: 9.667,   // 37x8 per Subway Train Floor Plan v1
         // heightFt is the car body, interior floor to roof; it rides on a 2ft air-caster undercarriage
         // (so the interior floor sits at stage-deck height and total height = undercarriageFt + heightFt).
         undercarriageFt: 2, interiorCeilingFt: 6.667, windowSillFt: 3.083,
-        doorConfig: { doorways: 2, panelsPerDoorway: 2, style: "center-parting sliding" }, model: "assets/subway_car.glb",
+        doorConfig: { doorways: 2, panelsPerDoorway: 2, style: "center-parting sliding", centersFt: [-7, 7], widthFt: 4, endDoorFt: 2.5, noseEnd: "-X" }, model: "assets/subway_car.glb",
         // Known-good camera vantages, in the car's local frame (x along its length, z across;
         // rotationDeg 0 faces -Z, 180 faces +Z, 270 faces +X). heightFt is lens height above the
         // ground: 2ft floor/platform + ~5ft eye height. Snap a camera to one from its inspector.
         cameraMarks: [
           { name: "Platform exterior",         x: 0,     z: -13, heightFt: 7, rotationDeg: 180, focusFt: 9 },
           { name: "Interior, center aisle",    x: -14,   z: 0,   heightFt: 7, rotationDeg: 270, focusFt: 20 },
-          { name: "Interior, looking out door", x: 9.04, z: 2.5, heightFt: 7, rotationDeg: 0,   focusFt: 8 }
+          { name: "Interior, looking out door", x: 7,    z: 2.5, heightFt: 7, rotationDeg: 0,   focusFt: 8 }
         ] },
       { assetId: "sedan_generic", name: "Sedan (generic)", category: "vehicle", lengthFt: 15, widthFt: 6, heightFt: 5, model: "assets/sedan_generic.glb",
         // Local frame: car faces -X (front seats forward of center), left-hand drive so driver is +Z.
@@ -1428,102 +1428,278 @@
     return g;
   }
 
+  // Rounded-rectangle outline into a Shape/Path (r clamps to fit).
+  function rrPath(p, x0, y0, x1, y1, r) {
+    r = Math.max(0, Math.min(r || 0, (x1 - x0) / 2, (y1 - y0) / 2));
+    p.moveTo(x0 + r, y0); p.lineTo(x1 - r, y0);
+    if (r) p.quadraticCurveTo(x1, y0, x1, y0 + r);
+    p.lineTo(x1, y1 - r);
+    if (r) p.quadraticCurveTo(x1, y1, x1 - r, y1);
+    p.lineTo(x0 + r, y1);
+    if (r) p.quadraticCurveTo(x0, y1, x0, y1 - r);
+    p.lineTo(x0, y0 + r);
+    if (r) p.quadraticCurveTo(x0, y0, x0 + r, y0);
+    return p;
+  }
+
   // Build a flat wall (in local XY plane, extruded thickness along Z) with
-  // real rectangular openings cut clean THROUGH the geometry.
-  // holes: [{x (centered), y (from bottom), w, h}]
+  // real openings cut clean THROUGH the geometry.
+  // holes: [{x (centered), y (from bottom), w, h, r? (corner radius)}]
   function makeWallWithHoles(width, height, thickness, holes, mat) {
-    const shape = new THREE.Shape();
-    shape.moveTo(-width / 2, 0);
-    shape.lineTo(width / 2, 0);
-    shape.lineTo(width / 2, height);
-    shape.lineTo(-width / 2, height);
-    shape.lineTo(-width / 2, 0);
+    const shape = rrPath(new THREE.Shape(), -width / 2, 0, width / 2, height, 0);
     (holes || []).forEach((ho) => {
-      const p = new THREE.Path();
-      const x0 = ho.x - ho.w / 2, x1 = ho.x + ho.w / 2, y0 = ho.y, y1 = ho.y + ho.h;
-      p.moveTo(x0, y0); p.lineTo(x1, y0); p.lineTo(x1, y1); p.lineTo(x0, y1); p.lineTo(x0, y0);
-      shape.holes.push(p);
+      shape.holes.push(rrPath(new THREE.Path(), ho.x - ho.w / 2, ho.y, ho.x + ho.w / 2, ho.y + ho.h, ho.r || 0));
     });
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false, curveSegments: 6 });
     geo.translate(0, 0, -thickness / 2);
     return new THREE.Mesh(geo, mat);
   }
 
-  // Subway car — HOLLOW from the start. Openings (2 doorways + windows per
-  // long side, one door per end) are cut clean through the geometry on
-  // EVERY side, so a sightline can pass out-to-in, in-to-out, or straight
-  // through. Interior surfaces use double-sided materials (render from inside).
-  function buildSubwayCar(entry) {
+  // Flat rounded-rect band (a rubber gasket / frame) around a w x h opening, in the XY plane.
+  function makeGasket(w, h, r, band, mat) {
+    const s = rrPath(new THREE.Shape(), -w / 2 - band, -band, w / 2 + band, h + band, (r || 0) + band);
+    s.holes.push(rrPath(new THREE.Path(), -w / 2, 0, w / 2, h, r || 0));
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(s, 6), mat);
+    return m;
+  }
+
+  // Subway car — modelled on Lumostage's set (Subway Train Floor Plan v1 + set photos).
+  // HOLLOW: doorways, windows and the end door are cut clean through, so sightlines pass
+  // out-to-in, in-to-out or straight through.
+  //   Plan:   37' long x 8' wide. Rounded cab nose at local -X; flat "flyaway" end wall at +X with
+  //           a 2.5' sliding door. Two 4' bi-parting doorways per side, centred 7' either side of
+  //           the middle (bays ~9' / 9' / 8.5'). Six longitudinal benches (one per bay per side),
+  //           4'2" aisle between seat fronts, 7' inside wall to wall.
+  //   Photos: brushed-stainless body, rounded roof eaves + rain gutter, belt-line seam, rounded
+  //           windows with black gaskets and a transom bar, tall narrow door windows, cab end with
+  //           a centre storm door and anti-climber; inside cream benches with orange bucket seats,
+  //           yellow-sleeved stainless poles, ceiling light coves, ad cards and round diffusers.
+  // pa.doorsOpen (default true) slides the side door leaves open/closed.
+  function buildSubwayCar(entry, pa) {
+    pa = pa || {};
     const L = entry.lengthFt, W = entry.widthFt, H = entry.heightFt;
     const t = 0.25;
     const uc = entry.undercarriageFt != null ? entry.undercarriageFt : 2;
     const g = new THREE.Group();
     g.userData.baseY = 0;
 
-    // Brushed stainless shell: metallic, so it mirrors the LED volume via the car's reflection probe.
-    const shell = new THREE.MeshStandardMaterial({ color: 0xc4cad3, roughness: 0.32, metalness: 0.85, side: THREE.DoubleSide });
+    // ---- materials --------------------------------------------------------------
+    // Brushed stainless shell + glass: both mirror the LED volume via the car's reflection probe.
+    // (Painted-silver set finish in the photos: brighter and less mirror-like than raw steel.)
+    const shell = new THREE.MeshStandardMaterial({ color: 0xd6dbe0, roughness: 0.38, metalness: 0.55, side: THREE.DoubleSide });
     shell.userData.reflective = true;
-    const interior = makeStandardMat(0x6b7078);
+    const glass = new THREE.MeshStandardMaterial({ color: 0x1b2328, roughness: 0.04, metalness: 0.9, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide });
+    glass.userData.reflective = true;
+    const rubber = new THREE.MeshStandardMaterial({ color: 0x141618, roughness: 0.8, metalness: 0, side: THREE.DoubleSide });
+    const steel = new THREE.MeshStandardMaterial({ color: 0xe4e8ec, roughness: 0.3, metalness: 0.6 });
+    steel.userData.reflective = true;                     // poles/rails pick up the probe too
+    const yellow = new THREE.MeshStandardMaterial({ color: 0xf2bf1b, roughness: 0.5 });
+    const floorMat = makeStandardMat(0x5d6165);
+    const ceilMat = makeStandardMat(0xe9ecee, 0x8a8c8e);   // lit headliner (glows a little, like the set)
+    const cream = new THREE.MeshStandardMaterial({ color: 0xe9e1cb, roughness: 0.6 });
+    const orangeA = new THREE.MeshStandardMaterial({ color: 0xf29a22, roughness: 0.45 });
+    const orangeB = new THREE.MeshStandardMaterial({ color: 0xe8561d, roughness: 0.45 });
+    const lightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff6e8, emissiveIntensity: 0.9 });
+    const adMats = [0x2f5d9e, 0xd9822b, 0x3c8a5e, 0xb8423a, 0x6b4fa0].map(c => makeStandardMat(c));
+    const under = makeStandardMat(0x3d434d);
 
-    // Air-caster undercarriage: lifts the interior floor to `uc` ft, matching stage-deck height.
+    // ---- frame ----------------------------------------------------------------
+    // Air-caster undercarriage lifts the interior floor to `uc` ft (stage-deck height).
     if (uc > t) {
-      const under = new THREE.Mesh(new THREE.BoxGeometry(L - 0.5, uc - t, W - 0.5), makeStandardMat(0x3d434d));
-      under.position.y = (uc - t) / 2; g.add(under);
+      const u = new THREE.Mesh(new THREE.BoxGeometry(L - 2, uc - t, W - 1), under);
+      u.position.set(0.5, (uc - t) / 2, 0); g.add(u);
     }
-    // The car body (all measurements floor-relative) rides on top; its floor slab's top face is at y = uc.
     const body = new THREE.Group();
     body.position.y = uc - t;
     g.add(body);
-    const add = m => body.add(m);
+    const add = m => { body.add(m); return m; };
     const floorTop = t;
+    const roofCap = 0.85;                                 // the rounded eave band on top of the walls
+    const wallTop = floorTop + H - roofCap;
+    const ceilY = floorTop + (entry.interiorCeilingFt || 6.667);
 
-    // Floor & roof
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(L, t, W), interior);
-    floor.position.y = t / 2; add(floor);
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(L, t, W), shell);
-    roof.position.y = floorTop + H - t / 2; add(roof);
-    // Interior ceiling plane (slightly concave real car ~6'8"): a low double-sided plane
-    const ceilInt = new THREE.Mesh(new THREE.BoxGeometry(L - 2 * t, 0.08, W - 2 * t), interior);
-    ceilInt.position.y = floorTop + (entry.interiorCeilingFt || (H - 1.5)); add(ceilInt);
+    // Nose geometry: circular arc (chord = W, sagitta s) at -X.
+    const s = 1.0, R = (W * W / 4 + s * s) / (2 * s), half = Math.asin((W / 2) / R);
+    const xNoseTip = -L / 2, xb = xNoseTip + s, xc = xNoseTip + R, xEnd = L / 2;
+    const Ls = xEnd - xb, xs = (xb + xEnd) / 2;           // straight section length / centre
 
-    // Openings, positioned identically on both long sides so sightlines pass through.
-    const doorX = [-L / 4, L / 4];
-    const doorW = 4, doorH = 6.5;
-    const sill = entry.windowSillFt || 3.083, winW = 3, winH = 3, winY = floorTop + sill;
-    const winX = [-L / 2 + 4, -L / 8, L / 8, L / 2 - 4];
+    // ---- layout from the floor plan ---------------------------------------------
+    const doorX = [-7, 7], doorW = 4, doorH = 6.5;
+    const sill = entry.windowSillFt || 3.083, winH = 3.3, winR = 0.35;
+    const bays = [                                        // [start, end] of each bay along X
+      [xb, doorX[0] - doorW / 2], [doorX[0] + doorW / 2, doorX[1] - doorW / 2], [doorX[1] + doorW / 2, xEnd]
+    ];
+    const winWs = [4.6, 5.2, 5.0];
+    const windows = bays.map((b, i) => ({ x: (b[0] + b[1]) / 2 + (i === 2 ? -0.4 : i === 0 ? 0.3 : 0), w: winWs[i] }));
+
+    // ---- floor, side walls, roof --------------------------------------------------
+    const floor = add(new THREE.Mesh(new THREE.BoxGeometry(Ls + s * 0.6, t, W - 0.05), floorMat));
+    floor.position.set(xs - s * 0.3, t / 2, 0);
+
     const sideHoles = [];
-    doorX.forEach(x => sideHoles.push({ x: x, y: floorTop, w: doorW, h: doorH }));
-    winX.forEach(x => sideHoles.push({ x: x, y: winY, w: winW, h: winH }));
-
-    const wallH = floorTop + H;
-    const sideFront = makeWallWithHoles(L, wallH, t, sideHoles, shell);
-    sideFront.position.z = W / 2; add(sideFront);
-    const sideBack = makeWallWithHoles(L, wallH, t, sideHoles, shell);
-    sideBack.position.z = -W / 2; add(sideBack);
-
-    // Center-parting sliding door panels (shown slid open) — visual read of door style.
-    doorX.forEach(x => {
-      [-1, 1].forEach(sgn => {
-        [W / 2, -W / 2].forEach(zc => {
-          const panel = new THREE.Mesh(new THREE.BoxGeometry(1.7, doorH, 0.08), makeStandardMat(0x555b64));
-          panel.position.set(x + sgn * (doorW / 2 + 0.9), floorTop + doorH / 2, zc);
-          add(panel);
+    doorX.forEach(x => sideHoles.push({ x: x - xs, y: floorTop, w: doorW, h: doorH }));
+    windows.forEach(wn => sideHoles.push({ x: wn.x - xs, y: floorTop + sill, w: wn.w, h: winH, r: winR }));
+    [1, -1].forEach(side => {
+      const wall = add(makeWallWithHoles(Ls, wallTop, t, sideHoles, shell));
+      wall.position.set(xs, 0, side * (W / 2 - t / 2));
+      const zOut = side * (W / 2 + 0.012);
+      // Window glass, gaskets and transom bars
+      windows.forEach(wn => {
+        const gl = add(new THREE.Mesh(new THREE.PlaneGeometry(wn.w, winH), glass));
+        gl.position.set(wn.x, floorTop + sill + winH / 2, side * (W / 2 - t / 2));
+        const gk = add(makeGasket(wn.w, winH, winR, 0.1, rubber));
+        gk.position.set(wn.x, floorTop + sill, zOut); if (side < 0) gk.rotation.y = Math.PI;
+        const tr = add(new THREE.Mesh(new THREE.BoxGeometry(wn.w, 0.09, t + 0.06), shell));
+        tr.position.set(wn.x, floorTop + sill + winH - 0.85, side * (W / 2 - t / 2));
+      });
+      // Belt-line seam under the windows and the rain gutter along the roofline
+      const beltEdges = [xb].concat(doorX.reduce((a, dx) => a.concat([dx - doorW / 2, dx + doorW / 2]), []), [xEnd]);
+      for (let k = 0; k < beltEdges.length; k += 2) {      // seam stops at each doorway
+        const a = beltEdges[k], b = beltEdges[k + 1];
+        const belt = add(new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.07, 0.06), shell));
+        belt.position.set((a + b) / 2, floorTop + sill - 0.12, side * (W / 2 + 0.03));
+      }
+      const gutter = add(new THREE.Mesh(new THREE.BoxGeometry(Ls + 0.4, 0.12, 0.14), shell));
+      gutter.position.set(xs - 0.2, wallTop + 0.02, side * (W / 2 + 0.05));
+      // Bi-parting door leaves: tall narrow windows; slid open beside the doorway (default) or closed.
+      doorX.forEach(dx => {
+        [-1, 1].forEach(sgn => {
+          const leafW = doorW / 2 + 0.05, open = pa.doorsOpen !== false;
+          const leaf = add(makeWallWithHoles(leafW, doorH + 0.05, 0.12, [{ x: 0, y: 2.95, w: 0.78, h: 2.9, r: 0.3 }], shell));
+          const lx = dx + sgn * (open ? doorW / 2 + leafW / 2 + 0.02 : leafW / 2 - 0.02);
+          leaf.position.set(lx, floorTop, side * (W / 2 + 0.08));
+          const lg = add(new THREE.Mesh(new THREE.PlaneGeometry(0.78, 2.9), glass));
+          lg.position.set(lx, floorTop + 2.95 + 1.45, side * (W / 2 + 0.08));
+          const lgk = add(makeGasket(0.78, 2.9, 0.3, 0.07, rubber));
+          lgk.position.set(lx, floorTop + 2.95, side * (W / 2 + 0.15)); if (side < 0) lgk.rotation.y = Math.PI;
+          // Rubber edge where the leaves meet
+          const edge = add(new THREE.Mesh(new THREE.BoxGeometry(0.06, doorH, 0.16), rubber));
+          edge.position.set(lx - sgn * leafW / 2, floorTop + doorH / 2, side * (W / 2 + 0.08));
         });
       });
     });
 
-    // End walls (one door each — matches rear-end-wall single-door photo).
-    const endHoles = [{ x: 0, y: floorTop, w: 3, h: doorH }];
-    const endA = makeWallWithHoles(W, wallH, t, endHoles, shell);
-    endA.rotation.y = Math.PI / 2; endA.position.x = L / 2; add(endA);
-    const endB = makeWallWithHoles(W, wallH, t, endHoles, shell);
-    endB.rotation.y = Math.PI / 2; endB.position.x = -L / 2; add(endB);
+    // Roof: rounded-eave profile extruded along the straight section.
+    const prof = new THREE.Shape();
+    prof.moveTo(-W / 2, 0); prof.lineTo(-W / 2, 0.05);
+    prof.quadraticCurveTo(-W / 2, roofCap, -W / 2 + roofCap, roofCap);
+    prof.lineTo(W / 2 - roofCap, roofCap);
+    prof.quadraticCurveTo(W / 2, roofCap, W / 2, 0.05);
+    prof.lineTo(W / 2, 0); prof.lineTo(-W / 2, 0);
+    const roofGeo = new THREE.ExtrudeGeometry(prof, { depth: Ls, bevelEnabled: false, curveSegments: 8 });
+    roofGeo.rotateY(Math.PI / 2);                          // extrusion now runs along +X
+    const roof = add(new THREE.Mesh(roofGeo, shell));
+    roof.position.set(xb, wallTop, 0);
 
-    // Interior benches (scale/eyeline reference for interior camera setups).
+    // ---- cab nose (-X) ------------------------------------------------------------
+    const nose = add(new THREE.Mesh(new THREE.CylinderGeometry(R, R, wallTop, 32, 1, true, -Math.PI / 2 - half, 2 * half), shell));
+    nose.position.set(xc, wallTop / 2, 0);
+    const noseFloor = add(new THREE.Mesh(new THREE.CylinderGeometry(R, R, t, 32, 1, false, -Math.PI / 2 - half, 2 * half), floorMat));
+    noseFloor.position.set(xc, t / 2, 0);
+    // Rounded roof cap over the nose: the arc segment, extruded up with a soft bevel.
+    // Drawn inset by the bevel so the softened edge lands flush with the cab face (no overhang).
+    const bev = 0.22, r2 = R - bev, half2 = Math.acos(Math.min(1, (xc - xb) / r2));
+    const seg = new THREE.Shape();
+    seg.moveTo(xb, -r2 * Math.sin(half2));
+    seg.absarc(xc, 0, r2, Math.PI + half2, Math.PI - half2, true);
+    seg.lineTo(xb, -r2 * Math.sin(half2));
+    const capGeo = new THREE.ExtrudeGeometry(seg, { depth: roofCap - bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 24 });
+    capGeo.rotateX(-Math.PI / 2);
+    const cap = add(new THREE.Mesh(capGeo, shell));
+    cap.position.y = wallTop;
+    // Elements on the cab face: centre storm door, a window either side, anti-climber at the bottom.
+    const onNose = (deg, obj, out) => {                   // place a flat item tangent to the nose arc
+      const a = degToRad(deg), nx = -Math.cos(a), nz = Math.sin(a);
+      obj.position.x = xc + nx * (R + (out || 0.06)); obj.position.z = nz * (R + (out || 0.06));
+      obj.rotation.y = Math.atan2(nx, nz);
+      return add(obj);
+    };
+    const sd = onNose(0, makeGasket(2.3, 5.9, 0.28, 0.1, rubber)); sd.position.y = floorTop + 0.45;
+    const handle = onNose(0, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.08), steel), 0.12); handle.position.y = floorTop + 5.6;
     [-1, 1].forEach(sgn => {
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(L - 6, 1.4, 1.2), interior);
-      bench.position.set(0, 0.7 + floorTop, sgn * (W / 2 - 0.9));
-      add(bench);
+      const deg = sgn * radToDeg(Math.asin(2.6 / R));
+      const wg = onNose(deg, new THREE.Mesh(new THREE.PlaneGeometry(1.9, 3.3), glass), 0.05); wg.position.y = floorTop + 3.0 + 1.65;
+      const wk = onNose(deg, makeGasket(1.9, 3.3, 0.3, 0.1, rubber), 0.08); wk.position.y = floorTop + 3.0;
+    });
+    for (let i = 0; i < 3; i++) {                         // ribbed anti-climber across the cab end
+      const rib = add(new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 5.8 - i * 0.4), shell));
+      rib.position.set(xNoseTip - 0.12, 0.25 + i * 0.22, 0);
+    }
+
+    // ---- flat end (+X): flyaway wall with a 2.5' sliding door ----------------------
+    const endHoles = [{ x: 0, y: floorTop, w: 2.5, h: doorH }];
+    const endWall = add(makeWallWithHoles(W, wallTop, t, endHoles, shell));
+    endWall.rotation.y = Math.PI / 2; endWall.position.x = xEnd - t / 2;
+    const endLeaf = add(makeWallWithHoles(2.6, doorH, 0.1, [{ x: 0, y: 3.0, w: 1.3, h: 2.6, r: 0.25 }], shell));
+    endLeaf.rotation.y = Math.PI / 2; endLeaf.position.set(xEnd + 0.08, floorTop, pa.doorsOpen !== false ? 2.6 : 0);
+    const endGlass = add(new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.6), glass));
+    endGlass.rotation.y = Math.PI / 2; endGlass.position.set(xEnd + 0.08, floorTop + 4.3, endLeaf.position.z);
+
+    // ---- interior -----------------------------------------------------------------
+    const ceil = add(new THREE.Mesh(new THREE.BoxGeometry(Ls - 0.2, 0.06, W - 2 * t), ceilMat));
+    ceil.position.set(xs, ceilY, 0);
+    [1, -1].forEach(side => {
+      // Light coves along the ceiling edge, with angled ad cards beneath (the photo's ad frames).
+      const cove = add(new THREE.Mesh(new THREE.BoxGeometry(Ls - 1, 0.12, 0.35), lightMat));
+      cove.position.set(xs, ceilY - 0.12, side * (W / 2 - t - 0.6));
+      let i = 0;
+      for (let x = xb + 1.2; x < xEnd - 1.4; x += 2.6) {
+        if (doorX.some(dx => Math.abs(x + 1.1 - dx) < doorW / 2 + 1.2)) continue;
+        const card = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.95, 0.04), adMats[i++ % adMats.length]));
+        card.position.set(x + 1.1, ceilY - 0.6, side * (W / 2 - t - 0.35));
+        card.rotation.x = side * degToRad(40);
+      }
+      // Overhead grab rail
+      const rail = add(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, Ls - 2, 8), steel));
+      rail.rotation.z = Math.PI / 2; rail.position.set(xs, ceilY - 0.45, side * 1.95);
+    });
+    // Interior fill light — the car is lit from inside like the real set (one light per car).
+    const interiorLight = new THREE.PointLight(0xfff2de, 0.9, Ls * 0.9, 1.6);
+    interiorLight.position.set(xs, ceilY - 0.5, 0);
+    add(interiorLight);
+    // Round ceiling diffusers, one per bay
+    bays.forEach(b => {
+      const cx = (b[0] + b[1]) / 2;
+      const ring = add(new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.05, 32), steel));
+      ring.position.set(cx, ceilY - 0.04, 0);
+      const disc = add(new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.06, 32), lightMat));
+      disc.position.set(cx, ceilY - 0.06, 0);
+    });
+    // Benches (six, per the plan): cream base, molded orange bucket seats, seat fronts 2'1" off centre.
+    const benchSpans = [[-17.5, -10.1], [-3.5, 3.8], [9.9, 17.3]];
+    const seatH = 1.45, frontZ = 2.08, backZ = W / 2 - t;
+    benchSpans.forEach(span => {
+      [1, -1].forEach(side => {
+        const len = span[1] - span[0], cx = (span[0] + span[1]) / 2, depth = backZ - frontZ;
+        const base = add(new THREE.Mesh(new THREE.BoxGeometry(len, seatH - 0.15, depth), cream));
+        base.position.set(cx, floorTop + (seatH - 0.15) / 2, side * (frontZ + depth / 2));
+        const backer = add(new THREE.Mesh(new THREE.BoxGeometry(len, 1.6, 0.15), cream));
+        backer.position.set(cx, floorTop + seatH + 0.7, side * (backZ - 0.1));
+        backer.rotation.x = -side * degToRad(8);
+        const n = Math.max(2, Math.round(len / 1.55)), sw = len / n;
+        for (let k = 0; k < n; k++) {
+          const sx = span[0] + sw * (k + 0.5), mat = (k % 2) ? orangeB : orangeA;
+          const seatPan = add(new THREE.Mesh(new THREE.BoxGeometry(sw - 0.12, 0.14, depth - 0.15), mat));
+          seatPan.position.set(sx, floorTop + seatH, side * (frontZ + depth / 2 - 0.03));
+          seatPan.rotation.x = side * degToRad(4);
+          const seatBack = add(new THREE.Mesh(new THREE.BoxGeometry(sw - 0.14, 1.35, 0.1), mat));
+          seatBack.position.set(sx, floorTop + seatH + 0.75, side * (backZ - 0.22));
+          seatBack.rotation.x = -side * degToRad(8);
+        }
+      });
+    });
+    // Stanchions: one at each doorway centre and at the bench ends beside the doors (yellow sleeves).
+    const pole = (x, z) => {
+      const p = add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, ceilY - floorTop, 10), steel));
+      p.position.set(x, floorTop + (ceilY - floorTop) / 2, z);
+      const sl = add(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.9, 10), yellow));
+      sl.position.set(x, floorTop + 5.1, z);
+    };
+    doorX.forEach(dx => {
+      pole(dx, 0);
+      [1, -1].forEach(side => benchSpans.forEach(span => span.forEach(ex => {
+        if (Math.abs(ex - dx) < doorW / 2 + 1.2) pole(ex + (ex < dx ? 0.15 : -0.15), side * (frontZ - 0.12));
+      })));
     });
 
     return g;
@@ -1665,7 +1841,7 @@
     if (entry.custom) {
       return buildCustomModel(entry, pa);
     } else if (entry.assetId === "subwayCar") {
-      g = buildSubwayCar(entry);
+      g = buildSubwayCar(entry, pa);
       attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // stainless shell mirrors the volume
     } else if (entry.assetId === "glassWall") {
       g = buildGlassWall(entry);
@@ -2261,7 +2437,10 @@
   function reflectHTML(pa) {
     if (selected.kind !== "placed" || !hasProbeKind(pa)) return "";
     const k = pa.reflectStrength != null ? pa.reflectStrength : 1;
-    return '<div class="subhead">Reflections</div>' +
+    const doors = pa.assetId === "subwayCar"
+      ? '<div class="subhead">Doors</div><label class="setToggle"><input type="checkbox" id="doorsOpen" ' + (pa.doorsOpen !== false ? "checked" : "") + '><span>Doors open (side doorways + end door)</span></label>'
+      : "";
+    return doors + '<div class="subhead">Reflections</div>' +
       '<label class="setToggle"><input type="checkbox" id="reflOn" ' + (pa.reflective !== false ? "checked" : "") + '><span>Mirror the LED stage</span></label>' +
       '<div class="field" style="margin-top:6px"><span>Strength</span><input type="range" id="reflK" min="0" max="3" step="0.05" value="' + k + '" style="width:130px"></div>' +
       '<div class="hint">Glossy paint, chrome and glass pick up the volume, rolling walls and ceiling — and their colour lights the body.</div>';
@@ -2277,6 +2456,13 @@
     };
     if (on) on.addEventListener("change", apply);
     if (k) k.addEventListener("input", apply);
+    const dO = document.getElementById("doorsOpen");
+    if (dO) dO.addEventListener("change", () => {
+      const pa = cfgForSelected(); if (!pa) return;
+      const uid = pa._uid;
+      pa.doorsOpen = dO.checked;
+      rebuildPlaced(); reselectUid(uid); scheduleAutosave();
+    });
   }
 
   function customFitHTML(pa) {
