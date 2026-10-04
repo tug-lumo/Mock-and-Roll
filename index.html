@@ -207,6 +207,9 @@
   .roleSw[aria-checked="true"] { border-color: var(--text); }
   .roleSw[aria-checked="true"] svg { visibility: visible; }
   .roleName { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  .warnTxt { color: #ffb020; }
+  .ledTable { margin: 4px 0 6px; }
+  .ledTable select { width: 138px; }
 
   /* Viewfinder action bar (only while looking through the camera) */
   #lensBar {
@@ -272,10 +275,15 @@
 
   /* Collision warning for the selected piece (advisory — nothing is blocked). */
   #collHud {
-    position: absolute; top: 56px; left: 50%; transform: translateX(-50%); z-index: 18;
-    background: rgba(160,36,44,.94); color: #fff; padding: 4px 12px; border-radius: 5px;
-    font-size: 12px; font-weight: 600; pointer-events: none; white-space: nowrap;
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 18;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(160,36,44,.94); color: #fff; padding: 3px 4px 3px 10px; border-radius: 7px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
   }
+  #collHud > svg { width: 14px; height: 14px; flex-shrink: 0; }
+  #collHud .x { background: transparent; border: 0; color: #fff; padding: 4px; line-height: 0; border-radius: 5px; }
+  #collHud .x:hover { background: rgba(255,255,255,.15); }
+  #collHud .x svg { width: 14px; height: 14px; }
   #collHud.fire { background: rgba(130,84,0,.9); }
   #collHud.hidden { display: none; }
 
@@ -384,6 +392,7 @@
       <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
       <symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></g></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></symbol>
@@ -573,6 +582,23 @@
           <dt>Start / LB</dt><dd>Save shot / mark</dd>
           <dt>R3</dt><dd>Print shot</dd>
           <dt>B</dt><dd>Drop · deselect · exit</dd></dl></div>
+        <div><h3>Cast &amp; seats</h3><dl>
+          <dt>Seat map</dt><dd>Select a car or the subway; its Cast map shows every spot from above</dd>
+          <dt>Click a spot</dt><dd>Fill it with a figure</dd>
+          <dt>Click someone</dt><dd>Select them (on the map, the figure or its name tag)</dd>
+          <dt><kbd>Shift</kbd> click</dt><dd>Empty that spot</dd>
+          <dt><kbd>Alt</kbd> click</dt><dd>Pick the car or set, not the person inside</dd>
+          <dt>Fill</dt><dd>Empty · Seats · Everyone; Undo appears after</dd>
+          <dt>Pinned</dt><dd>Cast moves with its host; drag over 3 ft away to free one</dd></dl></div>
+        <div><h3>People</h3><dl>
+          <dt>Role</dt><dd>Pick a colour for a hero; it shows on the plan and in prints</dd>
+          <dt>Name tag</dt><dd>Typing a name gives an untagged person the next free colour</dd>
+          <dt>Height off floor</dt><dd>Auto stands them on decks, wall bases and the subway floor; type a value to fix it</dd></dl>
+          <h3>360° world</h3><dl>
+          <dt>LED</dt><dd>Each surface shows Off, a flat plate, or the 360° world</dd>
+          <dt>Library</dt><dd>Ready-made worlds, saved with the layout</dd>
+          <dt>Load a file</dt><dd>Plays this session only; reload it after a refresh</dd>
+          <dt>Staff</dt><dd>Add worlds to the library with <code>tools/make-360-proxies.ps1</code> (see docs/360-environments.md)</dd></dl></div>
       </div>
     </div>
   </div>
@@ -2671,25 +2697,29 @@
       grpHTML("refl", "Reflections", reflSummary(cur), reflectHTML(cur)) +
       (selected.kind === "rollingWall"
         ? '<label class="setToggle"><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '><span>Deployed</span></label>' +
-          grpHTML("rollLed", "LED content", "", '<div class="field"><span>Shows</span><select class="plateSel" data-platekey="roll:' + selected.id + '">' + plateOptionsHTML("roll:" + selected.id) + '</select></div>' +
+          grpHTML("rollLed", "LED content", "", surfSelectHTML("roll:" + selected.id, "Shows") +
             '<div class="btnRow"><button class="plateAddBtn" data-platekey="roll:' + selected.id + '">Add image / video…</button></div>', true)
         : "") +
       (selected.type === "human" ? grpHTML("seat", "Seat", "", seatFieldHTML(cur), true) : "") +
       (isCamera ? cameraFieldsHTML(cur) : "") +
       (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button></div>' : "");
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
-      inspOpen[d.dataset.k] = d.open;
+      inspOpenState()[d.dataset.k] = d.open;
       try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
     }));
     wireInspectorFields();
   }
 
   // Inspector groups reuse the drawer's collapsible pattern; open/closed is remembered per group.
-  let inspOpen = {};
-  try { inspOpen = JSON.parse(localStorage.getItem("lumostage.inspGroups") || "{}") || {}; } catch (err) { inspOpen = {}; }
+  // (var + lazy read: the LED drawer can render before this line has run.)
+  var inspOpen = null;
+  function inspOpenState() {
+    if (!inspOpen) { try { inspOpen = JSON.parse(localStorage.getItem("lumostage.inspGroups") || "{}") || {}; } catch (err) { inspOpen = {}; } }
+    return inspOpen;
+  }
   function grpHTML(k, title, summary, body, openByDefault) {
     if (!body) return "";
-    const open = k in inspOpen ? inspOpen[k] : !!openByDefault;
+    const st = inspOpenState(), open = k in st ? st[k] : !!openByDefault;
     return '<details class="grp" data-k="' + k + '"' + (open ? " open" : "") + '><summary>' + title +
       (summary ? '<span class="count">' + summary + '</span>' : "") + '<svg class="chev"><use href="#i-chev"/></svg></summary>' +
       '<div class="grpBody">' + body + '</div></details>';
@@ -3141,7 +3171,8 @@
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
     wireCameraFields();
-    wirePlateControls();   // rolling-wall LED-content dropdown + add button, if present
+    wirePlateControls();   // rolling-wall "Add image / video" button, if present
+    wireSurfSelects();     // rolling-wall "Shows" dropdown
   }
 
   function numOr(v, d) { const n = parseFloat(v); return isNaN(n) ? d : n; }
@@ -3766,26 +3797,47 @@
   }
 
   // ---- Fixed-element controls (main wall + ceiling are the only fixed pieces) -----
-  // Options markup for one LED surface's content dropdown (shared plate pool).
-  function plateOptionsHTML(key) {
-    const sel = surfacePlateIdx[key] != null ? surfacePlateIdx[key] : 0;
-    return wallPlates.map((p, i) =>
-      '<option value="' + i + '"' + (i === sel ? " selected" : "") + '>' + escapeHtml(p.name) + '</option>'
-    ).join("");
-  }
-
   // LED content — swappable image/video on each LED surface (main wall + ceiling here; each
   // rolling wall carries its own, set from its inspector). Framing/scale check, not a tracked
   // render. Session-only; not persisted to JSON.
-  // LED section: every LED surface in one place — what each shows, plus loading new content.
-  function ledContentHTML() {
+  // LED section: one row per surface (Off / a flat plate / the 360° world), then the 360° world's
+  // own controls and the flat-plate pool, each in a collapsible group.
+  function ledSurfaceRows() {
     const rows = [["mainWall", "Main wall"], ["ceiling", "Ceiling"]];
-    (config.rollingWalls || []).forEach(rw => rows.push(["roll:" + rw.id, "Rolling wall " + (rw.defaultSide === "left" ? "(left)" : rw.defaultSide === "right" ? "(right)" : rw.id)]));
-    return '<hr><div class="subhead">What each surface shows</div>' +
-      rows.map(r => '<div class="field"><span>' + r[1] + '</span><select class="plateSel" data-platekey="' + r[0] + '">' + plateOptionsHTML(r[0]) + '</select></div>').join("") +
-      '<div class="subhead">Add a flat plate</div>' +
-      '<div class="btnRow"><button class="plateAddBtn" data-platekey="mainWall">Add image or video…</button></div>' +
-      '<div class="hint">A flat plate is stretched across one surface (no perspective) — new ones go on the main wall; pick them for other surfaces above. Video up to 1080p plays smoothly.</div>';
+    (config.rollingWalls || []).forEach(rw => rows.push(["roll:" + rw.id, "Rolling wall · " + (rw.defaultSide || rw.id)]));
+    return rows;
+  }
+  function ledContentHTML() {
+    return '<div class="ledTable">' + ledSurfaceRows().map(r => surfSelectHTML(r[0], r[1])).join("") + '</div>';
+  }
+  function surfSelectHTML(k, label) {
+    const ei = envPlateIndex(), p = envPlate(), cur = surfacePlateIdx[k] != null ? surfacePlateIdx[k] : 0, id = "surf_" + k.replace(":", "_");
+    const opts = wallPlates.map((pl, i) => i === ei ? "" : '<option value="' + i + '"' + (i === cur ? " selected" : "") + '>' + escapeHtml(i === 0 ? "Off" : pl.name) + '</option>').join("") +
+      '<option value="env"' + (ei >= 0 && cur === ei ? " selected" : "") + (p ? "" : " disabled") + '>' + (p ? "360° world" : "360° world (load one in LED)") + '</option>';
+    return '<div class="field"><label for="' + id + '">' + label + '</label><select class="surfSel" id="' + id + '" data-k="' + k + '">' + opts + '</select></div>';
+  }
+  // Idempotent: the LED drawer and a rolling wall's inspector both carry these.
+  function wireSurfSelects() {
+    document.querySelectorAll(".surfSel:not([data-wired])").forEach(c => {
+      c.dataset.wired = "1";
+      c.addEventListener("change", () => {
+        const k = c.dataset.k, ei = envPlateIndex();
+        if (c.value === "env") setEnvOnSurface(k, true);
+        else {
+          const e = envCfg();
+          if (ei >= 0 && surfacePlateIdx[k] === ei) e.surfaces = (e.surfaces || []).filter(x => x !== k);
+          setSurfacePlate(k, parseInt(c.value, 10) || 0);
+          scheduleAutosave();
+        }
+        renderSections();
+      });
+    });
+  }
+  function platesHTML() {
+    const n = wallPlates.filter(pl => pl.kind !== "env").length - 1;
+    return grpHTML("ledPlates", "Flat plates", n > 0 ? n + " loaded" : "",
+      '<div class="btnRow" style="margin-top:0"><button class="plateAddBtn" data-platekey="mainWall">Add image or video…</button></div>' +
+      '<div class="hint">A flat plate is stretched across one surface (no perspective). New ones go on the main wall; pick them for other surfaces in the list above. Video up to 1080p plays smoothly.</div>');
   }
   function ceilingControlsHTML() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
@@ -3798,7 +3850,13 @@
   function renderSections() {
     const cb = document.getElementById("ceilBody"), lb = document.getElementById("ledBody");
     if (cb) cb.innerHTML = ceilingControlsHTML();
-    if (lb) lb.innerHTML = envControlsHTML() + ledContentHTML();
+    if (lb) {
+      lb.innerHTML = ledContentHTML() + envControlsHTML() + platesHTML();
+      lb.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
+        inspOpenState()[d.dataset.k] = d.open;
+        try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
+      }));
+    }
     wireFixedControls();
     wireEnvControls();
   }
@@ -3825,10 +3883,6 @@
   // Idempotent: controls already wired are skipped (the LED section and the inspector both call this).
   // The single shared #plateFile input is wired once in wireUI.
   function wirePlateControls() {
-    document.querySelectorAll(".plateSel:not([data-wired])").forEach(sel => {
-      sel.dataset.wired = "1";
-      sel.addEventListener("change", () => setSurfacePlate(sel.dataset.platekey, parseInt(sel.value, 10) || 0));
-    });
     document.querySelectorAll(".plateAddBtn:not([data-wired])").forEach(btn => {
       btn.dataset.wired = "1";
       btn.addEventListener("click", () => { _plateTargetKey = btn.dataset.platekey || "mainWall"; document.getElementById("plateFile").click(); });
@@ -3918,7 +3972,7 @@
       e.surfaces = (e.surfaces || []).filter(k => k !== key).concat(on ? [key] : []);
     }
     // The same surface can be edited from the LED section and a rolling wall's inspector — keep both in step.
-    document.querySelectorAll('.plateSel[data-platekey="' + key + '"]').forEach(el => { el.value = String(i); });
+    document.querySelectorAll('.surfSel[data-k="' + key + '"]').forEach(el => { el.value = wallPlates[i].kind === "env" ? "env" : String(i); });
   }
 
   function surfacePlateOf(key) { const i = surfacePlateIdx[key]; return wallPlates[i != null ? i : 0]; }
@@ -4136,38 +4190,37 @@
 
   // The LED section's 360° group.
   function envControlsHTML() {
-    const e = envCfg(), p = envPlate(), i = envPlateIndex();
-    const surf = [["mainWall", "Main wall"], ["ceiling", "Ceiling"]];
-    (config.rollingWalls || []).forEach(rw => surf.push(["roll:" + rw.id, "Rolling wall " + (rw.defaultSide === "left" ? "(left)" : rw.defaultSide === "right" ? "(right)" : rw.id)]));
+    const e = envCfg(), p = envPlate();
     const opt = (v, t, cur) => '<option value="' + v + '"' + (v === cur ? " selected" : "") + '>' + t + '</option>';
-    let h = '<div class="subhead">360° environment</div>';
+    let h = "";
     if (envLibrary.length) {
-      h += '<div class="field"><span>Library</span><select id="envLib"><option value="">Choose…</option>' +
+      h += '<div class="field"><label for="envLib">Library</label><select id="envLib"><option value="">Choose…</option>' +
         envLibrary.map(x => opt(x.id, escapeHtml(x.name || x.id), e.libraryId)).join("") + '</select></div>';
     }
-    h += '<div class="btnRow"><button id="envFileBtn">Load 360° image or video…</button></div>';
+    h += '<div class="btnRow" style="margin-top:0"><button id="envFileBtn">Load a 360° file…</button></div>';
     if (!p) {
-      return h + '<div class="hint">One 360° frame spread across every LED surface, each panel showing the slice it would see. ' +
-        (envLibrary.length ? "" : "Run <b>tools/make-360-proxies.ps1</b> to build a library of ready-to-play proxies. ") + '</div>';
+      h += '<div class="hint">One 360° frame spread across every LED surface, each panel showing the slice it would see. ' +
+        (envLibrary.length ? "Pick one from the library, or load a file to try it — files play for this session only." : "Load a file to try one — it plays for this session only.") + '</div>';
+      return grpHTML("led360", "360° world", "none", h, true);
     }
-    h += '<div class="dims" style="margin:8px 0 4px">Showing <b>' + escapeHtml(p.name.replace(/^360° · /, "")) + '</b></div>';
-    h += '<div class="subhead">Show on</div>' + surf.map(s =>
-      '<label class="setToggle"><input type="checkbox" class="envSurf" data-k="' + s[0] + '"' + (surfacePlateIdx[s[0]] === i ? " checked" : "") + '><span>' + s[1] + '</span></label>').join("");
-    h += '<div class="subhead">Projection</div>' +
-      '<div class="field"><span>Seen from</span><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
-      '<div class="field"><span>Turn</span><input type="range" id="envYaw" min="-180" max="180" step="1" value="' + (e.yaw || 0) + '" style="width:120px"><output id="envYawV">' + Math.round(e.yaw || 0) + '°</output></div>' +
-      '<div class="field" title="Raise (+) or lower (−) the world’s horizon"><span>Horizon</span><input type="range" id="envPitch" min="-45" max="45" step="0.5" value="' + (e.pitch || 0) + '" style="width:120px"><output id="envPitchV">' + (e.pitch || 0) + '°</output></div>' +
-      '<div class="field"><span>Brightness</span><input type="range" id="envBright" min="0.2" max="2" step="0.05" value="' + (e.brightness != null ? e.brightness : 1) + '" style="width:120px"><output id="envBrightV">' + Math.round((e.brightness != null ? e.brightness : 1) * 100) + '%</output></div>';
+    const local = !p.envId;
+    h += '<div class="dims" style="margin:8px 0 6px">Showing <b>' + escapeHtml(p.name.replace(/^360° · /, "")) + '</b>' +
+      (local ? '<br><span class="warnTxt">Local file — not saved with the layout; load it again after a refresh.</span>' : "") + '</div>';
+    h += '<div class="field"><label for="envFollow">Seen from</label><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
+      '<div class="field"><label for="envYaw">Turn</label><div class="inl"><input type="range" id="envYaw" min="-180" max="180" step="1" value="' + (e.yaw || 0) + '" style="width:110px"><output id="envYawV">' + Math.round(e.yaw || 0) + '°</output></div></div>' +
+      '<div class="field" title="Raise (+) or lower (−) the world’s horizon"><label for="envPitch">Horizon</label><div class="inl"><input type="range" id="envPitch" min="-45" max="45" step="0.5" value="' + (e.pitch || 0) + '" style="width:110px"><output id="envPitchV">' + (e.pitch || 0) + '°</output></div></div>' +
+      '<div class="field"><label for="envBright">Brightness</label><div class="inl"><input type="range" id="envBright" min="0.2" max="2" step="0.05" value="' + (e.brightness != null ? e.brightness : 1) + '" style="width:110px"><output id="envBrightV">' + Math.round((e.brightness != null ? e.brightness : 1) * 100) + '%</output></div></div>';
     h += '<div class="btnRow">' + (p.video ? '<button id="envPlay">' + (p.video.paused ? "Play" : "Pause") + '</button><button id="envRestart">Restart</button>' : "") +
       '<button id="envRemove" class="danger">Remove</button></div>';
-    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street or horizon with the set.</div>';
-    return h;
+    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street or horizon with the set. Choose which surfaces show it in the list above.</div>';
+    const on = ledSurfaceRows().filter(r => surfacePlateIdx[r[0]] === envPlateIndex()).length;
+    return grpHTML("led360", "360° world", (local ? "local file · " : "") + "on " + on + " of " + ledSurfaceRows().length, h, true);
   }
   function wireEnvControls() {
     const $ = id => document.getElementById(id);
     const lib = $("envLib"); if (lib) lib.addEventListener("change", () => { const it = envLibrary.find(x => x.id === lib.value); if (it) loadEnvironment(it); });
     const fb = $("envFileBtn"); if (fb) fb.addEventListener("click", () => $("envFile").click());
-    document.querySelectorAll(".envSurf").forEach(c => c.addEventListener("change", () => setEnvOnSurface(c.dataset.k, c.checked)));
+    wireSurfSelects();
     const e = envCfg();
     const slider = (id, key, fmt) => { const s = $(id), o = $(id + "V"); if (!s) return; s.addEventListener("input", () => { e[key] = parseFloat(s.value); if (o) o.textContent = fmt(e[key]); scheduleAutosave(); }); };
     slider("envYaw", "yaw", v => Math.round(v) + "°");
@@ -4479,6 +4532,10 @@
   const COLL_TOL = 0.05;        // ft — flush/abutting pieces are not a collision
   const MAIN_WALL_DEPTH = 1;    // ft of panel + frame behind the LED face
   let collOutline = null, collSig = "", collHud = null;
+  // The banner speaks up only once a piece has been moved since it was selected (a layout that
+  // overlaps on purpose stays quiet, just outlined), and can be dismissed per piece.
+  let collBase = { uuid: "", sig: "" };
+  const collDismissed = {};
 
   // The piece's box in its own unrotated frame (cached per group; groups are rebuilt on change).
   function localBoxOfGroup(g) {
@@ -4588,6 +4645,8 @@
     const sig = g.uuid + "|" + g.position.x.toFixed(2) + "|" + g.position.z.toFixed(2) + "|" + g.rotation.y.toFixed(3);
     if (sig === collSig) return;
     collSig = sig;
+    if (collBase.uuid !== g.uuid) collBase = { uuid: g.uuid, sig: sig };
+    const moved = sig !== collBase.sig;
     clearCollisionOutline();
     const r = collisionsFor(g), lb = localBoxOfGroup(g);
     if ((!r.hard.length && !r.fire) || !lb) return;
@@ -4602,10 +4661,12 @@
     collOutline.position.y += ctr.y;
     scene.add(collOutline);
     if (!collHud) collHud = document.getElementById("collHud");
-    if (collHud) {
+    if (collHud && moved && !collDismissed[g.uuid]) {
       const uniq = r.hard.filter((n, i) => r.hard.indexOf(n) === i);
-      collHud.textContent = uniq.length ? "⚠ Overlaps: " + uniq.join(", ") + (r.fire ? " · in fire lane" : "") : "⚠ In the 4′ fire lane (keep clear)";
+      collHud.innerHTML = '<svg><use href="#i-warn"/></svg><span>' + escapeHtml(uniq.length ? "Overlaps " + uniq.join(", ") + (r.fire ? " · in the fire lane" : "")
+        : "In the 4′ fire lane — keep it clear") + '</span><button class="x" aria-label="Dismiss for this piece"><svg><use href="#i-x"/></svg></button>';
       collHud.className = uniq.length ? "" : "fire";
+      collHud.querySelector("button").addEventListener("click", () => { collDismissed[g.uuid] = true; collHud.classList.add("hidden"); });
     }
     const gp = pad.connected && firstPad(); if (gp && r.hard.length) padRumble(gp, 0.5, 0.2, 90);
   }
