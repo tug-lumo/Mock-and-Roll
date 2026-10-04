@@ -169,6 +169,44 @@
   #inspector .tools { padding: 0 16px 10px; }
   #inspector .tools .seg { width: 100%; }
   #inspector .tools .seg button { flex: 1; justify-content: center; }
+  #inspector.wide { width: 340px; }
+  #inspector .paneBody { padding-bottom: 0; }
+  #inspector details.grp > summary { padding: 10px 2px; }
+  #inspector .dims + details.grp { border-top: 0; margin-top: 4px; }
+  /* Duplicate / Remove stay in reach however long the inspector gets */
+  #inspector .foot { position: sticky; bottom: 0; display: flex; gap: 6px; margin: 4px -16px 0; padding: 10px 16px 14px; background: var(--panel); border-top: 1px solid var(--line); }
+  #inspector .foot button { flex: 1; }
+  .field label { color: var(--muted); font-size: 12.5px; }
+  .field .inl { display: flex; gap: 4px; align-items: center; }
+  .rowSeg { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 10px; }
+  .rowSeg > span { color: var(--muted); font-size: 12.5px; }
+  .rowSeg .seg button { padding: 5px 12px; }
+  .pinCard { font-size: 13px; line-height: 1.45; margin: 0 0 12px; }
+  .pinCard span { display: block; color: var(--muted); font-size: 12px; }
+
+  /* Cast seat map: the host from above, spots you click */
+  .seatMap { display: block; width: 100%; height: auto; margin: 2px 0 6px; }
+  .seatMap .shell { fill: #0e1314; stroke: var(--line); stroke-width: 1.5; }
+  .seatMap .endLbl { fill: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .08em; pointer-events: none; }
+  .seatMap .spot { cursor: pointer; outline: none; }
+  .seatMap .spot .mk { fill: transparent; stroke: #6b7a7c; stroke-width: 1.25; transition: fill .12s, stroke .12s; }
+  .seatMap .spot:hover .mk { stroke: var(--text); }
+  .seatMap .spot.on .mk { fill: #a3b0b0; stroke: #a3b0b0; }
+  .seatMap .spot:focus-visible .mk { stroke: var(--accent); stroke-width: 2.5; }
+  .castTip { min-height: 32px; font-size: 12px; line-height: 1.35; color: var(--muted); margin-bottom: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+  .chips button { padding: 5px 10px; font-size: 12px; border-radius: 999px; min-height: 28px; }
+  .chips button .n { color: var(--muted); margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .chips button.full { border-color: #5b6a6c; background: #26302f; }
+
+  /* Role colour: a radio group of swatches; the chosen one carries a check, not the focus ring */
+  .roles { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }
+  .roleSw { width: 28px; height: 28px; padding: 0; border-radius: 50%; background: var(--c); border: 2px solid transparent; display: grid; place-items: center; }
+  .roleSw:hover { border-color: rgba(255,255,255,.5); }
+  .roleSw svg { width: 14px; height: 14px; color: var(--k); visibility: hidden; }
+  .roleSw[aria-checked="true"] { border-color: var(--text); }
+  .roleSw[aria-checked="true"] svg { visibility: visible; }
+  .roleName { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
 
   /* Viewfinder action bar (only while looking through the camera) */
   #lensBar {
@@ -247,6 +285,9 @@
     padding: 8px 14px; font-size: 12px; z-index: 30; opacity: 0; transition: opacity .25s; pointer-events: none;
   }
   #toast.show { opacity: 1; }
+  #toast.act { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; }
+  #toast.act.show { pointer-events: auto; }
+  #toast button { padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--accent); }
 
   /* ---- Camera View viewfinder (sized to the letterboxed lens image each frame) ---- */
   #vf { position: absolute; z-index: 17; pointer-events: none; color: #fff; font-family: "Segoe UI", system-ui, sans-serif;
@@ -343,6 +384,7 @@
       <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
       <symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></g></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></symbol>
       <symbol id="i-open" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14"/></g></symbol>
@@ -578,7 +620,7 @@
     SUBWAY_BENCHES.forEach((span, bi) => {
       [1, -1].forEach(side => {
         const len = span[1] - span[0], n = Math.max(2, Math.round(len / 1.55)), sw = len / n;
-        const grp = "Bench " + (bi + 1) + (side > 0 ? "A" : "B");
+        const grp = "Bench " + (bi + 1) + (side > 0 ? " · left" : " · right");   // as you face the cab
         for (let k = 0; k < n; k++) {
           out.push({ id: "b" + (bi + 1) + (side > 0 ? "a" : "b") + (k + 1), name: grp + " · seat " + (k + 1), group: grp,
             x: span[0] + sw * (k + 0.5), y: floorY, z: side * (W / 2 - t - 0.2 - 1.27), rot: side > 0 ? 180 : 0, pose: "seated" });
@@ -835,11 +877,20 @@
   }
 
   let toastTimer = null;
-  function toast(msg) {
+  // action: optional { label, fn } — a button in the toast (e.g. Undo); the toast then lingers.
+  function toast(msg, action) {
     const t = document.getElementById("toast");
-    t.textContent = msg; t.classList.add("show");
+    t.textContent = msg;
+    if (action) {
+      const b = document.createElement("button");
+      b.textContent = action.label;
+      b.addEventListener("click", () => { t.classList.remove("show"); action.fn(); });
+      t.appendChild(b);
+    }
+    t.classList.toggle("act", !!action);
+    t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+    toastTimer = setTimeout(() => t.classList.remove("show"), action ? 7000 : 2200);
   }
 
   function catalogEntry(assetId) {
@@ -1453,8 +1504,9 @@
     x.fillStyle = color; x.beginPath(); x.arc(x0 + 44, 64, 16, 0, Math.PI * 2); x.fill();
     x.fillStyle = "#f2f2f2"; x.textBaseline = "middle"; x.fillText(text, x0 + 72, 66, w - 90);
     const tex = new THREE.CanvasTexture(c);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
-    sp.scale.set(3.2, 0.8, 1); sp.renderOrder = 997; sp.layers.set(1); sp.raycast = function () {};
+    // Fixed on-screen size (about 30 px tall), so tags stay readable however far away you are.
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
+    sp.scale.set(0.2, 0.05, 1); sp.renderOrder = 997; sp.layers.set(1); sp.raycast = function () {};
     sp.userData.tag = true;
     return sp;
   }
@@ -2394,14 +2446,46 @@
       const h = raycaster.intersectObject(humanMesh, false);
       if (h.length && h[0].instanceId != null) { raycaster.near = 0; return { human: h[0].instanceId, point: h[0].point.clone() }; }
     }
+    const tagged = !minDist && tagAt(e);
+    if (tagged) { raycaster.near = 0; return { obj: tagged, point: tagged.position.clone() }; }
     const hits = raycaster.intersectObjects(selectableObjects, true);
     raycaster.near = 0;
     if (hits.length) {
-      let o = hits[0].object;
-      while (o && !o.userData.kind) o = o.parent;
-      if (o) return { obj: o, point: hits[0].point.clone() };
+      const owners = hits.map(h => ownerGroup(h.object));
+      // Cast members sit inside their vehicle/set: they win over the shell around them, as long as
+      // nothing but that host is in front. Alt-click picks the host itself.
+      if (!e.altKey) {
+        for (let i = 0; i < owners.length; i++) {
+          const pa = owners[i] && getPlacedByUid(owners[i].userData.uid);
+          if (!pa || !pa.pin) continue;
+          const host = config.placedAssets.find(p => p.key === pa.pin.host);
+          const hg = host && placedGroupByUid[host._uid];
+          if (owners.slice(0, i).every(o => o === hg || o === owners[i])) return { obj: owners[i], point: hits[i].point.clone() };
+          break;
+        }
+      }
+      if (owners[0]) return { obj: owners[0], point: hits[0].point.clone() };
     }
     return null;
+  }
+  function ownerGroup(o) { while (o && !o.userData.kind) o = o.parent; return o || null; }
+  // Name tags are labels drawn over everything (no depth), so pick them in screen space.
+  const _tagV = new THREE.Vector3();
+  function tagAt(e) {
+    const r = renderer.domElement.getBoundingClientRect(), P = camera.projectionMatrix.elements;
+    let best = null, bestD = Infinity;
+    selectableObjects.forEach(g => {
+      if (!g.visible) return;
+      const tg = g.children.find(c => c.userData.tag); if (!tg) return;
+      tg.getWorldPosition(_tagV);
+      const d = _tagV.distanceTo(camera.position), p = _tagV.clone().project(camera);
+      if (p.z > 1) return;
+      const sx = (p.x + 1) / 2 * r.width + r.left, sy = (1 - p.y) / 2 * r.height + r.top;
+      // Tags have a fixed screen size: half-extent in pixels straight from the projection scale.
+      const hw = tg.scale.x / 2 * P[0] * r.width / 2 * 0.9, hh = tg.scale.y / 2 * P[5] * r.height / 2;
+      if (Math.abs(e.clientX - sx) <= hw && Math.abs(e.clientY - sy) <= hh && d < bestD) { best = g; bestD = d; }
+    });
+    return best;
   }
 
   // Slide the grabbed piece to where the cursor is, on the horizontal plane it was grabbed at.
@@ -2523,25 +2607,9 @@
     const moved = Math.hypot(e.clientX - downPt.x, e.clientY - downPt.y);
     downPt = null;
     if (moved > 5) return;                 // was a view drag
-    const rect = renderer.domElement.getBoundingClientRect();
-    const ndc = new THREE.Vector2(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1
-    );
-    camera.updateMatrixWorld(true);
-    raycaster.setFromCamera(ndc, camera);
-
-    // Humans first (instanced)
-    if (humanMesh && humanMesh.count > 0) {
-      const hHit = raycaster.intersectObject(humanMesh, false);
-      if (hHit.length && hHit[0].instanceId != null) { selectHuman(hHit[0].instanceId); return; }
-    }
-    const hits = raycaster.intersectObjects(selectableObjects, true);
-    if (hits.length) {
-      let obj = hits[0].object;
-      while (obj && !obj.userData.kind) obj = obj.parent;
-      if (obj) { selectObject(obj); return; }
-    }
+    const hit = pickAt(e);
+    if (hit && hit.human != null) { selectHuman(hit.human); return; }
+    if (hit && hit.obj) { if (selectedObject !== hit.obj) selectObject(hit.obj); return; }
     deselect();
   }
 
@@ -2570,7 +2638,7 @@
                   : "Height " + fmtLen(HUMAN_H);
     } else if (selected.kind === "rollingWall") {
       const d = selectedObject.userData.dims;
-      name = "Rolling Wall (" + selected.id + ")";
+      name = "Rolling wall" + (/R$/i.test(selected.id) ? " · right" : /L$/i.test(selected.id) ? " · left" : "");
       dims = "Wall " + fmtLen(d.wallLen) + " × " + fmtLen(d.wallH) + " (" + cur.panelsHigh + "×" + cur.panelsWide + " panels) · deck " + fmtLen(d.deckLen) + " × " + fmtLen(d.deckDepth) + " × " + fmtLen(d.deckH);
     } else if (isStageDeck) {
       const preset = cur.preset && (config.stageDeckPresets || []).find(p => p.preset === cur.preset);
@@ -2583,31 +2651,52 @@
     }
     const canDup = selected.type === "human" || selected.kind === "placed";
     document.getElementById("inspTitle").innerHTML = name;
+    const isPerson = isPersonPA(cur), spots = selected.kind === "placed" && spotsFor(cur);
+    panel.classList.toggle("wide", !!spots);
+    const castN = spots ? castOf(cur).length : 0;
     body.innerHTML =
-      '<div class="dims" style="margin-top:0">' + dims + '</div><hr>' +
-      '<div class="subhead">Position</div>' +
-      fieldHTML("posX", "Left / right", toDisplay(cur.x)) +
-      fieldHTML("posZ", "Front / back", toDisplay(cur.z)) +
-      fieldHTML("rot", "Turn (°)", cur.rotationDeg || 0, true) +
-      (isStageDeck
-        ? fieldHTML("deckL", "Length", toDisplay(cur.lengthFt)) + fieldHTML("deckW", "Width", toDisplay(cur.widthFt))
-        : "") +
-      (customFitHTML(cur)) +
-      personFieldHTML(cur) +
-      castHTML(cur) +
-      reflectHTML(cur) +
+      '<div class="dims" style="margin-top:0">' + dims + '</div>' +
+      grpHTML("pos", "Position", "", (isPerson && cur.pin ? pinnedHTML(cur) : "") +
+        fieldHTML("posX", "Left / right", toDisplay(cur.x)) +
+        fieldHTML("posZ", "Front / back", toDisplay(cur.z)) +
+        fieldHTML("rot", "Turn (°)", cur.rotationDeg || 0, true) +
+        (isStageDeck ? fieldHTML("deckL", "Length", toDisplay(cur.lengthFt)) + fieldHTML("deckW", "Width", toDisplay(cur.widthFt)) : ""), true) +
+      doorsHTML(cur) +
+      (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
+      (isPerson ? grpHTML("figure", "Figure", fmtLen(personHeight(catalogEntry(cur.assetId), cur)), figureHTML(cur)) : "") +
+      (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
+      grpHTML("size", "Real-world size", cur.fitFt ? fmtLen(cur.fitFt) + " " + (cur.fitAxis || "length") : "", customFitHTML(cur)) +
+      grpHTML("seating", "Seating", cur.car ? "car" : "off", carFlagHTML(cur)) +
+      (spots ? grpHTML("cast", "Cast", castN + " of " + spots.length, castHTML(cur), true) : "") +
+      grpHTML("refl", "Reflections", reflSummary(cur), reflectHTML(cur)) +
       (selected.kind === "rollingWall"
-        ? '<div class="field"><span>Deployed</span><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '></div>' +
-          '<div class="subhead">LED content</div>' +
-          '<div class="field"><span>Shows</span><select class="plateSel" data-platekey="roll:' + selected.id + '">' + plateOptionsHTML("roll:" + selected.id) + '</select></div>' +
-          '<div class="btnRow"><button class="plateAddBtn" data-platekey="roll:' + selected.id + '">Add image / video…</button></div>'
+        ? '<label class="setToggle"><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '><span>Deployed</span></label>' +
+          grpHTML("rollLed", "LED content", "", '<div class="field"><span>Shows</span><select class="plateSel" data-platekey="roll:' + selected.id + '">' + plateOptionsHTML("roll:" + selected.id) + '</select></div>' +
+            '<div class="btnRow"><button class="plateAddBtn" data-platekey="roll:' + selected.id + '">Add image / video…</button></div>', true)
         : "") +
-      (selected.type === "human" ? seatFieldHTML(cur) : "") +
+      (selected.type === "human" ? grpHTML("seat", "Seat", "", seatFieldHTML(cur), true) : "") +
       (isCamera ? cameraFieldsHTML(cur) : "") +
-      '<div class="btnRow">' +
-        (canDup ? '<button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button>' : '') +
-      '</div>';
+      (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button></div>' : "");
+    body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
+      inspOpen[d.dataset.k] = d.open;
+      try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
+    }));
     wireInspectorFields();
+  }
+
+  // Inspector groups reuse the drawer's collapsible pattern; open/closed is remembered per group.
+  let inspOpen = {};
+  try { inspOpen = JSON.parse(localStorage.getItem("lumostage.inspGroups") || "{}") || {}; } catch (err) { inspOpen = {}; }
+  function grpHTML(k, title, summary, body, openByDefault) {
+    if (!body) return "";
+    const open = k in inspOpen ? inspOpen[k] : !!openByDefault;
+    return '<details class="grp" data-k="' + k + '"' + (open ? " open" : "") + '><summary>' + title +
+      (summary ? '<span class="count">' + summary + '</span>' : "") + '<svg class="chev"><use href="#i-chev"/></svg></summary>' +
+      '<div class="grpBody">' + body + '</div></details>';
+  }
+  function isPersonPA(pa) {
+    const e = selected && selected.kind === "placed" && pa && catalogEntry(pa.assetId);
+    return !!(e && e.category === "person");
   }
 
   // Vehicle options for the human "Seat" dropdown: every anchor that's free (or already this human's).
@@ -2659,21 +2748,21 @@
     const sid = sensorById(camVal(cur, "sensor")).id;
     const sensOpts = sens.map(s => '<option value="' + escapeHtml(s.id) + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHtml(s.name) + '</option>').join("");
     const marks = cameraMarkList().map(m => '<option value="' + m.uid + "|" + m.mi + '">' + escapeHtml(m.label) + '</option>').join("");
-    return '<div class="subhead">Lens</div>' +
-      '<div class="field"><span>Focal length</span><select id="camLens">' + lensOpts + '</select></div>' +
-      '<div class="field"><span>Sensor</span><select id="camSensor">' + sensOpts + '</select></div>' +
-      fieldHTML("camFocus", "Focus distance", toDisplay(camVal(cur, "focusFt"))) +
-      '<div class="subhead">Rig</div>' +
-      fieldHTML("camH", "Lens height", toDisplay(camVal(cur, "heightFt"))) +
-      fieldHTML("camTilt", "Tilt (° up)", camVal(cur, "tiltDeg"), true) +
-      (marks ? '<div class="field"><span>Jump to</span><select id="camMark"><option value="">A set vantage…</option>' + marks + '</select></div>' : "") +
-      '<label class="setToggle"><input type="checkbox" id="camFrustum" ' + (config.showFrustums ? "checked" : "") + '><span>Show field of view on stage</span></label>' +
-      '<div class="btnRow"><button id="camLook" class="primary">Open viewfinder</button></div>';
+    return '<div class="btnRow" style="margin:2px 0 6px"><button id="camLook" class="primary">Open viewfinder</button></div>' +
+      grpHTML("lens", "Lens", fl + "mm · " + escapeHtml(sensorById(sid).name),
+        '<div class="field"><label for="camLens">Focal length</label><select id="camLens">' + lensOpts + '</select></div>' +
+        '<div class="field"><label for="camSensor">Sensor</label><select id="camSensor">' + sensOpts + '</select></div>' +
+        fieldHTML("camFocus", "Focus distance", toDisplay(camVal(cur, "focusFt"))), true) +
+      grpHTML("rig", "Rig", "lens " + fmtLen(camVal(cur, "heightFt")),
+        fieldHTML("camH", "Lens height", toDisplay(camVal(cur, "heightFt"))) +
+        fieldHTML("camTilt", "Tilt (° up)", camVal(cur, "tiltDeg"), true) +
+        (marks ? '<div class="field"><label for="camMark">Jump to</label><select id="camMark"><option value="">A set vantage…</option>' + marks + '</select></div>' : "") +
+        '<label class="setToggle"><input type="checkbox" id="camFrustum" ' + (config.showFrustums ? "checked" : "") + '><span>Show field of view on stage</span></label>');
   }
 
   function fieldHTML(id, label, val, isDeg) {
     const step = isDeg ? "1" : (displayUnit === "m" ? "0.1" : "0.25");
-    return '<div class="field"><span>' + label + '</span>' +
+    return '<div class="field"><label for="' + id + '">' + label + '</label>' +
       '<input type="number" id="' + id + '" step="' + step + '" value="' + (Math.round(val * 100) / 100) + '"></div>';
   }
 
@@ -2682,16 +2771,27 @@
     const e = pa && catalogEntry(pa.assetId);
     return !!(e && (e.custom || e.assetId === "subwayCar"));
   }
+  function reflSummary(pa) {
+    if (selected.kind !== "placed" || !hasProbeKind(pa)) return "";
+    if (!reflSettings().live) return "off in Settings";
+    return pa.reflective === false ? "off" : "on";
+  }
   function reflectHTML(pa) {
     if (selected.kind !== "placed" || !hasProbeKind(pa)) return "";
     const k = pa.reflectStrength != null ? pa.reflectStrength : 1;
-    const doors = pa.assetId === "subwayCar"
-      ? '<div class="subhead">Doors</div><label class="setToggle"><input type="checkbox" id="doorsOpen" ' + (pa.doorsOpen !== false ? "checked" : "") + '><span>Doors open (side doorways + end door)</span></label>'
-      : "";
-    return doors + '<div class="subhead">Reflections</div>' +
-      '<label class="setToggle"><input type="checkbox" id="reflOn" ' + (pa.reflective !== false ? "checked" : "") + '><span>Mirror the LED stage</span></label>' +
-      '<div class="field" style="margin-top:6px"><span>Strength</span><input type="range" id="reflK" min="0" max="3" step="0.05" value="' + k + '" style="width:130px"></div>' +
-      '<div class="hint">Glossy paint, chrome and glass pick up the volume, rolling walls and ceiling — and their colour lights the body.</div>';
+    return '<label class="setToggle"><input type="checkbox" id="reflOn" ' + (pa.reflective !== false ? "checked" : "") + '><span>Mirror the LED stage</span></label>' +
+      '<div class="field" style="margin-top:6px"><label for="reflK">Strength</label><input type="range" id="reflK" min="0" max="3" step="0.05" value="' + k + '" style="width:130px"></div>' +
+      '<div class="hint">' + (reflSettings().live
+        ? "Glossy paint, chrome and glass pick up the volume, rolling walls and ceiling — and their colour lights the body."
+        : "Live reflections are switched off in Settings, so this piece won't pick up the volume until they're back on.") + '</div>';
+  }
+  // Subway doors: a quick state, so it sits right under Position as a two-way switch.
+  function doorsHTML(pa) {
+    if (selected.kind !== "placed" || pa.assetId !== "subwayCar") return "";
+    const open = pa.doorsOpen !== false;
+    return '<div class="rowSeg"><span id="doorsLbl">Doors</span><div class="seg" role="group" aria-labelledby="doorsLbl">' +
+      '<button data-doors="0" class="' + (open ? "" : "active") + '" aria-pressed="' + !open + '">Closed</button>' +
+      '<button data-doors="1" class="' + (open ? "active" : "") + '" aria-pressed="' + open + '">Open</button></div></div>';
   }
   function wireReflectFields() {
     const on = document.getElementById("reflOn"), k = document.getElementById("reflK");
@@ -2704,51 +2804,65 @@
     };
     if (on) on.addEventListener("change", apply);
     if (k) k.addEventListener("input", apply);
-    const dO = document.getElementById("doorsOpen");
-    if (dO) dO.addEventListener("change", () => {
+    document.querySelectorAll("#inspectorBody [data-doors]").forEach(b => b.addEventListener("click", () => {
       const pa = cfgForSelected(); if (!pa) return;
-      const uid = pa._uid;
-      pa.doorsOpen = dO.checked;
+      const uid = pa._uid, open = b.dataset.doors === "1";
+      if ((pa.doorsOpen !== false) === open) return;
+      pa.doorsOpen = open;
       rebuildPlaced(); reselectUid(uid); scheduleAutosave();
-    });
+    }));
   }
 
   // Hero-role palette (brand colours first). Background people stay neutral grey.
   const ROLE_COLORS = [["#ff6169", "Salmon"], ["#00efea", "Seafoam"], ["#0060fe", "Blue"], ["#f2bf1b", "Yellow"],
                        ["#3cb371", "Green"], ["#9b59d0", "Purple"], ["#f28c28", "Orange"], ["#ff7ec8", "Pink"]];
+  function lumaOf(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
+  function roleColorName(c) { const rc = ROLE_COLORS.find(r => r[0] === c); return rc ? rc[1] : ""; }
+  function nextRoleColor() {
+    const used = new Set(config.placedAssets.filter(p => p.role).map(p => p.role.color));
+    const free = ROLE_COLORS.find(rc => !used.has(rc[0]));
+    return (free || ROLE_COLORS[0])[0];
+  }
+  function nextRoleName() {
+    const used = config.placedAssets.filter(p => p.role && p.role.name).length;
+    return "Hero " + String.fromCharCode(65 + Math.min(25, used));
+  }
 
-  // Library people: figure swap, real-world height, role colour + name tag, elevation, pin status.
-  function personFieldHTML(pa) {
-    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
-    if (!e || e.category !== "person") return "";
+  // Library people: role colour + name tag, figure swap and height, height off the floor, pin.
+  function roleHTML(pa) {
+    const role = pa.role || {}, cur = role.color || "";
+    const opt = (c, name, bg) => '<button class="roleSw" role="radio" data-c="' + c + '" aria-checked="' + (cur === c) + '" aria-label="' + name + '" title="' + name + '"' +
+      ' tabindex="' + (cur === c ? 0 : -1) + '" style="--c:' + bg + ';--k:' + (lumaOf(bg) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>';
+    return '<div class="roles" role="radiogroup" aria-label="Role colour">' + opt("", "Background", "#8a909a") + ROLE_COLORS.map(rc => opt(rc[0], rc[1], rc[0])).join("") + '</div>' +
+      '<div class="roleName">' + (cur ? escapeHtml(roleColorName(cur)) + (role.name ? "" : " · no tag yet") : "Background · no colour, no tag") + '</div>' +
+      '<div class="field"><label for="roleName">Name tag</label><input type="text" id="roleName" placeholder="Type to tag, e.g. Hero A" value="' + escapeHtml(role.name || "") + '" style="width:150px"></div>';
+  }
+  function figureHTML(pa) {
+    const e = catalogEntry(pa.assetId);
     const people = config.assetCatalog.filter(x => x.category === "person");
     const figOpts = people.map(x => '<option value="' + x.assetId + '"' + (x.assetId === pa.assetId ? " selected" : "") + '>' + escapeHtml(x.name) + '</option>').join("");
-    const role = pa.role || {};
-    const sw = '<button class="roleSw" data-c="" title="Background (no role)" style="width:26px;height:26px;padding:0;border-radius:50%;background:#8a909a;' + (!role.color ? "box-shadow:var(--focus)" : "") + '"></button>' +
-      ROLE_COLORS.map(rc => '<button class="roleSw" data-c="' + rc[0] + '" title="' + rc[1] + '" style="width:26px;height:26px;padding:0;border-radius:50%;background:' + rc[0] + ';' + (role.color === rc[0] ? "box-shadow:var(--focus)" : "") + '"></button>').join("");
-    const s = pinnedSpot(pa);
-    let h = '<div class="subhead">Figure</div>' +
-      '<div class="field"><span>Model</span><select id="personFig">' + figOpts + '</select></div>' +
-      fieldHTML("personH", "Height", toDisplay(personHeight(e, pa))) +
-      '<div class="subhead">Role</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' + sw + '</div>' +
-      '<div class="field"><span>Name tag</span><input type="text" id="roleName" placeholder="e.g. Hero A" value="' + escapeHtml(role.name || "") + '" style="width:150px"' + (role.color ? "" : " disabled") + '></div>';
-    if (s) {
-      const he = catalogEntry(s.host.assetId);
-      h += '<div class="subhead">Placement</div><div class="dims" style="margin:0 0 6px">Pinned to <b>' + escapeHtml(he ? he.name : "vehicle") + '</b> · ' + escapeHtml(s.spot.name) +
-        '<br>Moves with it. Drag to nudge; drag over 3 ft away to free it.</div><div class="btnRow"><button id="unpinBtn">Unpin</button></div>';
-    } else {
-      const auto = pa.elevFt == null || pa.elevFt === "";
-      h += '<div class="subhead">Placement</div><div class="field"><span>Elevation</span><input type="number" id="elevFt" step="0.25" placeholder="auto" value="' + (auto ? "" : Math.round(toDisplay(+pa.elevFt) * 100) / 100) + '"></div>' +
-        '<div class="hint">' + (auto ? "Auto: stands on decks, rolling-wall bases and the subway floor when dragged over them." : "Fixed height. Clear the box to go back to auto.") + '</div>';
-    }
-    return h;
+    return '<div class="field"><label for="personFig">Model</label><select id="personFig">' + figOpts + '</select></div>' +
+      fieldHTML("personH", "Height", toDisplay(personHeight(e, pa)));
+  }
+  function placementHTML(pa) {
+    const auto = pa.elevFt == null || pa.elevFt === "";
+    return '<div class="field"><label for="elevFt">Raise by</label><div class="inl">' + (auto ? "" : '<button id="elevAuto" class="ghost">Auto</button>') +
+      '<input type="number" id="elevFt" step="0.25" placeholder="auto" value="' + (auto ? "" : Math.round(toDisplay(+pa.elevFt) * 100) / 100) + '"></div></div>' +
+      '<div class="hint">' + (auto ? "Auto: stands on decks, rolling-wall bases and the subway floor when moved over them. Type a height to fix it."
+                                   : "Fixed height. Auto puts it back on whatever floor is under it.") + '</div>';
+  }
+  function pinnedHTML(pa) {
+    const s = pinnedSpot(pa); if (!s) return "";
+    const he = catalogEntry(s.host.assetId), hn = escapeHtml(he ? he.name : "vehicle");
+    return '<div class="pinCard"><b>' + escapeHtml(s.spot.name) + '</b><span>In the ' + hn + ' · moves with it. Drag to nudge; drag over 3 ft away to free it.</span>' +
+      '<div class="btnRow"><button id="backHost">Back to ' + (spotsFor(s.host) && (he && (he.car || s.host.car)) ? "car" : "set") + '</button><button id="unpinBtn">Unpin</button></div></div>';
   }
 
   function wirePeopleAndCast() {
     const $ = id => document.getElementById(id);
     const redo = (pa, fn) => { const uid = pa._uid; fn(); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); };
     const cur = () => cfgForSelected();
-    // Person: height, figure, role, elevation, unpin
+    // Person: height, figure, role, elevation, pin
     const ph = $("personH");
     if (ph) ph.addEventListener("change", () => {
       const pa = cur(); if (!pa) return;
@@ -2758,69 +2872,174 @@
     });
     const pf = $("personFig");
     if (pf) pf.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => { pa.assetId = pf.value; delete pa.heightFt; }); });
-    document.querySelectorAll(".roleSw").forEach(b => b.addEventListener("click", () => {
+    const setRole = (c, kb) => {
       const pa = cur(); if (!pa) return;
       redo(pa, () => {
-        if (!b.dataset.c) { delete pa.role; return; }
-        const used = config.placedAssets.filter(p => p.role && p.role.name).length;
-        pa.role = { color: b.dataset.c, name: (pa.role && pa.role.name) || ("Hero " + String.fromCharCode(65 + Math.min(25, used))) };
+        if (!c) { delete pa.role; return; }
+        pa.role = { color: c, name: (pa.role && pa.role.name) || nextRoleName() };
       });
-    }));
+      if (kb) { const b = document.querySelector('.roleSw[data-c="' + c + '"]'); if (b) b.focus(); }
+    };
+    const roles = document.querySelector("#inspectorBody .roles");
+    if (roles) {
+      roles.addEventListener("click", ev => { const b = ev.target.closest(".roleSw"); if (b) setRole(b.dataset.c, false); });
+      roles.addEventListener("keydown", ev => {
+        const all = [...roles.querySelectorAll(".roleSw")], i = all.indexOf(document.activeElement);
+        if (i < 0) return;
+        const k = ev.key;
+        const j = k === "ArrowRight" || k === "ArrowDown" ? (i + 1) % all.length : k === "ArrowLeft" || k === "ArrowUp" ? (i - 1 + all.length) % all.length : null;
+        if (j == null) return;
+        ev.preventDefault(); ev.stopPropagation();
+        setRole(all[j].dataset.c, true);
+      });
+    }
     const rn = $("roleName");
-    if (rn) rn.addEventListener("change", () => { const pa = cur(); if (pa && pa.role) redo(pa, () => { pa.role.name = rn.value.trim().slice(0, 24); }); });
+    if (rn) rn.addEventListener("change", () => {
+      const pa = cur(); if (!pa) return;
+      const name = rn.value.trim().slice(0, 24);
+      if (!pa.role && !name) return;
+      redo(pa, () => { pa.role = { color: (pa.role && pa.role.color) || nextRoleColor(), name: name }; });
+    });
     const ef = $("elevFt");
     if (ef) ef.addEventListener("change", () => {
       const pa = cur(); if (!pa) return;
       redo(pa, () => { if (ef.value === "") delete pa.elevFt; else pa.elevFt = Math.max(0, Math.round(fromDisplay(parseFloat(ef.value)) * 100) / 100); });
     });
+    const ea = $("elevAuto");
+    if (ea) ea.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.elevFt; }); });
     const up = $("unpinBtn");
     if (up) up.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.pin; pa.x = snap(pa.x + 1.5); }); });
-    // Host: car seating for imported models, RHD, spot toggles, bulk fill/clear
+    const bh = $("backHost");
+    if (bh) bh.addEventListener("click", () => { const s = pinnedSpot(cur()), hg = s && placedGroupByUid[s.host._uid]; if (hg) selectObject(hg); });
+    // Host: car seating for imported models, nose direction, RHD
     const cs = $("carSeats");
     if (cs) cs.addEventListener("change", () => { const pa = cur(); if (!pa) return; redo(pa, () => { if (cs.checked) pa.car = { front: -1, rhd: false }; else { castOf(pa).forEach(p => setCastSpot(pa, p.pin.spot, false)); delete pa.car; } }); });
-    const cf = $("carFront");
-    if (cf) cf.addEventListener("change", () => { const pa = cur(); if (pa && pa.car) redo(pa, () => { pa.car.front = +cf.value; }); });
+    document.querySelectorAll("#inspectorBody [data-front]").forEach(b => b.addEventListener("click", () => { const pa = cur(); if (pa && pa.car) redo(pa, () => { pa.car.front = +b.dataset.front; }); }));
     const rh = $("carRhd");
     if (rh) rh.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => { pa.car = Object.assign({ front: -1 }, pa.car || {}, { rhd: rh.checked }); }); });
-    document.querySelectorAll(".castSpot").forEach(c => c.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => setCastSpot(pa, c.dataset.s, c.checked)); }));
-    document.querySelectorAll(".castGrp").forEach(b => b.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, s => s.group === b.dataset.g, b.dataset.on === "1")); }));
-    const fs = $("castSeats"); if (fs) fs.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, s => s.pose === "seated", true)); });
-    const fa = $("castAll"); if (fa) fa.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, () => true, true)); });
-    const cc = $("castClear"); if (cc) cc.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => setCastMany(pa, () => true, false)); });
+    // Bulk changes can be undone once, from the toast.
+    const bulk = (pa, fn) => {
+      const key = ensureKey(pa);
+      const before = castOf(pa).map(p => { const c = JSON.parse(JSON.stringify(p)); delete c._uid; return c; });
+      redo(pa, fn);
+      const host = config.placedAssets.find(p => p.key === key), n0 = before.length, n1 = castOf(host).length;
+      if (n0 === n1) return;
+      toast((n1 > n0 ? "Filled " + (n1 - n0) : "Emptied " + (n0 - n1)) + (Math.abs(n1 - n0) === 1 ? " spot" : " spots"), { label: "Undo", fn: () => {
+        const h = config.placedAssets.find(p => p.key === key); if (!h) return;
+        redo(h, () => { config.placedAssets = config.placedAssets.filter(p => !(p.pin && p.pin.host === key)).concat(before.map(c => JSON.parse(JSON.stringify(c)))); });
+      } });
+    };
+    document.querySelectorAll("#inspectorBody [data-fill]").forEach(b => b.addEventListener("click", () => {
+      const pa = cur(); if (!pa) return;
+      const f = b.dataset.fill;
+      bulk(pa, () => {
+        if (f === "none") setCastMany(pa, () => true, false);
+        else if (f === "seats") { setCastMany(pa, s => s.pose === "seated", true); setCastMany(pa, s => s.pose !== "seated", false); }
+        else setCastMany(pa, () => true, true);
+      });
+    }));
+    document.querySelectorAll("#inspectorBody .castGrp").forEach(b => b.addEventListener("click", () => {
+      const pa = cur(); if (pa) bulk(pa, () => setCastMany(pa, s => s.group === b.dataset.g, b.getAttribute("aria-pressed") !== "true"));
+    }));
+    // Seat map: click to fill, click someone to select them, Shift-click (or Delete) to empty.
+    const map = document.querySelector("#inspectorBody .seatMap");
+    if (map) {
+      const tip = $("castTip");
+      const spotOf = t => (t && t.closest ? t.closest(".spot") : null);
+      const occupant = id => { const pa = cur(); return pa ? castOf(pa).find(p => p.pin.spot === id) : null; };
+      const describe = g => {
+        const o = occupant(g.dataset.s), nm = g.getAttribute("aria-label");
+        tip.textContent = o ? nm + " · " + (o.role && o.role.name ? o.role.name : ((catalogEntry(o.assetId) || {}).name || "person")) + " — click to select, Shift-click to empty"
+                            : nm + " · empty — click to fill";
+      };
+      const act = (g, empty, kb) => {
+        const pa = cur(); if (!pa) return;
+        const id = g.dataset.s, o = occupant(id);
+        if (o && !empty) { const og = placedGroupByUid[o._uid]; if (og) selectObject(og); return; }
+        if (!o && empty) return;
+        redo(pa, () => setCastSpot(pa, id, !o));
+        if (kb) { const n = document.querySelector('#inspectorBody .seatMap .spot[data-s="' + id + '"]'); if (n) n.focus(); }
+      };
+      map.addEventListener("click", ev => { const g = spotOf(ev.target); if (g) act(g, ev.shiftKey, false); });
+      map.addEventListener("pointerover", ev => { const g = spotOf(ev.target); if (g) describe(g); });
+      map.addEventListener("pointerleave", () => { tip.textContent = CAST_TIP; });
+      map.addEventListener("focusin", ev => {
+        const g = spotOf(ev.target); if (!g) return;
+        map.querySelectorAll(".spot").forEach(n => n.setAttribute("tabindex", n === g ? "0" : "-1"));
+        describe(g);
+      });
+      map.addEventListener("keydown", ev => {
+        const g = spotOf(ev.target); if (!g) return;
+        const all = [...map.querySelectorAll(".spot")], i = all.indexOf(g), k = ev.key;
+        if (k === " " || k === "Enter") act(g, ev.shiftKey, true);
+        else if (k === "Delete" || k === "Backspace") act(g, true, true);
+        else if (k === "ArrowRight" || k === "ArrowDown") all[Math.min(all.length - 1, i + 1)].focus();
+        else if (k === "ArrowLeft" || k === "ArrowUp") all[Math.max(0, i - 1)].focus();
+        else return;
+        ev.preventDefault(); ev.stopPropagation();
+      });
+    }
   }
 
-  // Cast panel for vehicles/sets with spots (and imported models switched to car seating).
+  // Imported models can be flagged as a car to get the five standard seats.
+  function carFlagHTML(pa) {
+    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
+    if (!e || !e.custom) return "";
+    let h = '<label class="setToggle"><input type="checkbox" id="carSeats" ' + (pa.car ? "checked" : "") + '><span>It\'s a car — give it five seats</span></label>';
+    if (pa.car) h += '<div class="rowSeg"><span id="noseLbl">Nose points</span><div class="seg" role="group" aria-labelledby="noseLbl">' +
+      '<button data-front="-1" class="' + (pa.car.front !== 1 ? "active" : "") + '" aria-pressed="' + (pa.car.front !== 1) + '">Left</button>' +
+      '<button data-front="1" class="' + (pa.car.front === 1 ? "active" : "") + '" aria-pressed="' + (pa.car.front === 1) + '">Right</button></div></div>' +
+      '<div class="hint">As the model sits in Plan view at 0° turn. The seat map marks the front.</div>';
+    return h;
+  }
+
+  // Cast panel: a top-down seat map of the host, bulk fill, group chips.
+  const CAST_TIP = "Click a spot to fill it · click someone to select them · Shift-click to empty";
   function castHTML(pa) {
-    if (selected.kind !== "placed") return "";
-    const e = catalogEntry(pa.assetId); if (!e) return "";
-    let h = "";
-    if (e.custom) {
-      h += '<div class="subhead">Seating</div><label class="setToggle"><input type="checkbox" id="carSeats" ' + (pa.car ? "checked" : "") + '><span>This is a car — add seat spots</span></label>';
-      if (pa.car) {
-        h += '<div class="field"><span>Front faces</span><select id="carFront"><option value="-1"' + (pa.car.front !== 1 ? " selected" : "") + '>Left (−X)</option><option value="1"' + (pa.car.front === 1 ? " selected" : "") + '>Right (+X)</option></select></div>';
-      }
-    }
-    const spots = spotsFor(pa);
-    if (!spots) return h;
-    if (e.car || pa.car) h += '<label class="setToggle"><input type="checkbox" id="carRhd" ' + (pa.car && pa.car.rhd ? "checked" : "") + '><span>Right-hand drive</span></label>';
-    const key = pa.key, on = {};
-    castOf(pa).forEach(p => { on[p.pin.spot] = true; });
+    const e = catalogEntry(pa.assetId), spots = spotsFor(pa);
+    if (!e || !spots) return "";
+    const occ = {}; castOf(pa).forEach(p => { occ[p.pin.spot] = p; });
+    const isCar = !!(e.car || pa.car);
+    let h = seatMapHTML(pa, e, spots, occ) + '<div class="castTip" id="castTip" aria-live="polite">' + CAST_TIP + '</div>';
+    const seats = spots.filter(s => s.pose === "seated"), stands = spots.filter(s => s.pose !== "seated");
+    const nSeat = seats.filter(s => occ[s.id]).length, nStand = stands.filter(s => occ[s.id]).length;
+    const state = nSeat + nStand === 0 ? "none" : (stands.length && nSeat === seats.length && nStand === 0) ? "seats" : nSeat + nStand === spots.length ? "all" : "";
+    const opts = stands.length && seats.length ? [["none", "Empty"], ["seats", "Seats"], ["all", "Everyone"]] : [["none", "Empty"], ["all", "Full"]];
+    h += '<div class="rowSeg"><span id="fillLbl">Fill</span><div class="seg" role="group" aria-labelledby="fillLbl">' +
+      opts.map(o => '<button data-fill="' + o[0] + '" class="' + (state === o[0] ? "active" : "") + '" aria-pressed="' + (state === o[0]) + '">' + o[1] + '</button>').join("") + '</div></div>';
     const groups = [];
     spots.forEach(sp => { let gr = groups.find(g => g.name === sp.group); if (!gr) groups.push(gr = { name: sp.group, spots: [] }); gr.spots.push(sp); });
-    const count = Object.keys(on).length;
-    h += '<div class="subhead">Cast · ' + count + ' of ' + spots.length + ' spots filled</div>';
-    groups.forEach(gr => {
-      const short = gr.spots.length > 3;
-      h += '<div style="margin:0 0 8px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:4px"><span>' + escapeHtml(gr.name) + '</span>' +
-        '<span><button class="castGrp ghost" data-g="' + escapeHtml(gr.name) + '" data-on="1" style="padding:2px 6px">all</button><button class="castGrp ghost" data-g="' + escapeHtml(gr.name) + '" data-on="0" style="padding:2px 6px">none</button></span></div>' +
-        '<div style="display:flex;flex-wrap:wrap;gap:4px 10px">' +
-        gr.spots.map((sp, i) => '<label class="setToggle" style="padding:2px 0" title="' + escapeHtml(sp.name) + '"><input type="checkbox" class="castSpot" data-s="' + sp.id + '"' + (on[sp.id] ? " checked" : "") + '><span>' + escapeHtml(short ? String(i + 1) : sp.name) + '</span></label>').join("") +
-        '</div></div>';
-    });
-    const hasSeat = spots.some(s => s.pose === "seated"), hasStand = spots.some(s => s.pose === "standing");
-    h += '<div class="btnRow">' + (hasSeat ? '<button id="castSeats">Fill seats</button>' : "") + (hasStand && hasSeat ? '<button id="castAll">Fill all</button>' : "") + '<button id="castClear" class="danger">Clear</button></div>' +
-      '<div class="hint">Cast members move with the ' + (e.car || pa.car ? "car" : "set") + '. Select one to change its figure, give it a role colour, or nudge it.</div>';
+    if (groups.length > 1) h += '<div class="chips" role="group" aria-label="Fill or empty a group">' + groups.map(gr => {
+      const n = gr.spots.filter(s => occ[s.id]).length, full = n === gr.spots.length;
+      return '<button class="castGrp' + (full ? " full" : "") + '" data-g="' + escapeHtml(gr.name) + '" aria-pressed="' + full + '" title="' + (full ? "Empty " : "Fill ") + escapeHtml(gr.name) + '">' +
+        escapeHtml(gr.name) + '<span class="n">' + n + '/' + gr.spots.length + '</span></button>';
+    }).join("") + '</div>';
+    if (isCar) h += '<label class="setToggle"><input type="checkbox" id="carRhd" ' + (pa.car && pa.car.rhd ? "checked" : "") + '><span>Right-hand drive</span></label>';
     return h;
+  }
+  // Plan-view map in the host's own frame (x → right, z → down, as Plan view shows it at 0° turn).
+  function seatMapHTML(pa, e, spots, occ) {
+    const L = e.custom ? (pa.lengthFt || 15) : e.lengthFt, W = e.custom ? (pa.widthFt || 6) : e.widthFt;
+    // Long hosts (the subway) get their width stretched up to 1.8x so the bench rows stay clickable.
+    const vw = 308, pad = 4, s = (vw - 2 * pad) / L, sz = Math.min(150 / W, s * 1.8);
+    const vh = Math.round(W * sz + 2 * pad), X = x => vw / 2 + x * s, Y = z => vh / 2 + z * sz, f1 = v => Math.round(v * 10) / 10;
+    const front = e.assetId === "subwayCar" ? -1 : ((pa.car && pa.car.front) || (e.car && e.car.front) || -1);
+    let h = '<svg class="seatMap" viewBox="0 0 ' + vw + ' ' + vh + '" role="group" aria-label="Seat map of the ' + escapeHtml(e.name) + '">' +
+      '<rect class="shell" x="' + f1(X(-L / 2)) + '" y="' + f1(Y(-W / 2)) + '" width="' + f1(L * s) + '" height="' + f1(W * sz) + '" rx="' + f1(Math.min(W * sz * 0.22, 14)) + '"/>' +
+      '<text class="endLbl" x="' + f1(front < 0 ? X(-L / 2) + 7 : X(L / 2) - 7) + '" y="' + f1(vh / 2 + 3) + '" text-anchor="' + (front < 0 ? "start" : "end") + '">' + (e.assetId === "subwayCar" ? "CAB" : "FRONT") + '</text>';
+    spots.forEach((sp, i) => {
+      const o = occ[sp.id], c = o && o.role && o.role.color, x = X(sp.x), y = Y(sp.z);
+      const style = c ? ' style="fill:' + c + ';stroke:' + c + '"' : "";
+      let mk;
+      if (sp.pose === "seated") {
+        const w = Math.max(1.3 * s, 10), hh = Math.max(1.2 * sz, 18);
+        mk = '<rect class="mk" x="' + f1(x - w / 2) + '" y="' + f1(y - hh / 2) + '" width="' + f1(w) + '" height="' + f1(hh) + '" rx="3"' + style + '/>';
+      } else {
+        mk = '<circle class="mk" cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + f1(Math.max(0.5 * Math.min(s, sz), 7)) + '"' + style + '/>';
+      }
+      h += '<g class="spot' + (o ? " on" : "") + '" data-s="' + sp.id + '" role="checkbox" aria-checked="' + !!o + '" aria-label="' + escapeHtml(sp.name) + '" tabindex="' + (i === 0 ? 0 : -1) + '">' + mk + '</g>';
+    });
+    return h + '</svg>';
   }
 
   function customFitHTML(pa) {
@@ -2828,8 +3047,7 @@
     if (!e || !e.custom) return "";
     const axis = pa.fitAxis || "length", key = { length: "lengthFt", width: "widthFt", height: "heightFt" }[axis] || "lengthFt";
     const opt = a => '<option value="' + a + '"' + (a === axis ? " selected" : "") + '>' + a[0].toUpperCase() + a.slice(1) + '</option>';
-    return '<hr><div style="font-weight:600;margin-bottom:6px;">Real-world size</div>' +
-      '<div class="field"><span>Known dimension</span><select id="fitAxis">' + ["length", "width", "height"].map(opt).join("") + '</select></div>' +
+    return '<div class="field"><label for="fitAxis">Known dimension</label><select id="fitAxis">' + ["length", "width", "height"].map(opt).join("") + '</select></div>' +
       fieldHTML("fitVal", "Real " + axis, toDisplay(pa[key] || 0)) +
       '<div class="hint">Enter the real ' + axis + ' (e.g. a pickup ≈ 19 ft long); the other two follow in proportion.</div>';
   }
