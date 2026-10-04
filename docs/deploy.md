@@ -18,7 +18,11 @@ viewer's browser. Hosting = serving `index.html` + `vendor/` + `brand/` behind a
 
 After that, shipping a change is just `git push`.
 
-## 2. Cloudflare Pages — one time
+## 2. Cloudflare hosting — one time
+
+**Workers (what we use — "Create application"):** `wrangler.jsonc` in the repo tells Cloudflare to run `scripts/build.sh` and serve only `dist/`. In the Worker's **Settings → Build**: build command *(blank — wrangler runs it)*, deploy command `npx wrangler deploy`. Every push to `main` redeploys.
+
+**Pages (alternative):**
 
 1. dash.cloudflare.com → sign up / sign in with the company Google account.
 2. **Workers & Pages → Create → Pages → Connect to Git** → authorise GitHub → pick the repo.

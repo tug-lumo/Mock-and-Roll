@@ -1,0 +1,12 @@
+// Cloudflare Workers (static assets) config for Mock & Roll.
+// Only the built dist/ folder is served — scripts/build.sh copies just the app files into it,
+// so docs/, reference material, .claude/ and serve.py are never published.
+{
+  "name": "mock-and-roll",
+  "compatibility_date": "2025-09-01",
+  "build": { "command": "sh scripts/build.sh" },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}
