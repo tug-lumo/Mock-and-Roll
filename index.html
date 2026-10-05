@@ -373,6 +373,9 @@
   body.phone #camHud { top: 58px; font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
   body.phone #camHud .keys { display: none; }
   body.phone #toast { bottom: 76px; max-width: 90vw; }
+  .histBtns { display: flex; gap: 2px; }
+  .histBtns button { padding: 6px 8px; line-height: 0; }
+  .histBtns button svg { width: 18px; height: 18px; }
   #modeBadge { color: var(--accent2); font-size: 12px; font-weight: 600; }
 </style>
 </head>
@@ -394,6 +397,8 @@
       <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
       <symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></g></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5H9.5a5 5 0 0 0 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -414,6 +419,10 @@
       <button id="camViewBtn" title="Viewfinder — see exactly what the film camera sees"><svg><use href="#i-lens"/></svg>Viewfinder</button>
     </div>
     <span class="spacer"></span>
+    <div class="histBtns editOnly" role="group" aria-label="History">
+      <button class="ghost" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#i-undo"/></svg></button>
+      <button class="ghost" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><svg><use href="#i-redo"/></svg></button>
+    </div>
     <span id="modeBadge"></span>
     <div class="menuWrap" id="fileWrap">
       <button class="ghost" id="fileMenuBtn" aria-haspopup="true" aria-expanded="false"><svg><use href="#i-file"/></svg>File</button>
@@ -565,6 +574,8 @@
           <dt><kbd>2</kbd> then drag ring</dt><dd>Rotate (<kbd>Shift</kbd> for 1°)</dd>
           <dt><kbd>Shift</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Turn 15°</dd>
           <dt><kbd>Del</kbd></dt><dd>Remove</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo (moves, adds, removes, cast, film camera)</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dt><dd>Redo (or <kbd>Ctrl</kbd> <kbd>Y</kbd>)</dd>
           <dt><kbd>Esc</kbd></dt><dd>Deselect</dd></dl>
           <h3>Viewfinder</h3><dl>
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · drag</dt><dd>Move / aim the camera</dd>
@@ -591,7 +602,7 @@
           <dt><kbd>Shift</kbd> click</dt><dd>Empty that spot</dd>
           <dt><kbd>Alt</kbd> click</dt><dd>Pick the car or set, not the person inside</dd>
           <dt>Fill</dt><dd>Empty · Seats · Everyone; Undo appears after</dd>
-          <dt>Pinned</dt><dd>Cast moves with its host; drag over 3 ft away to free one</dd></dl></div>
+          <dt>Re-anchor</dt><dd>Drop a person on a free seat or spot and they take it; on a deck, platform or the subway floor they ride with it; clear of everything they stand free</dd></dl></div>
         <div><h3>People</h3><dl>
           <dt>Role</dt><dd>Pick a colour for a hero; it shows on the plan and in prints</dd>
           <dt>Name tag</dt><dd>Typing a name gives an untagged person the next free colour</dd>
@@ -1029,6 +1040,9 @@
     wireCamPicker();
     initPhone();        // phone = read-only viewer with touch gestures (no-op on desktop)
     applyUrlParams();  // share links: ?view (read-only) and ?config=<url> (auto-load a layout)
+    if (histAt < 0) historyReset();
+    document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
+    document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
     loadEnvLibrary();  // 360° environments (environments/library.json + samples.json), restores the layout's pick
 
@@ -1665,6 +1679,11 @@
   function pinnedSpot(pa) {
     if (!pa || !pa.pin) return null;
     const host = config.placedAssets.find(p => p.key === pa.pin.host);
+    if (pa.pin.floor) {
+      if (!host) return null;
+      const he = catalogEntry(host.assetId);
+      return { host: host, spot: { id: "floor", floor: true, name: "On the " + (he ? he.name : "set"), x: pa.pin.lx, z: pa.pin.lz, y: pa.pin.ly, rot: pa.pin.lrot } };
+    }
     const sp = host && (spotsFor(host) || []).find(s => s.id === pa.pin.spot);
     return sp ? { host: host, spot: sp } : null;
   }
@@ -1687,7 +1706,8 @@
     if (!host || !host.key) return;
     config.placedAssets.forEach(pa => { if (pa.pin && pa.pin.host === host.key) placeCast(pa); });
   }
-  function castOf(host) { return host && host.key ? config.placedAssets.filter(p => p.pin && p.pin.host === host.key) : []; }
+  // Seat/spot cast only: people pinned to a host's floor (pin.floor) ride along but aren't "cast".
+  function castOf(host) { return host && host.key ? config.placedAssets.filter(p => p.pin && !p.pin.floor && p.pin.host === host.key) : []; }
   // Default figure for a spot: seated poses alternate, standing poses rotate through the six.
   function figureForSpot(spot, i) {
     const people = config.assetCatalog.filter(e => e.category === "person" && e.status !== "legacy");
@@ -1709,6 +1729,113 @@
   }
   function setCastMany(host, filterFn, on) {
     (spotsFor(host) || []).filter(filterFn).forEach(sp => setCastSpot(host, sp.id, on));
+  }
+
+
+  // ---- Re-anchoring: where a person lands decides what they ride with -----------------
+  // On release (drag, gamepad drop, typed position) a person is anchored, in this order:
+  //   1. still within 1.5 ft of their own seat/spot   -> stays pinned there (nudged);
+  //   2. near a free spot of the same pose on any host -> pinned into it (inside a car, any
+  //      free seat within 3.5 ft — cars have no floor to stand on);
+  //   3. over a movable floor (stage deck, platform, subway floor, glass-wall deck) -> pinned to
+  //      that floor where they stand, so they ride with it;
+  //   4. otherwise free on the studio floor.
+  function hostLocal(host, x, z) {
+    return new THREE.Vector3(x - host.x, 0, z - host.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), -degToRad(host.rotationDeg || 0));
+  }
+  function hostFootprint(host) {
+    const e = catalogEntry(host.assetId); if (!e) return null;
+    if (e.platform) { const d = platformDims(e, host); return { L: d.W, W: d.L }; }
+    if (e.custom || e.category === "stage-deck") return { L: host.lengthFt || e.defaultLengthFt || 8, W: host.widthFt || e.defaultWidthFt || 8 };
+    return e.lengthFt ? { L: e.lengthFt, W: e.widthFt } : null;
+  }
+  function isRiderHost(pa) {
+    const e = pa && catalogEntry(pa.assetId);
+    return !!(e && e.category !== "person" && e.category !== "camera" && e.category !== "human");
+  }
+  // Topmost movable floor (a placed piece with walkable rects) under a world point.
+  const _anInv = new THREE.Matrix4(), _anP = new THREE.Vector3();
+  function floorHostAt(x, z, exceptG) {
+    let best = null;
+    config.placedAssets.forEach(h => {
+      if (!isRiderHost(h)) return;
+      const g = placedGroupByUid[h._uid];
+      if (!g || g === exceptG || !g.visible || !g.userData.walk) return;
+      g.updateMatrixWorld(true);
+      _anP.set(x, 0, z).applyMatrix4(_anInv.copy(g.matrixWorld).invert());
+      g.userData.walk.forEach(r => {
+        if (_anP.x < r.x0 || _anP.x > r.x1 || _anP.z < r.z0 || _anP.z > r.z1) return;
+        const wy = g.position.y + r.y;
+        if (!best || wy > best.wy) best = { host: h, lx: _anP.x, lz: _anP.z, ly: r.y, wy: wy };
+      });
+    });
+    return best;
+  }
+  function reanchor(pa) {
+    const g = placedGroupByUid[pa._uid], e = catalogEntry(pa.assetId);
+    if (!g || !e) return null;
+    const x = g.position.x, z = g.position.z, rot = normDeg(radToDeg(g.rotation.y));
+    // 1. own seat / spot
+    if (pa.pin && !pa.pin.floor) {
+      const s = pinnedSpot(pa);
+      if (s) { const l = hostLocal(s.host, x, z); if (Math.hypot(l.x - s.spot.x, l.z - s.spot.z) <= 1.5) return { kind: "kept", name: s.spot.name }; }
+    }
+    // 2. a free spot nearby (matching pose)
+    let best = null;
+    config.placedAssets.forEach(h => {
+      if (h === pa || !isRiderHost(h)) return;
+      const spots = spotsFor(h); if (!spots) return;
+      const hg = placedGroupByUid[h._uid], l = hostLocal(h, x, z), fp = hostFootprint(h);
+      const inside = fp && Math.abs(l.x) <= fp.L / 2 && Math.abs(l.z) <= fp.W / 2;
+      const lim = inside && !(hg && hg.userData.walk) ? 3.5 : 1.2;
+      spots.forEach(sp => {
+        if (sp.pose && e.pose && sp.pose !== e.pose) return;
+        if (config.placedAssets.some(o => o !== pa && o.pin && !o.pin.floor && o.pin.host === h.key && o.pin.spot === sp.id)) return;
+        const d = Math.hypot(l.x - sp.x, l.z - sp.z);
+        if (d <= lim && (!best || d < best.d)) best = { h: h, sp: sp, d: d };
+      });
+    });
+    if (best) {
+      pa.pin = { host: ensureKey(best.h), spot: best.sp.id };
+      placeCast(pa);
+      return { kind: "spot", name: best.sp.name, seated: best.sp.pose === "seated" };
+    }
+    // 3. a movable floor
+    const f = floorHostAt(x, z, g);
+    if (f) {
+      pa.pin = { host: ensureKey(f.host), floor: true, lx: round2(f.lx), lz: round2(f.lz), ly: f.ly, lrot: round2(normDeg(rot - (f.host.rotationDeg || 0))) };
+      placeCast(pa);
+      const he = catalogEntry(f.host.assetId);
+      return { kind: "floor", name: he ? he.name : "set" };
+    }
+    // 4. free
+    if (pa.pin) { delete pa.pin; pa.x = round2(x); pa.z = round2(z); pa.rotationDeg = rot; }
+    refreshElevations();
+    return { kind: "free" };
+  }
+  function reanchorSelected() {
+    const pa = cfgForSelected();
+    if (!pa || !isPersonPA(pa)) return;
+    delete pa.noAnchor;                                      // moved on purpose: anchor wherever it lands
+    const before = JSON.stringify(pa.pin || null), r = reanchor(pa);
+    if (!r || JSON.stringify(pa.pin || null) === before) { scheduleAutosave(); return; }
+    toast(r.kind === "spot" ? (r.seated ? "Seated · " : "On spot · ") + r.name
+        : r.kind === "floor" ? "Standing on the " + r.name + " — moves with it"
+        : r.kind === "free" ? "Standing free" : r.name);
+    renderInspector();
+    scheduleAutosave();
+  }
+  // On load: free people already standing on a deck / platform / car floor ride with it.
+  function anchorPeopleOnFloors() {
+    config.placedAssets.forEach(pa => {
+      if (pa.pin || pa.noAnchor || (pa.elevFt != null && pa.elevFt !== "")) return;
+      const e = catalogEntry(pa.assetId), g = placedGroupByUid[pa._uid];
+      if (!e || e.category !== "person" || !g) return;
+      const f = floorHostAt(g.position.x, g.position.z, g);
+      if (!f) return;
+      pa.pin = { host: ensureKey(f.host), floor: true, lx: round2(f.lx), lz: round2(f.lz), ly: f.ly, lrot: round2(normDeg((pa.rotationDeg || 0) - (f.host.rotationDeg || 0))) };
+      placeCast(pa);
+    });
   }
 
   function importGlbFile(file) {
@@ -2794,7 +2921,9 @@
 
   function onWindowPointerUp() {
     if (yawDrag) { yawDrag = null; if (viewCamUid == null) nav.enabled = true; }
+    const dropped = bodyDrag && selected && selected.kind === "placed";
     bodyDrag = null; camLook = null; nav.look = null;
+    if (dropped) reanchorSelected();
     renderer.domElement.style.cursor = "";
   }
 
@@ -2826,19 +2955,13 @@
       g.rotation.set(0, degToRad(rot), 0);
       const cfg = cfgForSelected();
       if (cfg && cfg.pin && pinnedSpot(cfg)) {
-        // Cast member: keep it pinned, storing the nudge relative to its spot (in the host frame);
-        // dragged more than 3 ft away it comes off the vehicle and stands free.
+        // Pinned person: keeps riding its host while dragged (nudge stored relative to its spot, in
+        // the host frame). On release, reanchor() decides: same seat, another seat, a floor, or free.
         const s = pinnedSpot(cfg), hr = degToRad(s.host.rotationDeg || 0);
         const loc = new THREE.Vector3(g.position.x - s.host.x, 0, g.position.z - s.host.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), -hr);
         const dx = loc.x - s.spot.x, dz = loc.z - s.spot.z;
-        if (Math.hypot(dx, dz) > 3) {
-          delete cfg.pin; cfg.x = x; cfg.z = z; cfg.rotationDeg = rot;
-          toast("Unpinned — now standing free");
-          renderInspector();
-        } else {
-          cfg.pin.dx = round2(dx); cfg.pin.dz = round2(dz);
-          placeCast(cfg);
-        }
+        cfg.pin.dx = round2(dx); cfg.pin.dz = round2(dz);   // follows the cursor; where it lands is decided on release
+        placeCast(cfg);
       } else if (cfg) { cfg.x = x; cfg.z = z; cfg.rotationDeg = rot; syncSeatedTo(cfg); syncCastTo(cfg); }
       refreshElevations();                                  // settle onto decks / floors under the new spot
     }
@@ -3130,7 +3253,9 @@
   function pinnedHTML(pa) {
     const s = pinnedSpot(pa); if (!s) return "";
     const he = catalogEntry(s.host.assetId), hn = escapeHtml(he ? he.name : "vehicle");
-    return '<div class="pinCard"><b>' + escapeHtml(s.spot.name) + '</b><span>In the ' + hn + ' · moves with it. Drag to nudge; drag over 3 ft away to free it.</span>' +
+    const note = s.spot.floor ? "Moves with it. Drop it on a seat or another floor to re-anchor; off every floor it stands free."
+                              : "In the " + hn + " · moves with it. Drag to nudge; drop it on another seat, a floor, or clear of the set to re-anchor.";
+    return '<div class="pinCard"><b>' + escapeHtml(s.spot.name) + '</b><span>' + note + '</span>' +
       '<div class="btnRow"><button id="backHost">Back to ' + (spotsFor(s.host) && (he && (he.car || s.host.car)) ? "car" : "set") + '</button><button id="unpinBtn">Unpin</button></div></div>';
   }
 
@@ -3184,7 +3309,7 @@
     const ea = $("elevAuto");
     if (ea) ea.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.elevFt; }); });
     const up = $("unpinBtn");
-    if (up) up.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.pin; pa.x = snap(pa.x + 1.5); }); });
+    if (up) up.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.pin; pa.noAnchor = true; pa.x = snap(pa.x + 1.5); }); });
     const bh = $("backHost");
     if (bh) bh.addEventListener("click", () => { const s = pinnedSpot(cur()), hg = s && placedGroupByUid[s.host._uid]; if (hg) selectObject(hg); });
     // Host: car seating for imported models, nose direction, RHD
@@ -3350,7 +3475,7 @@
       return "Wall " + fmtLen(e.lengthFt) + " × " + fmtLen(e.heightFt) + (e.assetId === "cornerPillar" ? " × " + fmtLen(e.widthFt) : "") +
         "<br>on deck " + fmtLen(d.lengthFt) + " × " + fmtLen(d.widthFt) + " × " + fmtLen(d.heightFt) + " · total H " + fmtLen(d.heightFt + e.heightFt);
     }
-    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (e.pose || "figure") + "<br>low-poly figure · scaled to height";
+    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (e.pose || "figure") + "<br>scaled to height · rides whatever it stands on";
     if (e.custom) {
       return "L " + fmtLen(pa.lengthFt) + " × W " + fmtLen(pa.widthFt) + " × H " + fmtLen(pa.heightFt) + "<br>imported model · scaled uniformly";
     }
@@ -4015,6 +4140,7 @@
       syncSeatedTo(cfg);
       syncCastTo(cfg);
       refreshElevations();
+      if (isPersonPA(cfg)) reanchorSelected();
     }
     updateYawRing(false);
     scheduleAutosave();
@@ -4035,7 +4161,8 @@
   function removeSelected() {
     if (!isRemovable()) return;
     const gone = getPlacedByUid(selected.uid), cast = castOf(gone);
-    // A vehicle/set takes its pinned cast with it.
+    // A vehicle/set takes its seated cast with it; people just standing on its floor step off.
+    config.placedAssets.forEach(p => { if (gone && gone.key && p.pin && p.pin.floor && p.pin.host === gone.key) delete p.pin; });
     config.placedAssets = config.placedAssets.filter(p => p._uid !== selected.uid && cast.indexOf(p) === -1);
     rebuildPlaced();
     scheduleAutosave();
@@ -4045,11 +4172,12 @@
   function duplicateSelected() {
     if (!isRemovable()) return;
     const src = getPlacedByUid(selected.uid);
-    const copy = deepClone(src); delete copy._uid; delete copy.key; delete copy.seat; delete copy._setKey;
+    const copy = deepClone(src); delete copy._uid; delete copy.key; delete copy.seat; delete copy._setKey; delete copy.pin;
     copy.x = snap(src.x + 4); copy.z = snap(src.z + 4);
     config.placedAssets.push(copy);
     rebuildPlaced();
     reselectUid(copy._uid); // select the new copy so it's ready to reposition
+    if (isPersonPA(copy)) reanchorSelected();
     scheduleAutosave();
     toast("Duplicated");
   }
@@ -4661,7 +4789,8 @@
     } else {
       if (!setIsOn(key)) return;
       const hostKeys = config.placedAssets.filter(p => p._setKey === key && p.key).map(p => p.key);
-      config.placedAssets = config.placedAssets.filter(p => p._setKey !== key && !(p.pin && hostKeys.indexOf(p.pin.host) !== -1));   // its cast goes with it
+      config.placedAssets.forEach(p => { if (p.pin && p.pin.floor && hostKeys.indexOf(p.pin.host) !== -1) delete p.pin; });   // people standing on it step off
+      config.placedAssets = config.placedAssets.filter(p => p._setKey !== key && !(p.pin && hostKeys.indexOf(p.pin.host) !== -1));   // its seated cast goes with it
       rebuildPlaced();
       scheduleAutosave();
       toast("Removed " + sd.label);
@@ -5020,6 +5149,7 @@
   function padRelease(gp) {
     if (!pad.held) return;
     pad.held = false; bodyDrag = null;
+    if (selected && selected.kind === "placed") reanchorSelected();
     if (gp) padRumble(gp, 0.1, 0.3, 40);
   }
 
@@ -5283,6 +5413,52 @@
   function scheduleAutosave() {
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(saveAutosave, 500);
+    scheduleHistory();
+  }
+
+  // ---- Undo / redo -------------------------------------------------------------------
+  // Layout history: what's placed where (pieces, cast, the film cameras) and the rolling walls.
+  // Your own point of view (walking, plan, looking around) is never recorded. Changes are grouped:
+  // everything that settles within ~0.4 s (a whole drag, a fill) is one step.
+  const HISTORY_MAX = 100;
+  let hist = [], histAt = -1, histTimer = null;
+  function layoutSnap() { return JSON.stringify({ placedAssets: config.placedAssets, rollingWalls: config.rollingWalls }); }
+  function historyReset() { clearTimeout(histTimer); histTimer = null; hist = [layoutSnap()]; histAt = 0; updateHistoryButtons(); }
+  function scheduleHistory() {
+    clearTimeout(histTimer);
+    histTimer = setTimeout(commitHistory, 400);
+  }
+  function commitHistory() {
+    histTimer = null;
+    if (bodyDrag || yawDrag || pad.held) { scheduleHistory(); return; }   // still mid-gesture
+    if (histAt < 0) { historyReset(); return; }
+    const snapNow = layoutSnap();
+    if (snapNow === hist[histAt]) return;
+    hist = hist.slice(0, histAt + 1);
+    hist.push(snapNow);
+    if (hist.length > HISTORY_MAX) hist.shift();
+    histAt = hist.length - 1;
+    updateHistoryButtons();
+  }
+  function stepHistory(dir) {
+    if (histTimer) { clearTimeout(histTimer); commitHistory(); }      // bank the change in flight first
+    const to = histAt + dir;
+    if (to < 0 || to >= hist.length || mode !== "edit") return;
+    histAt = to;
+    const d = JSON.parse(hist[histAt]), uid = selected && selected.uid;
+    config.placedAssets = d.placedAssets; config.rollingWalls = d.rollingWalls;
+    rebuildPlaced();
+    if (uid != null && placedGroupByUid[uid]) reselectUid(uid);
+    refreshCamPicker();
+    buildLibrary();                                                   // Sets toggles follow what's placed
+    clearTimeout(autosaveTimer); saveAutosave();
+    updateHistoryButtons();
+    toast(dir < 0 ? "Undone" : "Redone");
+  }
+  function updateHistoryButtons() {
+    const u = document.getElementById("undoBtn"), r = document.getElementById("redoBtn");
+    if (u) u.disabled = histAt <= 0;
+    if (r) r.disabled = histAt < 0 || histAt >= hist.length - 1;
   }
   function saveAutosave() {
     try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(exportConfig())); }
@@ -5390,6 +5566,8 @@
     renderInspector();
     refreshShotUI();
     syncSettingsUI();
+    anchorPeopleOnFloors();                                  // people standing on decks/sets ride with them
+    historyReset();                                          // a loaded layout starts a fresh history
     // Bring back the layout's 360° environment when it came from the library.
     const e = config.environment, cur = envPlate();
     if (e && e.libraryId && envLibrary.length && (!cur || cur.envId !== e.libraryId)) {
@@ -5588,6 +5766,11 @@
       if (!document.getElementById("help").classList.contains("hidden")) { if (e.key === "Escape") { setHelp(false); e.preventDefault(); } return; }
       if (e.key === "Escape" && document.querySelector(".menu:not(.hidden)")) { closeMenus(); e.preventDefault(); return; }
       if (!typing && e.key === "?") { setHelp(true); e.preventDefault(); return; }
+      if (!typing && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        const k = e.key.toLowerCase();
+        if (k === "z") { stepHistory(e.shiftKey ? 1 : -1); e.preventDefault(); return; }
+        if (k === "y") { stepHistory(1); e.preventDefault(); return; }
+      }
       if (!typing && NAV_KEYS.indexOf(e.code) !== -1) { const h = document.getElementById("navHud"); if (h && !pad.connected) { clearTimeout(hudFadeTimer); hudFadeTimer = setTimeout(() => h.classList.add("faded"), 1500); } }
       // Lens menu: L toggles; while open, ↑/↓ lens, ←/→ sensor, Enter/Esc close.
       if (!typing && lensMenu.open) {
