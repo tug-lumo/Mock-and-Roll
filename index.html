@@ -190,6 +190,7 @@
   .rowSeg { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 10px; }
   .rowSeg > span { color: var(--muted); font-size: 12.5px; }
   .rowSeg .seg button { padding: 5px 12px; }
+  .fmtReadout { font-size: 12px; line-height: 1.5; color: var(--text); background: #0e1314; border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; margin: 2px 0 4px; font-variant-numeric: tabular-nums; }
   .pinCard { font-size: 13px; line-height: 1.45; margin: 0 0 12px; }
   .pinCard span { display: block; color: var(--muted); font-size: 12px; }
 
@@ -349,6 +350,26 @@
   #vf .blx .keys { color: #c9ced8; }
   #vf .brx { position: absolute; right: 4.5%; bottom: 5.5%; font-size: 15px; font-weight: 600; pointer-events: auto; cursor: pointer; }
   #vf.hidden { display: none; }
+  #vf { overflow: hidden; }
+  /* Frame lines: the delivery frame; everything outside it is shaded like a monitor's surround */
+  #vf .fl { position: absolute; box-sizing: border-box; }
+  #vf .fl.lines { outline: 1.5px solid rgba(255,255,255,.95); }
+  #vf .fl .lbl, #vf .pl .lbl { position: absolute; left: 6px; top: 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.9); }
+  #vf .pl { position: absolute; box-sizing: border-box; border: 1px dashed rgba(255,214,74,.95); }
+  #vf .pl .lbl { color: rgba(255,214,74,.95); top: auto; bottom: 4px; }
+  #vf .safe i { position: absolute; border: 1px dashed rgba(255,255,255,.55); }
+  #vf .safe .act { inset: 3.5%; }
+  #vf .safe .ttl { inset: 5%; border-color: rgba(255,255,255,.35); }
+  #vf .thirds i { position: absolute; background: rgba(255,255,255,.35); }
+  #vf .thirds i:nth-child(1) { left: 33.333%; top: 0; bottom: 0; width: 1px; }
+  #vf .thirds i:nth-child(2) { left: 66.667%; top: 0; bottom: 0; width: 1px; }
+  #vf .thirds i:nth-child(3) { top: 33.333%; left: 0; right: 0; height: 1px; }
+  #vf .thirds i:nth-child(4) { top: 66.667%; left: 0; right: 0; height: 1px; }
+  #vf .safe.hidden, #vf .thirds.hidden { display: none; }
+  #lensBar select { max-width: 150px; }
+  #vfGuides { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 19; min-width: 240px;
+    background: rgba(20,22,26,.96); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+  #vfGuides.hidden { display: none; }
   #vf .tc, #vf .brx { bottom: 11%; } #vf .blx { bottom: 11%; }
   /* Looking through the lens: give it the whole window (panels come back on exit). */
   body.camview #inspector, body.camview #welcome { display: none !important; }
@@ -544,6 +565,8 @@
   <div id="camHud" class="hidden"></div>
   <div id="vf" class="hidden">
     <div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div>
+    <div class="fl"><div class="safe"><i class="act"></i><i class="ttl"></i></div><div class="thirds"><i></i><i></i><i></i><i></i></div><span class="lbl"></span></div>
+    <div class="pl hidden"><span class="lbl"></span></div>
     <div class="af"><i></i><i></i><i></i><i></i></div><div class="plus"></div>
     <div class="tlx"><b></b><span class="cam">CAM 1</span></div>
     <div class="trx"></div>
@@ -559,10 +582,19 @@
   <!-- Viewfinder actions (shown only while looking through the camera) -->
   <div id="lensBar" class="hidden">
     <button id="lbLens" title="Lens menu (L)">Lens</button>
+    <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
+    <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
     <button class="primary editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
     <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
     <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
     <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit viewfinder</button>
+  </div>
+
+  <div id="vfGuides" class="hidden" role="group" aria-label="Viewfinder guides">
+    <label class="setToggle"><input type="checkbox" id="vgFull"><span>Show the whole sensor around the frame</span></label>
+    <div class="field" style="margin:4px 0"><label for="vgShade">Shade outside frame</label><select id="vgShade"><option value="0">None</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="0.92">Matte</option></select></div>
+    <label class="setToggle"><input type="checkbox" id="vgSafe"><span>Action / title safe</span></label>
+    <label class="setToggle"><input type="checkbox" id="vgThirds"><span>Rule of thirds</span></label>
   </div>
 
   <!-- First run: three things to know, then out of the way -->
@@ -607,6 +639,7 @@
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · drag</dt><dd>Move / aim the camera</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
           <dt><kbd>L</kbd></dt><dd>Lens menu</dd>
+          <dt><kbd>F</kbd> / <kbd>Shift</kbd> <kbd>F</kbd></dt><dd>Next / previous frame (2.39, 16:9, 9:16…)</dd>
           <dt><kbd>Esc</kbd></dt><dd>Exit</dd></dl></div>
         <div><h3>Gamepad</h3><dl>
           <dt>Left stick</dt><dd>Move</dd>
@@ -808,9 +841,22 @@
     ],
     // Phase 3 — camera/lens. Edit lensSetMm to match the primes actually on the truck.
     lensSetMm: [18, 24, 35, 50, 85, 100],
+    // Camera bodies: the recording area in mm (open gate unless noted). The frame you deliver is
+    // chosen separately per camera (format / anamorphic squeeze / protect) — see FRAME_FORMATS.
     sensors: [
-      { id: "ff",  name: "Full Frame", widthMm: 36,    heightMm: 24 },
-      { id: "s35", name: "Super 35",   widthMm: 24.89, heightMm: 18.66 }
+      { id: "s35",       name: "Super 35 (3-perf)",              short: "S35",       widthMm: 24.89, heightMm: 18.66 },
+      { id: "ff",        name: "Full Frame",                     short: "FF",        widthMm: 36,    heightMm: 24 },
+      { id: "alexa35",   name: "ARRI ALEXA 35 · 4.6K Open Gate", short: "ALEXA 35",  widthMm: 27.99, heightMm: 19.22 },
+      { id: "minilf",    name: "ARRI ALEXA Mini LF · Open Gate", short: "MINI LF",   widthMm: 36.70, heightMm: 25.54 },
+      { id: "alexamini", name: "ARRI ALEXA Mini · 3.4K Open Gate", short: "ALEXA MINI", widthMm: 28.25, heightMm: 18.17 },
+      { id: "venice2",   name: "Sony VENICE 2 · 8.6K FF 3:2",    short: "VENICE 2",  widthMm: 36.2,  heightMm: 24.1 },
+      { id: "fx3",       name: "Sony FX3 / FX6 · Full Frame",    short: "FX3",       widthMm: 35.6,  heightMm: 23.8 },
+      { id: "vraptor",   name: "RED V-RAPTOR · 8K VV",           short: "V-RAPTOR",  widthMm: 40.96, heightMm: 21.60 },
+      { id: "komodo",    name: "RED KOMODO · 6K S35",            short: "KOMODO",    widthMm: 27.03, heightMm: 14.26 },
+      { id: "ursa12k",   name: "Blackmagic URSA 12K · S35",      short: "URSA 12K",  widthMm: 27.03, heightMm: 14.25 },
+      { id: "bmpcc6k",   name: "Blackmagic Pocket 6K · S35",     short: "BMPCC 6K",  widthMm: 23.10, heightMm: 12.99 },
+      { id: "c70",       name: "Canon C70 / C300 III · S35",     short: "C70",       widthMm: 26.2,  heightMm: 13.8 },
+      { id: "mft",       name: "Micro Four Thirds",              short: "MFT",       widthMm: 17.3,  heightMm: 13.0 }
     ],
     // Frustum/focus overlay lines are OFF by default (they clutter the view while blocking);
     // toggle on from the camera inspector when you want to see coverage.
@@ -839,7 +885,7 @@
       // Camera object: 0° yaw faces -Z (toward the volume's deepest point). Height/tilt/lens
       // are per-instance fields; dragging still only moves on the floor and turns (yaw).
       { assetId: "camera", name: "Camera (lens / FOV)", category: "camera", heightFt: 5,
-        defaults: { heightFt: 5, tiltDeg: 0, focalMm: 35, sensor: "s35", focusFt: 12 } },
+        defaults: { heightFt: 5, tiltDeg: 0, focalMm: 35, sensor: "s35", focusFt: 12, format: "full", squeeze: 1, protect: "" } },
       // Stage decking: modular 2ft platform, CUSTOM length×width, spawn multiple. Station
       // platform / rooftop are just presets of this piece, not separate objects.
       { assetId: "stageDeck", name: "Stage Deck", category: "stage-deck", heightFt: 2, defaultLengthFt: 8, defaultWidthFt: 8, model: "assets/stage_deck.glb",
@@ -1110,6 +1156,7 @@
     if (histAt < 0) historyReset();
     document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
     wirePlanSheet();
+    wireVfBar();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
@@ -2527,13 +2574,46 @@
     const list = (config.sensors && config.sensors.length) ? config.sensors : DEFAULT_CONFIG.sensors;
     return list.find(s => s.id === id) || list[0];
   }
-  // Pinhole optics: half-extents of the image plane at unit distance, plus FOV in degrees.
+  // Delivery frames (frame lines). null aspect = the whole (de-squeezed) sensor.
+  const FRAME_FORMATS = [
+    { id: "full", name: "Full sensor", short: "OPEN", aspect: null },
+    { id: "239",  name: "2.39:1 Scope", short: "2.39", aspect: 2.39 },
+    { id: "200",  name: "2:1 Univisium", short: "2.00", aspect: 2.0 },
+    { id: "190",  name: "1.90:1 DCI / IMAX digital", short: "1.90", aspect: 1.896 },
+    { id: "185",  name: "1.85:1 Flat", short: "1.85", aspect: 1.85 },
+    { id: "178",  name: "16:9 HD / UHD", short: "16:9", aspect: 16 / 9 },
+    { id: "166",  name: "1.66:1 European", short: "1.66", aspect: 1.66 },
+    { id: "143",  name: "1.43:1 IMAX film", short: "1.43", aspect: 1.43 },
+    { id: "133",  name: "4:3", short: "4:3", aspect: 4 / 3 },
+    { id: "100",  name: "1:1 Square", short: "1:1", aspect: 1 },
+    { id: "080",  name: "4:5 Social portrait", short: "4:5", aspect: 0.8 },
+    { id: "056",  name: "9:16 Vertical", short: "9:16", aspect: 9 / 16 }
+  ];
+  const SQUEEZES = [1, 1.25, 1.33, 1.5, 1.65, 1.8, 2];
+  function frameFormat(id) { return FRAME_FORMATS.find(f => f.id === id) || FRAME_FORMATS[0]; }
+  // The largest rectangle of aspect a that fits a w x h (de-squeezed) sensor, centred.
+  function fitFrame(w, h, a) { return !a ? { w: w, h: h } : a >= w / h ? { w: w, h: w / a } : { w: h * a, h: h }; }
+  // Pinhole optics for the delivered frame. Anamorphic: the lens squeezes the scene horizontally
+  // onto the sensor, so the de-squeezed sensor is widthMm x squeeze wide (a wider field of view).
+  // halfW/halfH/aspect/hFov/vFov describe the FRAME (frustum, plan wedge, prints); sensor* the full
+  // de-squeezed sensor the viewfinder shows around it.
   function camOptics(pa) {
     const f = camVal(pa, "focalMm") || 35, S = sensorById(camVal(pa, "sensor"));
+    const sq = parseFloat(camVal(pa, "squeeze")) || 1, fmt = frameFormat(camVal(pa, "format")), prot = camVal(pa, "protect");
+    const sw = S.widthMm * sq, sh = S.heightMm, fr = fitFrame(sw, sh, fmt.aspect);
+    const pf = prot && prot !== fmt.id ? frameFormat(prot) : null, pr = pf ? fitFrame(sw, sh, pf.aspect) : null;
+    const fov = mm => radToDeg(2 * Math.atan(mm / (2 * f)));
     return {
-      f: f, S: S, halfW: S.widthMm / (2 * f), halfH: S.heightMm / (2 * f), aspect: S.widthMm / S.heightMm,
-      hFov: radToDeg(2 * Math.atan(S.widthMm / (2 * f))), vFov: radToDeg(2 * Math.atan(S.heightMm / (2 * f)))
+      f: f, S: S, sq: sq, fmt: fmt, protect: pf, protectW: pr && pr.w, protectH: pr && pr.h,
+      sensorW: sw, sensorH: sh, sensorAspect: sw / sh, sensorHFov: fov(sw), sensorVFov: fov(sh),
+      frameW: fr.w, frameH: fr.h, halfW: fr.w / (2 * f), halfH: fr.h / (2 * f), aspect: fr.w / fr.h,
+      hFov: fov(fr.w), vFov: fov(fr.h)
     };
+  }
+  // "ALEXA 35 · 2× · 2.39" style one-liner for HUDs, lists and prints.
+  function formatLabel(o, long) {
+    const sq = o.sq > 1 ? (long ? " · " + o.sq + "× anamorphic" : " · " + o.sq + "×") : "";
+    return (long ? o.S.name : (o.S.short || o.S.name)) + sq + " · " + (long ? o.fmt.name : o.fmt.short) + (o.protect ? (long ? " (protect " + o.protect.name + ")" : " / " + o.protect.short) : "");
   }
 
   // Floor marker + post + camera body; the frustum hangs off `rig`, which sits at lens
@@ -3397,11 +3477,24 @@
     const sid = sensorById(camVal(cur, "sensor")).id;
     const sensOpts = sens.map(s => '<option value="' + escapeHtml(s.id) + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHtml(s.name) + '</option>').join("");
     const marks = cameraMarkList().map(m => '<option value="' + m.uid + "|" + m.mi + '">' + escapeHtml(m.label) + '</option>').join("");
+    const o = camOptics(cur), fid = o.fmt.id, prot = camVal(cur, "protect") || "", sq = o.sq;
+    const fmtOpts = FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === fid ? " selected" : "") + '>' + escapeHtml(f.name) + '</option>').join("");
+    const protOpts = '<option value="">None</option>' + FRAME_FORMATS.filter(f => f.aspect).map(f => '<option value="' + f.id + '"' + (f.id === prot ? " selected" : "") + '>' + escapeHtml(f.name) + '</option>').join("");
+    const sqOpts = SQUEEZES.map(v => '<option value="' + v + '"' + (v === sq ? " selected" : "") + '>' + (v === 1 ? "Spherical (1×)" : v + "× anamorphic") + '</option>').join("");
+    const fd = camVal(cur, "focusFt");
     return '<div class="btnRow" style="margin:2px 0 6px"><button id="camLook" class="primary">Open viewfinder</button></div>' +
-      grpHTML("lens", "Lens", fl + "mm · " + escapeHtml(sensorById(sid).name),
+      grpHTML("lens", "Lens", fl + "mm · " + o.hFov.toFixed(1) + "° H",
         '<div class="field"><label for="camLens">Focal length</label><select id="camLens">' + lensOpts + '</select></div>' +
-        '<div class="field"><label for="camSensor">Sensor</label><select id="camSensor">' + sensOpts + '</select></div>' +
-        fieldHTML("camFocus", "Focus distance", toDisplay(camVal(cur, "focusFt"))), true) +
+        fieldHTML("camFocus", "Focus distance", toDisplay(fd)), true) +
+      grpHTML("format", "Format", escapeHtml(formatLabel(o)),
+        '<div class="field"><label for="camSensor">Camera</label><select id="camSensor" style="max-width:170px">' + sensOpts + '</select></div>' +
+        '<div class="field"><label for="camSqueeze">Lens type</label><select id="camSqueeze">' + sqOpts + '</select></div>' +
+        '<div class="field"><label for="camFormat">Frame</label><select id="camFormat" style="max-width:170px">' + fmtOpts + '</select></div>' +
+        '<div class="field"><label for="camProtect">Protect for</label><select id="camProtect" style="max-width:170px">' + protOpts + '</select></div>' +
+        '<div class="fmtReadout">Frame ' + o.frameW.toFixed(2) + ' × ' + o.frameH.toFixed(2) + ' mm' + (sq > 1 ? ' (de-squeezed)' : '') + ' · ' + o.aspect.toFixed(2) + ':1<br>' +
+          'Field of view ' + o.hFov.toFixed(1) + '° H × ' + o.vFov.toFixed(1) + '° V<br>' +
+          'At ' + fmtLen(fd) + ' the frame is ' + fmtLen(2 * fd * o.halfW) + ' × ' + fmtLen(2 * fd * o.halfH) + '</div>' +
+        '<div class="hint">The frame is what you deliver; the viewfinder shows the whole sensor with frame lines around it. Protect adds a second set of lines (e.g. 16:9 inside scope).</div>', true) +
       grpHTML("rig", "Rig", "lens " + fmtLen(camVal(cur, "heightFt")),
         fieldHTML("camH", "Lens height", toDisplay(camVal(cur, "heightFt"))) +
         fieldHTML("camTilt", "Tilt (° up)", camVal(cur, "tiltDeg"), true) +
@@ -3855,6 +3948,10 @@
       const uid = selected.uid;
       cfg.focalMm = numOr(lens.value, 35);
       cfg.sensor = sensor.value;
+      const sqEl = document.getElementById("camSqueeze"), fmEl = document.getElementById("camFormat"), prEl = document.getElementById("camProtect");
+      if (sqEl) cfg.squeeze = parseFloat(sqEl.value) || 1;
+      if (fmEl) cfg.format = fmEl.value;
+      if (prEl) cfg.protect = prEl.value;
       cfg.heightFt = clamp(round2(fromDisplay(numOr(h.value, camVal(cfg, "heightFt")))), 0.5, 40);
       cfg.tiltDeg = clamp(numOr(tilt.value, 0), -90, 90);
       cfg.focusFt = clamp(round2(fromDisplay(numOr(focus.value, camVal(cfg, "focusFt")))), 0.5, 500);
@@ -3862,7 +3959,7 @@
       reselectUid(uid);
       scheduleAutosave();
     };
-    [lens, sensor, h, tilt, focus].forEach(el => el.addEventListener("change", apply));
+    [lens, sensor, h, tilt, focus, document.getElementById("camSqueeze"), document.getElementById("camFormat"), document.getElementById("camProtect")].forEach(el => el && el.addEventListener("change", apply));
     if (mark) mark.addEventListener("change", () => {
       if (!mark.value) return;
       const parts = mark.value.split("|");
@@ -3914,7 +4011,7 @@
     const lb = document.getElementById("lensBtn"), fc = document.getElementById("frustChk");
     if (fc) fc.checked = !!config.showFrustums;
     ["lensBtn", "lookBtn", "shotPrint", "shotSave", "shotSaveMark"].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !cams.length; });
-    if (lb) lb.textContent = act ? camVal(act, "focalMm") + "mm · " + sensorById(camVal(act, "sensor")).name + "  ▾" : "—";
+    if (lb) lb.textContent = act ? camVal(act, "focalMm") + "mm · " + formatLabel(camOptics(act)) + "  ▾" : "—";
     if (!cams.length) {
       const o = document.createElement("option"); o.value = ""; o.textContent = "No camera placed"; sel.appendChild(o);
       sel.disabled = true; return;
@@ -3960,6 +4057,7 @@
     ["camOrbit", "camTop"].forEach(id => document.getElementById(id).classList.remove("active"));
     document.getElementById("camViewBtn").classList.add("active");
     document.getElementById("lensBar").classList.remove("hidden");
+    refreshVfBar();
     openDrawer(null);                                   // the lens image gets the whole window
   }
 
@@ -3975,6 +4073,7 @@
     document.body.classList.remove("camview");
     document.getElementById("camViewBtn").classList.remove("active");
     document.getElementById("lensBar").classList.add("hidden");
+    document.getElementById("vfGuides").classList.add("hidden");
     closeLensMenu();
     setNavButtons();
     const s = renderer.getSize(new THREE.Vector2());
@@ -4029,14 +4128,16 @@
   function renderCameraView() {
     const pa = getPlacedByUid(viewCamUid), g = placedGroupByUid[viewCamUid];
     if (!pa || !g || !g.userData.rig) { exitCameraView(); return; }
-    const o = camOptics(pa), rig = g.userData.rig;
+    const o = camOptics(pa), rig = g.userData.rig, full = vfPrefs().full;
     g.updateMatrixWorld(true);
     rig.getWorldPosition(shotCam.position);
     rig.getWorldQuaternion(shotCam.quaternion);
-    shotCam.fov = o.vFov; shotCam.aspect = o.aspect; shotCam.updateProjectionMatrix();
+    // Like an on-set monitor: the whole sensor, with the delivery frame marked inside it.
+    const vAsp = full ? o.sensorAspect : o.aspect;
+    shotCam.fov = full ? o.sensorVFov : o.vFov; shotCam.aspect = vAsp; shotCam.updateProjectionMatrix();
     const s = renderer.getSize(new THREE.Vector2()), W = s.x, H = s.y;
-    let vw = W, vh = W / o.aspect;
-    if (vh > H) { vh = H; vw = H * o.aspect; }
+    let vw = W, vh = W / vAsp;
+    if (vh > H) { vh = H; vw = H * vAsp; }
     const vx = (W - vw) / 2, vy = (H - vh) / 2;
     g.visible = false; // the camera's own body would sit inside its near plane
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.clear();
@@ -4061,13 +4162,63 @@
     const allCams = config.placedAssets.filter(p => p.assetId === "camera");
     const set = (sel, html) => { const el = vf.querySelector(sel); if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; } };
     set(".cam", "CAM " + (allCams.indexOf(pa) + 1));
-    set(".trx", '<span class="bx fill">' + escapeHtml(o.S.id.toUpperCase()) + '</span><span class="bx">' + o.f + 'mm</span><span>' +
-      o.hFov.toFixed(1) + '°</span><span>' + VF_FPS + 'FPS</span>');
+    set(".trx", '<span class="bx fill">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx">' + o.sq + '× ANA</span>' : "") +
+      '<span class="bx">' + o.f + 'mm</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
+    // Frame lines: the delivery frame (and protect) as a share of the image shown.
+    const vp = vfPrefs(), full = vp.full, fl = vf.querySelector(".fl"), pl = vf.querySelector(".pl");
+    const fx = full ? o.frameW / o.sensorW : 1, fy = full ? o.frameH / o.sensorH : 1;
+    const pct = v => (v * 100).toFixed(3) + "%";
+    const sig = [fx, fy, vp.shade, vp.safe, vp.thirds, o.fmt.id, o.protect && o.protect.id, full].join("|");
+    if (fl.dataset.sig !== sig) {
+      fl.dataset.sig = sig;
+      fl.style.left = pct((1 - fx) / 2); fl.style.top = pct((1 - fy) / 2); fl.style.width = pct(fx); fl.style.height = pct(fy);
+      fl.style.boxShadow = "0 0 0 100vmax rgba(0,0,0," + (full ? vp.shade : 0) + ")";
+      fl.classList.toggle("lines", full && o.fmt.aspect != null);
+      fl.querySelector(".safe").classList.toggle("hidden", !vp.safe);
+      fl.querySelector(".thirds").classList.toggle("hidden", !vp.thirds);
+      fl.querySelector(".lbl").textContent = o.fmt.aspect != null ? o.fmt.short : "";
+      if (o.protect) {
+        const px = full ? o.protectW / o.sensorW : o.protectW / o.frameW, py = full ? o.protectH / o.sensorH : o.protectH / o.frameH;
+        pl.classList.remove("hidden");
+        pl.style.left = pct((1 - px) / 2); pl.style.top = pct((1 - py) / 2); pl.style.width = pct(px); pl.style.height = pct(py);
+        pl.querySelector(".lbl").textContent = "protect " + o.protect.short;
+      } else pl.classList.add("hidden");
+    }
     set(".blx", "focus " + fmtLen(camVal(pa, "focusFt")) + " · lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°" +
       "<br>x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°" +
       (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · Esc exit</span>"));
     const fr = Math.floor((performance.now() - vfStart) / 1000 * VF_FPS), p2 = n => String(n).padStart(2, "0");
     set(".tc", p2(Math.floor(fr / (VF_FPS * 3600))) + ":" + p2(Math.floor(fr / (VF_FPS * 60)) % 60) + ":" + p2(Math.floor(fr / VF_FPS) % 60) + ":" + p2(fr % VF_FPS));
+  }
+
+  // ---- Viewfinder guides + frame picker (bar under the viewfinder) ---------------------
+  function vfPrefs() {
+    config.vf = Object.assign({ full: true, shade: 0.75, safe: false, thirds: false }, config.vf || {});
+    return config.vf;
+  }
+  function refreshVfBar() {
+    const pa = activeCameraPA(), sel = document.getElementById("lbFormat"); if (!sel) return;
+    const cur = pa ? frameFormat(camVal(pa, "format")).id : "full";
+    sel.innerHTML = FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === cur ? " selected" : "") + '>Frame · ' + escapeHtml(f.short === "OPEN" ? "full sensor" : f.short) + '</option>').join("");
+    const vp = vfPrefs();
+    document.getElementById("vgFull").checked = !!vp.full;
+    document.getElementById("vgShade").value = String(vp.shade);
+    document.getElementById("vgSafe").checked = !!vp.safe;
+    document.getElementById("vgThirds").checked = !!vp.thirds;
+  }
+  function wireVfBar() {
+    document.getElementById("lbFormat").addEventListener("change", e => {
+      const pa = activeCameraPA(); if (!pa) return;
+      pa.format = e.target.value; camDirty = true;
+      refreshCamPicker(); if (mode === "edit") scheduleAutosave();
+      e.target.blur();                                      // keys go back to driving the camera
+    });
+    document.getElementById("lbGuides").addEventListener("click", () => { document.getElementById("vfGuides").classList.toggle("hidden"); refreshVfBar(); });
+    const upd = (id, fn) => document.getElementById(id).addEventListener("change", e => { fn(vfPrefs(), e.target); scheduleAutosave(); });
+    upd("vgFull", (v, el) => { v.full = el.checked; });
+    upd("vgShade", (v, el) => { v.shade = parseFloat(el.value); });
+    upd("vgSafe", (v, el) => { v.safe = el.checked; });
+    upd("vgThirds", (v, el) => { v.thirds = el.checked; });
   }
 
   // ---- Lens menu (gamepad Select, viewfinder MENU, or click) ---------------
@@ -4105,7 +4256,7 @@
     const el = document.getElementById("lensMenu"), list = lensList(), S = sensorById(camVal(pa, "sensor")), cur = camVal(pa, "focalMm");
     el.innerHTML = '<h3><span>Lens</span><span>◀ ' + escapeHtml(S.name) + ' ▶</span></h3>' +
       list.map((mm, i) => {
-        const hf = radToDeg(2 * Math.atan(S.widthMm / (2 * mm)));
+        const hf = camOptics(Object.assign({}, pa, { focalMm: mm })).hFov;
         return '<div class="row' + (i === lensMenu.idx ? " cur" : "") + (mm === cur ? " on" : "") + '" data-i="' + i + '">' + mm + 'mm <span>' + hf.toFixed(1) + '° H</span></div>';
       }).join("") +
       '<div class="foot">' + (pad.connected ? "D-pad ↑↓ lens · ←→ sensor · A / Select done · B close" : "Click a lens · click the sensor name to switch") + '</div>';
@@ -4142,7 +4293,7 @@
         if (k) { parent = document.createElement("optgroup"); parent.setAttribute("label", k); sel.appendChild(parent); }
         groups[k].forEach(i => {
           const s = shots[i], o = document.createElement("option");
-          o.value = String(i); o.textContent = s.name + " · " + ((s.kind || "shot") === "mark" ? "mark" : s.focalMm + "mm");
+          o.value = String(i); o.textContent = s.name + " · " + ((s.kind || "shot") === "mark" ? "mark" : s.focalMm + "mm" + (s.format && s.format !== "full" ? " · " + frameFormat(s.format).short : ""));
           parent.appendChild(o);
         });
       });
@@ -4168,7 +4319,8 @@
       kind: kind, sequence: seq, name: name, x: pa.x, z: pa.z, rotationDeg: pa.rotationDeg || 0,
       heightFt: camVal(pa, "heightFt"), tiltDeg: camVal(pa, "tiltDeg")
     };
-    if (kind === "shot") { entry.focalMm = camVal(pa, "focalMm"); entry.sensor = camVal(pa, "sensor"); entry.focusFt = camVal(pa, "focusFt"); }
+    if (kind === "shot") { entry.focalMm = camVal(pa, "focalMm"); entry.sensor = camVal(pa, "sensor"); entry.focusFt = camVal(pa, "focusFt");
+      entry.format = camVal(pa, "format"); entry.squeeze = camVal(pa, "squeeze"); entry.protect = camVal(pa, "protect"); }
     let idx = config.shots.findIndex(s => s.name === name && (s.sequence || "") === seq && (s.kind || "shot") === kind);
     if (idx >= 0) config.shots[idx] = entry; else { config.shots.push(entry); idx = config.shots.length - 1; }
     refreshShotUI(idx);
@@ -4187,7 +4339,8 @@
     }
     pa.x = s.x; pa.z = s.z; pa.rotationDeg = s.rotationDeg; pa.heightFt = s.heightFt; pa.tiltDeg = s.tiltDeg;
     // A mark leaves the lens alone; a shot restores lens/sensor/focus too.
-    if ((s.kind || "shot") !== "mark") { pa.focalMm = s.focalMm; pa.sensor = s.sensor; pa.focusFt = s.focusFt; }
+    if ((s.kind || "shot") !== "mark") { pa.focalMm = s.focalMm; pa.sensor = s.sensor; pa.focusFt = s.focusFt;
+      if (s.format) { pa.format = s.format; pa.squeeze = s.squeeze || 1; pa.protect = s.protect || ""; } }
     rebuildPlaced();
     if (mode === "edit") { reselectUid(pa._uid); scheduleAutosave(); }
     toast("Recalled " + s.name);
@@ -4305,7 +4458,9 @@
       const P = 40, HEAD = 96, COLX = P + SHOT_W + P, COLW = 2400 - COLX - P;
       const info = [
         ["Lens", o.f + " mm"],
-        ["Sensor", o.S.name + " (" + o.S.widthMm + " × " + o.S.heightMm + " mm)"],
+        ["Camera", o.S.name + " (" + o.S.widthMm + " × " + o.S.heightMm + " mm)"],
+        ["Format", o.fmt.name + (o.sq > 1 ? " · " + o.sq + "× anamorphic" : " · spherical") + (o.protect ? " · protect " + o.protect.name : "") +
+          "  (frame " + o.frameW.toFixed(1) + " × " + o.frameH.toFixed(1) + " mm" + (o.sq > 1 ? " de-squeezed" : "") + ")"],
         ["Field of view", o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V"],
         ["Focus", fmtLen(fd)],
         ["Frame at focus", fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH)],
@@ -4330,7 +4485,7 @@
       const title = (seq ? seq + " · " : "") + (shotName || "Shot");
       c.fillStyle = "#e6e8ec"; c.font = "600 38px Segoe UI, sans-serif"; c.fillText(title, P, 56);
       c.fillStyle = "#9aa0ac"; c.font = "20px Segoe UI, sans-serif";
-      c.fillText("Mock & Roll · Lumostage · CAM " + camNo + " · " + o.f + "mm " + o.S.name + " · " + new Date().toLocaleString(), P, 84);
+      c.fillText("Mock & Roll · Lumostage · CAM " + camNo + " · " + o.f + "mm · " + formatLabel(o) + " · " + new Date().toLocaleString(), P, 84);
       c.drawImage(shotImg, P, HEAD);
       c.strokeStyle = "#3a3f4b"; c.lineWidth = 2; c.strokeRect(P, HEAD, SHOT_W, SHOT_H);
       c.drawImage(planImg, COLX, HEAD);
@@ -4356,7 +4511,7 @@
         });
       }
 
-      const fname = ("mock-and-roll_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm").replace(/[^\w\-]+/g, "_") + ".png";
+      const fname = ("mock-and-roll_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm_" + o.fmt.short).replace(/[^\w\-]+/g, "_") + ".png";
       cv.toBlob(blob => {
         if (!blob) { toast("Print failed: couldn't encode the image"); return; }
         const url = URL.createObjectURL(blob), a = document.createElement("a");
@@ -4596,7 +4751,7 @@
       const body = [[-0.9, 0.7], [0.9, 0.7], [0.9, -0.7], [-0.9, -0.7]].map(v => [pa.x + v[0] * Math.cos(th) + v[1] * Math.sin(th), pa.z - v[0] * Math.sin(th) + v[1] * Math.cos(th)]);
       out.push('<polygon points="' + pts(body) + '" fill="' + INK + '"/>');
       const q = P(pa.x, pa.z), no = allCams.indexOf(pa) + 1;
-      text(q[0] + 7, q[1] + 11, "CAM " + no + " · " + o.f + "mm", { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
+      text(q[0] + 7, q[1] + 11, "CAM " + no + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : ""), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
     });
     // ---- origin + dimensions -----------------------------------------------------------
     { const q = P(0, 0); out.push('<path d="M' + f2(q[0] - 5) + " " + f2(q[1]) + "h10M" + f2(q[0]) + " " + f2(q[1] - 5) + 'v10" stroke="' + INK + '" stroke-width="0.7"/>');
@@ -4671,7 +4826,7 @@
       head("CAMERAS");
       cams.forEach(c => { if (room() < 20) return; const pa = c.pa, o = camOptics(pa), no = allCams.indexOf(pa) + 1;
         text(tx + pad, y, "CAM " + no, { size: 6, weight: 700, fill: "#a86f00" });
-        text(tx + pad + 30, y, o.f + "mm " + o.S.name + " · lens " + ftIn(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°", { size: 5.6 }); y += 8;
+        text(tx + pad + 30, y, o.f + "mm · " + formatLabel(o) + " · lens " + ftIn(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°", { size: 5.6 }); y += 8;
         text(tx + pad + 30, y, "at x " + ftIn(pa.x) + ", z " + ftIn(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "° · focus " + ftIn(camVal(pa, "focusFt")), { size: 5.2, fill: MUTE }); y += 10; });
       y += 1; rule();
     }
@@ -6494,6 +6649,12 @@
         // FPS controls: WASD move (A/D strafe), Q/E height, arrows look, Shift = fast.
         if (e.key === "Escape") { exitCameraView(); return; }
         if (typing) return;
+        if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey) {      // F / Shift+F: next / previous frame
+          const pa = getPlacedByUid(viewCamUid), i = FRAME_FORMATS.findIndex(f => f.id === frameFormat(camVal(pa, "format")).id), n = FRAME_FORMATS.length;
+          pa.format = FRAME_FORMATS[(i + (e.shiftKey ? -1 : 1) + n) % n].id; camDirty = true;
+          refreshCamPicker(); refreshVfBar(); toast("Frame · " + frameFormat(pa.format).name); if (mode === "edit") scheduleAutosave();
+          e.preventDefault(); return;
+        }
         if (CAM_KEYS.indexOf(e.code) !== -1) { camKeys[e.code] = true; e.preventDefault(); }
         return;
       }
