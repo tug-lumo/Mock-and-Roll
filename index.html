@@ -234,6 +234,19 @@
   #welcome .btnRow { justify-content: flex-end; }
   #welcome .btnRow button { flex: 0 0 auto; }
 
+  /* Stage plan sheet */
+  #planSheet { position: absolute; inset: 0; z-index: 46; background: rgba(10,11,13,.72); display: grid; place-items: center; }
+  #planSheet .planWrap { width: calc(100% - 32px); height: calc(100% - 32px); display: flex; gap: 12px; }
+  #planSheet .planPreview { flex: 1; min-width: 0; position: relative; background: #2a3033; border-radius: var(--radius); }
+  /* the whole sheet, letterboxed to the preview area (the SVG keeps its paper aspect) */
+  #planSheet .planPreview svg { position: absolute; inset: 14px; width: calc(100% - 28px); height: calc(100% - 28px); filter: drop-shadow(0 6px 18px rgba(0,0,0,.45)); }
+  #planSheet .planSide { width: 300px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
+  #planSheet .foot { padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+  #planSheet .foot > .primary { width: 100%; }
+  #planSheet textarea { width: 100%; box-sizing: border-box; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font: 13px Arial, Helvetica, sans-serif; resize: vertical; }
+  #planSheet .planNotes { display: block; color: var(--muted); font-size: 12.5px; margin: 4px 0 6px; }
+  body.phone #planSheet .planWrap { flex-direction: column; }
+  body.phone #planSheet .planSide { width: auto; max-height: 50%; }
   /* Controls reference (Help) */
   #help { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; background: rgba(10,11,13,.6); }
   #help .card { width: min(780px, calc(100% - 32px)); max-height: calc(100% - 64px); overflow: auto; background: var(--panel);
@@ -430,6 +443,8 @@
         <button class="item editOnly" id="saveBtn" role="menuitem"><svg><use href="#i-save"/></svg><span>Save layout<small>Download this stage as a .json file</small></span></button>
         <button class="item editOnly" id="loadBtn" role="menuitem"><svg><use href="#i-open"/></svg><span>Open layout…<small>Load a saved .json file</small></span></button>
         <input id="fileInput" type="file" accept="application/json,.json" class="hidden" />
+        <div class="sep"></div>
+        <button class="item" id="planBtn" role="menuitem"><svg><use href="#i-plan"/></svg><span>Stage plan…<small>A to-scale floor plan to print, PDF or share (Ctrl+P)</small></span></button>
         <div class="sep editOnly"></div>
         <button class="item hidden" id="publishBtn" role="menuitem"><svg><use href="#i-phone"/></svg><span>Publish to phone<small>Send this layout and any imported models to the phone viewer</small></span></button>
         <button class="item" id="modeBtn" role="menuitem"><svg><use href="#i-eye"/></svg><span><span id="modeLabel">View-only mode</span><small id="modeSub">Hide the editing tools for a walkthrough</small></span></button>
@@ -613,6 +628,41 @@
           <dt>Load a file</dt><dd>Plays this session only; reload it after a refresh</dd>
           <dt>Staff</dt><dd>Add worlds to the library with <code>tools/make-360-proxies.ps1</code> (see docs/360-environments.md)</dd></dl></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Stage plan: a to-scale drafting sheet (File → Stage plan…) -->
+  <div id="planSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+    <div class="planWrap">
+      <div class="planPreview" id="planPreview" aria-label="Stage plan preview"></div>
+      <aside class="planSide">
+        <div class="paneHead"><div><h2 id="planTitle">Stage plan</h2><p>A to-scale drawing of the stage for crews and clients — drawn from this layout.</p></div>
+          <button class="ghost x" id="planClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+        <div class="paneBody">
+          <div class="field"><label for="planPaper">Paper</label><select id="planPaper" data-plan="paper"><option value="tabloid">Tabloid 17×11</option><option value="letter">Letter 11×8.5</option><option value="a3">A3</option><option value="a4">A4</option></select></div>
+          <div class="field"><label for="planArea">Area</label><select id="planArea" data-plan="area"><option value="studio">Whole studio</option><option value="set">Volume &amp; set only</option></select></div>
+          <div class="field"><label for="planScale">Scale</label><select id="planScale" data-plan="scale"><option value="auto">Auto (largest that fits)</option><option value="0.5">1/2″ = 1′</option><option value="0.375">3/8″ = 1′</option><option value="0.25">1/4″ = 1′</option><option value="0.1875">3/16″ = 1′</option><option value="0.125">1/8″ = 1′</option><option value="0.09375">3/32″ = 1′</option><option value="0.0625">1/16″ = 1′</option><option value="fit">Fit to page</option></select></div>
+          <div class="field"><label for="planLabels">Labels</label><select id="planLabels" data-plan="labels"><option value="numbers">Numbers + list</option><option value="names">Names on the plan</option></select></div>
+          <div class="field"><label for="planPeople">People</label><select id="planPeople" data-plan="people"><option value="all">Everyone</option><option value="heroes">Heroes only</option><option value="none">None</option></select></div>
+          <label class="setToggle"><input type="checkbox" data-plan="cameras"><span>Cameras &amp; field of view</span></label>
+          <label class="setToggle"><input type="checkbox" data-plan="grid"><span>Grid &amp; coordinates</span></label>
+          <label class="setToggle"><input type="checkbox" data-plan="ceiling"><span>LED ceiling outline</span></label>
+          <label class="setToggle"><input type="checkbox" data-plan="fireLane"><span>Fire lane</span></label>
+          <div class="subhead">Title block</div>
+          <div class="field"><label for="planProd">Production</label><input type="text" id="planProd" data-plan="meta.production" style="width:160px"></div>
+          <div class="field"><label for="planScene">Set / scene</label><input type="text" id="planScene" data-plan="meta.scene" style="width:160px"></div>
+          <div class="field"><label for="planDate">Shoot date</label><input type="text" id="planDate" data-plan="meta.date" placeholder="today" style="width:160px"></div>
+          <div class="field"><label for="planBy">Drawn by</label><input type="text" id="planBy" data-plan="meta.drawnBy" style="width:160px"></div>
+          <div class="field"><label for="planRev">Revision</label><input type="text" id="planRev" data-plan="meta.rev" style="width:60px"></div>
+          <label class="planNotes" for="planNotesIn">Notes</label>
+          <textarea id="planNotesIn" data-plan="meta.notes" rows="3" placeholder="Load-in, power, rigging, safety…"></textarea>
+        </div>
+        <div class="foot">
+          <button class="primary" id="planPrintBtn">Print / Save PDF</button>
+          <div class="btnRow"><button id="planSvgBtn">Download SVG</button><button id="planPngBtn">Download PNG</button></div>
+          <div class="hint" style="margin-top:6px">Print at 100% (no “fit to page”) and the scale holds: measure off the sheet.</div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -804,6 +854,12 @@
         note: "two exist (configs: straight 24ft run, or L-corner).",
         model: "assets/glass_wall.glb" },
       // Corner piece joins two glass walls at a 90° building corner; its reverse (outward) faces are brick.
+      // Faux wall: a standard 4'x10' film "hard" (Hollywood) flat — 1/4" luan face on a 1x3-on-edge
+      // frame (stiles, rails, two toggles), ~2 3/4" deep — standing on a 4x4x2 deck, flush to one
+      // edge like the glass walls, with a stage jack + sandbag on the deck behind. Face = local -Z.
+      // pa.paint: the face colour (scenic paint, chroma green/blue...).
+      { assetId: "setFlat", name: "Set flat (4×10 on 4×4 deck)", category: "set-wall",
+        lengthFt: 4, widthFt: 0.23, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 } },
       { assetId: "cornerPillar", name: "Glass Wall Corner Piece", category: "glass-wall", parentSet: "glassPropWalls",
         lengthFt: 4, widthFt: 4, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 },
         dualMaterial: { front: "glass/frame", reverse: "brick", note: "one object — inner-corner faces read as frame, the outward reverse is a brick facade" },
@@ -1042,6 +1098,8 @@
     applyUrlParams();  // share links: ?view (read-only) and ?config=<url> (auto-load a layout)
     if (histAt < 0) historyReset();
     document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
+    wirePlanSheet();
+    document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
     loadEnvLibrary();  // 360° environments (environments/library.json + samples.json), restores the layout's pick
@@ -2393,6 +2451,37 @@
     return g;
   }
 
+  const FLAT_PAINTS = [["#d8d2c4", "Off-white"], ["#9a948a", "Warm grey"], ["#3a3d40", "Charcoal"], ["#8a3b2c", "Brick red"],
+                       ["#8b9a7a", "Sage"], ["#2b3a55", "Navy"], ["#3dbb3f", "Chroma green"], ["#2b52d9", "Chroma blue"]];
+  function buildSetFlat(entry, pa) {
+    pa = pa || {};
+    const L = entry.lengthFt || 4, H = entry.heightFt || 10, D = entry.widthFt || 0.23;
+    const g = new THREE.Group(); g.userData.baseY = 0;
+    const deckTop = addGlassDeck(g, entry);
+    const w = new THREE.Group();                              // the flat, standing on the deck's -Z edge
+    w.position.set(0, deckTop, entry.deck ? -entry.deck.widthFt / 2 + D / 2 : 0);
+    g.add(w);
+    const paint = new THREE.MeshStandardMaterial({ color: parseInt((pa.paint || FLAT_PAINTS[0][0]).slice(1), 16), roughness: 0.88 });
+    const wood = new THREE.MeshStandardMaterial({ color: 0xb48a5a, roughness: 0.8 });
+    const luanBack = new THREE.MeshStandardMaterial({ color: 0xc9a77c, roughness: 0.85 });
+    const face = 0.02, st = 0.0625, dp = D - face;            // luan face, 3/4" x 2 1/2" frame members
+    const skin = new THREE.Mesh(new THREE.BoxGeometry(L, H, face), [paint, paint, paint, paint, luanBack, paint]);
+    skin.position.set(0, H / 2, -D / 2 + face / 2); w.add(skin);   // painted side faces -Z (out)
+    const member = (sx, sy, sz, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), wood); m.position.set(x, y, -D / 2 + face + dp / 2); w.add(m); };
+    [-1, 1].forEach(k => member(st, H, dp, k * (L / 2 - st / 2), H / 2));   // stiles
+    [st / 2, H - st / 2].forEach(y => member(L, st, dp, 0, y));            // top + bottom rails
+    [H / 3, 2 * H / 3].forEach(y => member(L - 2 * st, st, dp, 0, y));     // toggles
+    // Stage jack: a right-angle brace hinged to the back, foot on the deck, weighted with a sandbag.
+    const jh = 0.72 * H, jd = 2.6, jz0 = D / 2;
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(st, jh, 0.21), wood); leg.position.set(0, jh / 2, jz0 + 0.105); w.add(leg);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(st, 0.21, jd), wood); foot.position.set(0, 0.105, jz0 + jd / 2); w.add(foot);
+    const len = Math.hypot(jh, jd), diag = new THREE.Mesh(new THREE.BoxGeometry(st, len, 0.21), wood);
+    diag.position.set(0, jh / 2, jz0 + jd / 2); diag.rotation.x = -Math.atan2(jd, jh); w.add(diag);   // top at the flat, foot out on the deck
+    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.35, 0.55), makeStandardMat(0x3b3a33));
+    bag.position.set(0, 0.21 + 0.17, jz0 + jd - 0.45); w.add(bag);
+    return g;
+  }
+
   // Corner piece that joins two glass walls at a 90° building corner. One object: the inner-corner
   // faces read as frame, the outward reverse is a brick facade (BoxGeometry face order px,nx,py,ny,pz,nz).
   // Rides its own 2ft deck so its top lines up with the decked glass walls.
@@ -2491,6 +2580,8 @@
       attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // stainless shell mirrors the volume
     } else if (entry.assetId === "stationPlatform") {
       g = buildStationPlatform(entry, pa);
+    } else if (entry.assetId === "setFlat") {
+      g = buildSetFlat(entry, pa);
     } else if (entry.assetId === "glassWall") {
       g = buildGlassWall(entry);
     } else if (entry.assetId === "cornerPillar") {
@@ -3036,6 +3127,7 @@
         (isStageDeck ? fieldHTML("deckL", "Length", toDisplay(cur.lengthFt)) + fieldHTML("deckW", "Width", toDisplay(cur.widthFt)) : ""), true) +
       doorsHTML(cur) +
       platformHTML(cur) +
+      (selected.kind === "placed" && cur.assetId === "setFlat" ? grpHTML("paint", "Paint", escapeHtml(paintName(cur.paint)), paintHTML(cur), true) : "") +
       (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
       (isPerson ? grpHTML("figure", "Figure", fmtLen(personHeight(catalogEntry(cur.assetId), cur)), figureHTML(cur)) : "") +
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
@@ -3176,9 +3268,20 @@
         '<label class="setToggle"><input type="checkbox" id="platSigns" ' + (pa.signs ? "checked" : "") + '><span>"Canal Street" signs on the pillars</span></label>' +
         '<div class="hint">The signs match the Unreal station; the physical pillars are bare.</div>');
   }
+  function paintName(c) { const f = FLAT_PAINTS.find(x => x[0] === (c || FLAT_PAINTS[0][0])); return f ? f[1] : "Custom " + c; }
+  function paintHTML(pa) {
+    const cur = pa.paint || FLAT_PAINTS[0][0];
+    return '<div class="roles" role="radiogroup" aria-label="Face paint">' + FLAT_PAINTS.map(f => '<button class="roleSw paintSw" role="radio" data-c="' + f[0] + '" aria-checked="' + (cur === f[0]) + '" aria-label="' + f[1] + '" title="' + f[1] + '"' +
+      ' tabindex="' + (cur === f[0] ? 0 : -1) + '" style="--c:' + f[0] + ';--k:' + (lumaOf(f[0]) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>').join("") + '</div>' +
+      '<div class="field"><label for="paintCustom">Custom colour</label><input type="color" id="paintCustom" value="' + cur + '" style="width:60px;height:30px;padding:2px"></div>' +
+      '<div class="hint">The face points away from the deck; the frame, stage jack and sandbag sit on the deck behind. Butt flats edge to edge for a longer wall.</div>';
+  }
   function wirePlatformFields() {
     const redo = fn => { const pa = cfgForSelected(); if (!pa) return; const uid = pa._uid; fn(pa); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); };
     document.querySelectorAll("#inspectorBody [data-plat]").forEach(b => b.addEventListener("click", () => redo(pa => { pa.variant = b.dataset.plat; })));
+    document.querySelectorAll("#inspectorBody .paintSw").forEach(b => b.addEventListener("click", () => redo(pa => { pa.paint = b.dataset.c; })));
+    const pc = document.getElementById("paintCustom");
+    if (pc) pc.addEventListener("change", () => redo(pa => { pa.paint = pc.value; }));
     const br = document.getElementById("platBracing"), sg = document.getElementById("platSigns");
     if (br) br.addEventListener("change", () => redo(pa => { pa.bracing = br.checked; }));
     if (sg) sg.addEventListener("change", () => redo(pa => { pa.signs = sg.checked; }));
@@ -4088,6 +4191,400 @@
       toast("Print failed: " + (err && err.message ? err.message : err));
     }
   }
+  // ==================================================================
+  //  STAGE PLAN  (File → Stage plan…) — a to-scale drafting sheet, drawn as vector SVG
+  // ==================================================================
+  // Built straight from the layout (not a screenshot): studio shell, LED surfaces, every piece as a
+  // numbered outline, cameras with field of view, cast, grid + coordinates from the curve centre,
+  // dimensions, scale bar and a title block. Paper sizes print at a true architectural scale
+  // (Print / Save as PDF), or download as SVG / PNG. Options + title-block text live in config.plan.
+  const PLAN_PAPERS = { letter: { name: "Letter 11 × 8.5 in", w: 11, h: 8.5 }, tabloid: { name: "Tabloid 17 × 11 in", w: 17, h: 11 },
+                        a4: { name: "A4 297 × 210 mm", w: 11.69, h: 8.27 }, a3: { name: "A3 420 × 297 mm", w: 16.54, h: 11.69 } };
+  const PLAN_SCALES = [[0.5, "1/2″"], [0.375, "3/8″"], [0.25, "1/4″"], [0.1875, "3/16″"], [0.125, "1/8″"], [0.09375, "3/32″"], [0.0625, "1/16″"], [0.03125, "1/32″"]];
+  const PLAN_DEFAULTS = { paper: "tabloid", area: "studio", scale: "auto", grid: true, cameras: true, people: "all", labels: "numbers", ceiling: true, fireLane: true,
+                          meta: { production: "", scene: "", date: "", drawnBy: "", rev: "A", notes: "" } };
+  function planOpts() {
+    config.plan = Object.assign({}, PLAN_DEFAULTS, config.plan || {});
+    config.plan.meta = Object.assign({}, PLAN_DEFAULTS.meta, config.plan.meta || {});
+    return config.plan;
+  }
+  let planLogoData = null;
+  function loadPlanLogo() {
+    if (planLogoData) return Promise.resolve(planLogoData);
+    return fetch("brand/logo-positive.png").then(r => r.ok ? r.blob() : null).then(b => b ? new Promise(res => {
+      const fr = new FileReader(); fr.onload = () => res(planLogoData = fr.result); fr.readAsDataURL(b);
+    }) : null).catch(() => null);
+  }
+  const xmlEsc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  function ftIn(v) {                                         // 12.5 -> 12′-6″ (or metres in metric mode)
+    if (displayUnit === "m") return (v / FT_PER_M).toFixed(2) + " m";
+    const tot = Math.round(Math.abs(v) * 12), f = Math.floor(tot / 12), i = tot % 12;
+    return (v < 0 ? "-" : "") + f + "′" + (i ? "-" + i + "″" : "");
+  }
+  function planLabel(pa, e) {
+    if (pa.assetId === "stageDeck") return { name: "Stage deck", dims: ftIn(pa.lengthFt) + " × " + ftIn(pa.widthFt) };
+    if (e.platform) { const d = platformDims(e, pa); return { name: "Station platform", dims: ftIn(d.W) + " × " + ftIn(d.L) + ", 4 pillars" }; }
+    if (pa.assetId === "setFlat") return { name: "Set flat", dims: "4′ × 10′ on 4×4 deck · " + paintName(pa.paint).toLowerCase() };
+    if (pa.assetId === "glassWall") return { name: "Glass wall", dims: "12′ × 10′ on 12×4 deck" };
+    if (pa.assetId === "cornerPillar") return { name: "Glass corner", dims: "4′ × 4′ × 10′" };
+    if (pa.assetId === "subwayCar") return { name: "Subway car", dims: "37′ × 8′, doors " + (pa.doorsOpen !== false ? "open" : "closed") };
+    const nm = (e.name || pa.assetId).replace(/\s*\(.*\)\s*$/, "");
+    const L = e.custom ? pa.lengthFt : e.lengthFt, W = e.custom ? pa.widthFt : e.widthFt;
+    return { name: nm, dims: L ? ftIn(L) + " × " + ftIn(W) : "" };
+  }
+  // World (x, z) of a point given in a group's local frame (three.js Y rotation, as footprintOf).
+  function planW(g, lx, lz) {
+    const c = Math.cos(g.rotation.y), s = Math.sin(g.rotation.y);
+    return [g.position.x + lx * c + lz * s, g.position.z - lx * s + lz * c];
+  }
+  function buildPlanSVG(opt) {
+    const paper = PLAN_PAPERS[opt.paper] || PLAN_PAPERS.tabloid, PW = paper.w, PH = paper.h;
+    const m = 0.35, tbW = PW < 12 ? 2.6 : 3.2, gap = 0.22, ruler = opt.grid ? 0.22 : 0;
+    const area = { x: m + ruler, y: m + ruler, w: PW - 2 * m - tbW - gap - ruler, h: PH - 2 * m - ruler };
+    const st = config.studio || { xMin: -40, xMax: 40, zBack: -30, zFrontOpen: 40 };
+    const R = mainWallMesh && mainWallMesh.userData.dims ? mainWallMesh.userData.dims.radius : 18.8;
+
+    // ---- gather what's on stage --------------------------------------------------------
+    const items = [], people = [], cams = [];
+    selectableObjects.forEach(g => {
+      if (!g.visible) return;
+      if (g.userData.kind === "rollingWall") { items.push({ g: g, rw: config.rollingWalls.find(r => r.id === g.userData.id) }); return; }
+      if (g.userData.kind !== "placed") return;
+      const pa = getPlacedByUid(g.userData.uid), e = pa && catalogEntry(pa.assetId);
+      if (!pa || !e) return;
+      if (e.category === "camera") cams.push({ g: g, pa: pa });
+      else if (e.category === "person") people.push({ g: g, pa: pa, e: e });
+      else items.push({ g: g, pa: pa, e: e });
+    });
+    // ---- extent -> scale ---------------------------------------------------------------
+    let b;
+    if (opt.area === "set") {
+      b = { x0: -R - 1, x1: R + 1, z0: -R - 1, z1: 2 };
+      const grow = (x, z) => { b.x0 = Math.min(b.x0, x); b.x1 = Math.max(b.x1, x); b.z0 = Math.min(b.z0, z); b.z1 = Math.max(b.z1, z); };
+      items.concat(cams).forEach(it => { const fp = footprintOf(it.g, 0); if (fp) fp.forEach(p => grow(p[0], p[1])); else grow(it.g.position.x, it.g.position.z); });
+      people.forEach(p => grow(p.g.position.x, p.g.position.z));
+      b.x0 -= 4; b.x1 += 4; b.z0 -= 4; b.z1 += 5;
+    } else b = { x0: st.xMin - 2, x1: st.xMax + 2, z0: st.zBack - 2, z1: st.zFrontOpen + 4 };
+    const bw = b.x1 - b.x0, bh = b.z1 - b.z0;
+    let s, scaleTxt;
+    const fixed = PLAN_SCALES.find(x => String(x[0]) === String(opt.scale));
+    if (opt.scale === "fit") { s = Math.min(area.w / bw, area.h / bh); scaleTxt = "1 : " + Math.round(12 / s) + " (fit to page)"; }
+    else if (fixed) { s = fixed[0]; scaleTxt = fixed[1] + " = 1′-0″  (1 : " + Math.round(12 / s) + ")"; }
+    else { const pick = PLAN_SCALES.find(x => bw * x[0] <= area.w && bh * x[0] <= area.h) || PLAN_SCALES[PLAN_SCALES.length - 1]; s = pick[0]; scaleTxt = pick[1] + " = 1′-0″  (1 : " + Math.round(12 / s) + ")"; }
+    const overflow = bw * s > area.w + 0.01 || bh * s > area.h + 0.01;
+    const k = s * 72;                                          // points per foot
+    const ox = (area.x + Math.max(0, (area.w - bw * s) / 2)) * 72, oy = (area.y + Math.max(0, (area.h - bh * s) / 2)) * 72;
+    const P = (x, z) => [ox + (x - b.x0) * k, oy + (z - b.z0) * k];
+    const f2 = v => Math.round(v * 100) / 100;
+    const pts = arr => arr.map(p => { const q = P(p[0], p[1]); return f2(q[0]) + "," + f2(q[1]); }).join(" ");
+    const INK = "#1d2124", MUTE = "#6b7278", LED = "#0060fe", out = [];
+    const text = (x, y, t, o) => {
+      o = o || {};
+      out.push('<text x="' + f2(x) + '" y="' + f2(y) + '" font-size="' + (o.size || 7) + '" font-weight="' + (o.weight || 400) + '" fill="' + (o.fill || INK) + '"' +
+        (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + (o.halo ? ' stroke="#fff" stroke-width="2.4" paint-order="stroke" stroke-linejoin="round"' : "") +
+        (o.rot ? ' transform="rotate(' + o.rot + " " + f2(x) + " " + f2(y) + ')"' : "") + '>' + xmlEsc(t) + '</text>');
+    };
+    const dx0 = area.x * 72, dy0 = area.y * 72, dW = area.w * 72, dH = area.h * 72;
+    out.push('<defs><clipPath id="drawClip"><rect x="' + f2(dx0) + '" y="' + f2(dy0) + '" width="' + f2(dW) + '" height="' + f2(dH) + '"/></clipPath>' +
+      '<pattern id="hatchY" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#f6d77a"/><line x1="0" y1="0" x2="0" y2="4" stroke="#c99a1f" stroke-width="1.4"/></pattern>' +
+      '<pattern id="hatchW" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#9aa0a6" stroke-width="0.6"/></pattern></defs>');
+    out.push('<g clip-path="url(#drawClip)">');
+    // ---- grid ----------------------------------------------------------------------------
+    if (opt.grid) {
+      const minor = s >= 0.125 ? 1 : s >= 0.0625 ? 2 : 5, major = s >= 0.25 ? 5 : 10;
+      for (let x = Math.ceil(b.x0 / minor) * minor; x <= b.x1; x += minor) {
+        const q = P(x, 0)[0], mj = Math.abs(x % major) < 1e-6;
+        out.push('<line x1="' + f2(q) + '" y1="' + f2(dy0) + '" x2="' + f2(q) + '" y2="' + f2(dy0 + dH) + '" stroke="' + (mj ? "#ccd1d5" : "#eceef0") + '" stroke-width="' + (mj ? 0.6 : 0.35) + '"/>');
+      }
+      for (let z = Math.ceil(b.z0 / minor) * minor; z <= b.z1; z += minor) {
+        const q = P(0, z)[1], mj = Math.abs(z % major) < 1e-6;
+        out.push('<line x1="' + f2(dx0) + '" y1="' + f2(q) + '" x2="' + f2(dx0 + dW) + '" y2="' + f2(q) + '" stroke="' + (mj ? "#ccd1d5" : "#eceef0") + '" stroke-width="' + (mj ? 0.6 : 0.35) + '"/>');
+      }
+    }
+    // ---- studio shell --------------------------------------------------------------------
+    const sp = [P(st.xMin, st.zBack), P(st.xMax, st.zBack), P(st.xMin, st.zFrontOpen), P(st.xMax, st.zFrontOpen)];
+    out.push('<polyline points="' + [sp[2], sp[0], sp[1], sp[3]].map(q => f2(q[0]) + "," + f2(q[1])).join(" ") + '" fill="none" stroke="' + INK + '" stroke-width="3"/>');
+    out.push('<line x1="' + f2(sp[2][0]) + '" y1="' + f2(sp[2][1]) + '" x2="' + f2(sp[3][0]) + '" y2="' + f2(sp[3][1]) + '" stroke="' + MUTE + '" stroke-width="0.8" stroke-dasharray="6 4"/>');
+    text((sp[2][0] + sp[3][0]) / 2, sp[2][1] + 10, "OPEN FRONT", { size: 6.5, weight: 700, fill: MUTE, anchor: "middle", halo: true });
+    if (opt.fireLane) {
+      const fl = st.fireLaneWidthFt || 4;
+      out.push('<polygon points="' + pts([[st.xMin + fl, st.zBack + fl], [st.xMax - fl, st.zBack + fl], [st.xMax - fl, st.zFrontOpen - fl], [st.xMin + fl, st.zFrontOpen - fl]]) + '" fill="none" stroke="#d8a21b" stroke-width="0.9" stroke-dasharray="5 3"/>');
+      const q = P(st.xMax - fl, st.zBack + fl); text(q[0] - 3, q[1] + 8, "4′ fire lane — keep clear", { size: 5.5, fill: "#a87a10", anchor: "end", halo: true });
+    }
+    if (config.pillar) {
+      const pl = config.pillar, h = (pl.sizeFt || 2) / 2;
+      out.push('<polygon points="' + pts([[pl.x - h, pl.z - h], [pl.x + h, pl.z - h], [pl.x + h, pl.z + h], [pl.x - h, pl.z + h]]) + '" fill="#5b6069" stroke="' + INK + '" stroke-width="0.8"/>');
+      const q = P(pl.x + h, pl.z - h); text(q[0] + 3, q[1] - 2, "Column", { size: 5.5, fill: MUTE, halo: true });
+    }
+    // ---- LED volume ------------------------------------------------------------------------
+    if (opt.ceiling && ceilingMesh && ceilingGroup && ceilingGroup.visible) {
+      const cb = new THREE.Box3().setFromObject(ceilingMesh);
+      out.push('<polygon points="' + pts([[cb.min.x, cb.min.z], [cb.max.x, cb.min.z], [cb.max.x, cb.max.z], [cb.min.x, cb.max.z]]) + '" fill="rgba(0,96,254,.04)" stroke="' + LED + '" stroke-width="0.9" stroke-dasharray="7 3 1.5 3"/>');
+      const q = P(cb.min.x, cb.max.z); text(q[0] + 3, q[1] - 3, "LED ceiling above · " + ftIn(cb.max.x - cb.min.x) + " × " + ftIn(cb.max.z - cb.min.z) + " @ " + ftIn(cb.min.y), { size: 5.5, fill: LED, halo: true });
+    }
+    const arc = []; for (let i = 0; i <= 64; i++) { const a = Math.PI + Math.PI * i / 64; arc.push([R * Math.cos(a), R * Math.sin(a)]); }
+    out.push('<polyline points="' + pts(arc) + '" fill="none" stroke="' + LED + '" stroke-width="' + f2(Math.max(2.2, 0.5 * k)) + '" stroke-linecap="butt"/>');
+    { const q = P(0, -R); text(q[0], q[1] - 5, "MAIN LED WALL · " + ftIn(2 * R) + " dia · 180° · " + ftIn(mainWallMesh ? mainWallMesh.userData.dims.wallH : 16) + " high", { size: 6.5, weight: 700, fill: LED, anchor: "middle", halo: true }); }
+    // ---- pieces ----------------------------------------------------------------------------
+    const order = items.slice().sort((a, c) => a.g.position.z - c.g.position.z || a.g.position.x - c.g.position.x);
+    const schedule = [];
+    order.forEach(it => {
+      const g = it.g, fp = footprintOf(g, 0);
+      let label, centroid;
+      if (it.rw) {
+        const d = g.userData.dims;
+        const deck = [planW(g, -d.deckDepth, -d.deckLen / 2), planW(g, 0, -d.deckLen / 2), planW(g, 0, d.deckLen / 2), planW(g, -d.deckDepth, d.deckLen / 2)];
+        out.push('<polygon points="' + pts(deck) + '" fill="#eef0f2" stroke="#5a6270" stroke-width="0.8"/>');
+        const a = planW(g, d.thickness / 2, -d.wallLen / 2), c = planW(g, d.thickness / 2, d.wallLen / 2), qa = P(a[0], a[1]), qc = P(c[0], c[1]);
+        out.push('<line x1="' + f2(qa[0]) + '" y1="' + f2(qa[1]) + '" x2="' + f2(qc[0]) + '" y2="' + f2(qc[1]) + '" stroke="' + LED + '" stroke-width="' + f2(Math.max(2.2, 0.5 * k)) + '"/>');
+        label = { name: "Rolling LED wall · " + (it.rw.defaultSide || it.rw.id), dims: ftIn(d.wallLen) + " × " + ftIn(d.wallH) + " on " + ftIn(d.deckLen) + " × " + ftIn(d.deckDepth) + " deck" + (it.rw.deployed === false ? " (stowed)" : "") };
+        centroid = planW(g, -d.deckDepth / 2, 0);
+      } else {
+        const pa = it.pa, e = it.e;
+        label = planLabel(pa, e);
+        const castN = castOf(pa).length; if (castN) label.dims += (label.dims ? " · " : "") + castN + " cast";
+        if (e.deck && (pa.assetId === "glassWall" || pa.assetId === "setFlat" || pa.assetId === "cornerPillar")) {
+          const dk = e.deck, deck = [[-dk.lengthFt / 2, -dk.widthFt / 2], [dk.lengthFt / 2, -dk.widthFt / 2], [dk.lengthFt / 2, dk.widthFt / 2], [-dk.lengthFt / 2, dk.widthFt / 2]].map(v => planW(g, v[0], v[1]));
+          out.push('<polygon points="' + pts(deck) + '" fill="#eef0f2" stroke="#5a6270" stroke-width="0.8"/>');
+          if (pa.assetId === "cornerPillar") out.push('<polygon points="' + pts(deck) + '" fill="url(#hatchW)" stroke="' + INK + '" stroke-width="1.2"/>');
+          else {
+            const D = e.widthFt || 0.25, zW = -dk.widthFt / 2 + D / 2;
+            const wl = [[-e.lengthFt / 2, zW - D / 2], [e.lengthFt / 2, zW - D / 2], [e.lengthFt / 2, zW + D / 2], [-e.lengthFt / 2, zW + D / 2]].map(v => planW(g, v[0], v[1]));
+            const col = pa.assetId === "setFlat" ? (pa.paint || FLAT_PAINTS[0][0]) : "#9cc7e6";
+            out.push('<polygon points="' + pts(wl) + '" fill="' + col + '" stroke="' + INK + '" stroke-width="' + (pa.assetId === "setFlat" ? 1.6 : 1.1) + '"/>');
+            if (pa.assetId === "setFlat") {                     // stage jack behind
+              const j0 = planW(g, 0, zW + D / 2), j1 = planW(g, 0, zW + D / 2 + 2.6), q0 = P(j0[0], j0[1]), q1 = P(j1[0], j1[1]);
+              out.push('<line x1="' + f2(q0[0]) + '" y1="' + f2(q0[1]) + '" x2="' + f2(q1[0]) + '" y2="' + f2(q1[1]) + '" stroke="#8a6a3f" stroke-width="0.9"/>');
+            }
+          }
+          centroid = planW(g, 0, 0);
+        } else if (e.platform) {
+          const d = platformDims(e, pa), hx = d.W / 2, hz = d.L / 2;
+          out.push('<polygon points="' + pts([[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]].map(v => planW(g, v[0], v[1]))) + '" fill="#e9ecee" stroke="#5a6270" stroke-width="0.9"/>');
+          [-1, 1].forEach(sx => {
+            const x0 = sx < 0 ? -hx : hx - PLATFORM.strip, x1 = x0 + PLATFORM.strip;
+            out.push('<polygon points="' + pts([[x0, -hz], [x1, -hz], [x1, hz], [x0, hz]].map(v => planW(g, v[0], v[1]))) + '" fill="url(#hatchY)" stroke="#c99a1f" stroke-width="0.5"/>');
+          });
+          platformPillars().forEach(q => {
+            const a = PLATFORM.pw / 2, c = PLATFORM.pd / 2;
+            out.push('<polygon points="' + pts([[q[0] - a, q[1] - c], [q[0] + a, q[1] - c], [q[0] + a, q[1] + c], [q[0] - a, q[1] + c]].map(v => planW(g, v[0], v[1]))) + '" fill="#2f5a3a" stroke="' + INK + '" stroke-width="0.6"/>');
+          });
+          centroid = planW(g, 0, 0);
+        } else if (fp) {
+          const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar";
+          out.push('<polygon points="' + pts(fp) + '" fill="' + (veh ? "#dfe3e7" : pa.assetId === "stageDeck" ? "#eef0f2" : "#e6e2da") + '" stroke="#4b525a" stroke-width="0.9"/>');
+          const lb = localBoxOfGroup(g);
+          if (veh && lb) {                                     // nose marker: chevron at the front end
+            const front = pa.assetId === "subwayCar" ? -1 : ((pa.car && pa.car.front) || (e.car && e.car.front) || -1);
+            const xf = front < 0 ? lb.min.x : lb.max.x, xi = xf - front * Math.min(2, (lb.max.x - lb.min.x) * 0.12), hw = (lb.max.z - lb.min.z) * 0.22;
+            out.push('<polyline points="' + pts([planW(g, xi, -hw), planW(g, xf - front * 0.3, 0), planW(g, xi, hw)]) + '" fill="none" stroke="#4b525a" stroke-width="1"/>');
+            if (pa.assetId === "subwayCar") { const q = planW(g, xf - front * 3.2, 0), qq = P(q[0], q[1]); text(qq[0], qq[1] + 2, "CAB", { size: 5, weight: 700, fill: MUTE, anchor: "middle" }); }
+          }
+          centroid = [fp.reduce((a, v) => a + v[0], 0) / 4, fp.reduce((a, v) => a + v[1], 0) / 4];
+        }
+      }
+      if (!centroid) return;
+      schedule.push(label);
+      const n = schedule.length, q = P(centroid[0], centroid[1]);
+      if (opt.labels === "names") {
+        text(q[0], q[1] - 1, label.name, { size: 6, weight: 700, anchor: "middle", halo: true });
+        if (label.dims) text(q[0], q[1] + 6.5, label.dims, { size: 5, fill: MUTE, anchor: "middle", halo: true });
+      } else {
+        out.push('<circle cx="' + f2(q[0]) + '" cy="' + f2(q[1]) + '" r="5.6" fill="#fff" stroke="' + INK + '" stroke-width="0.8"/>');
+        text(q[0], q[1] + 2.4, String(n), { size: 6.5, weight: 700, anchor: "middle" });
+      }
+    });
+    // ---- people ----------------------------------------------------------------------------
+    const heroes = [];
+    people.forEach(p => {
+      const role = p.pa.role && p.pa.role.color ? p.pa.role : null;
+      if (opt.people === "none" || (opt.people === "heroes" && !role)) return;
+      const q = P(p.g.position.x, p.g.position.z), r = Math.max(2.2, 0.85 * k);
+      out.push('<circle cx="' + f2(q[0]) + '" cy="' + f2(q[1]) + '" r="' + f2(r) + '" fill="' + (role ? role.color : "#b9bec4") + '" stroke="' + INK + '" stroke-width="' + (role ? 0.9 : 0.5) + '"/>');
+      const fa = degToRad(p.pa.rotationDeg || 0), tip = [q[0] + Math.sin(fa) * r * 1.5, q[1] + Math.cos(fa) * r * 1.5];   // facing (0° = +Z)
+      out.push('<line x1="' + f2(q[0]) + '" y1="' + f2(q[1]) + '" x2="' + f2(tip[0]) + '" y2="' + f2(tip[1]) + '" stroke="' + INK + '" stroke-width="0.6"/>');
+      if (role) { heroes.push(p); if (role.name) text(q[0] + r + 2, q[1] - r - 1, role.name, { size: 6, weight: 700, halo: true }); }
+    });
+    // ---- cameras ---------------------------------------------------------------------------
+    const allCams = config.placedAssets.filter(p => p.assetId === "camera");
+    if (opt.cameras) cams.forEach(c => {
+      const pa = c.pa, o = camOptics(pa), th = degToRad(pa.rotationDeg || 0), half = degToRad(o.hFov / 2), fd = camVal(pa, "focusFt"), reach = Math.min(Math.max(fd * 1.5, 14), 60);
+      const dir = a => [-Math.sin(a), -Math.cos(a)];
+      const wedge = [[pa.x, pa.z]]; for (let i = 0; i <= 24; i++) { const a = th + half - 2 * half * i / 24, d = dir(a); wedge.push([pa.x + d[0] * reach, pa.z + d[1] * reach]); }
+      out.push('<polygon points="' + pts(wedge) + '" fill="rgba(255,176,0,.10)" stroke="#d99a00" stroke-width="0.8"/>');
+      const fa = []; for (let i = 0; i <= 24; i++) { const a = th + half - 2 * half * i / 24, d = dir(a); fa.push([pa.x + d[0] * fd, pa.z + d[1] * fd]); }
+      out.push('<polyline points="' + pts(fa) + '" fill="none" stroke="#d99a00" stroke-width="0.9" stroke-dasharray="3 2"/>');
+      const body = [[-0.9, 0.7], [0.9, 0.7], [0.9, -0.7], [-0.9, -0.7]].map(v => [pa.x + v[0] * Math.cos(th) + v[1] * Math.sin(th), pa.z - v[0] * Math.sin(th) + v[1] * Math.cos(th)]);
+      out.push('<polygon points="' + pts(body) + '" fill="' + INK + '"/>');
+      const q = P(pa.x, pa.z), no = allCams.indexOf(pa) + 1;
+      text(q[0] + 7, q[1] + 11, "CAM " + no + " · " + o.f + "mm", { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
+    });
+    // ---- origin + dimensions -----------------------------------------------------------
+    { const q = P(0, 0); out.push('<path d="M' + f2(q[0] - 5) + " " + f2(q[1]) + "h10M" + f2(q[0]) + " " + f2(q[1] - 5) + 'v10" stroke="' + INK + '" stroke-width="0.7"/>');
+      text(q[0] + 4, q[1] + 9, "0,0 curve centre", { size: 5, fill: MUTE, halo: true }); }
+    const dim = (x1, z1, x2, z2, off, label, vertical) => {
+      const a = P(x1, z1), c = P(x2, z2);
+      if (vertical) { const x = a[0] + off; out.push('<path d="M' + f2(a[0]) + " " + f2(a[1]) + "H" + f2(x + 3) + "M" + f2(c[0]) + " " + f2(c[1]) + "H" + f2(x + 3) + "M" + f2(x) + " " + f2(a[1]) + "V" + f2(c[1]) + '" stroke="' + MUTE + '" stroke-width="0.5" fill="none"/>');
+        text(x - 3, (a[1] + c[1]) / 2, label, { size: 6, fill: MUTE, anchor: "middle", rot: -90, halo: true }); }
+      else { const y = a[1] + off; out.push('<path d="M' + f2(a[0]) + " " + f2(a[1]) + "V" + f2(y - 3) + "M" + f2(c[0]) + " " + f2(c[1]) + "V" + f2(y - 3) + "M" + f2(a[0]) + " " + f2(y) + "H" + f2(c[0]) + '" stroke="' + MUTE + '" stroke-width="0.5" fill="none"/>');
+        [a[0], c[0]].forEach(x => out.push('<path d="M' + f2(x - 2) + " " + f2(y + 2) + "L" + f2(x + 2) + " " + f2(y - 2) + '" stroke="' + MUTE + '" stroke-width="0.7"/>'));
+        text((a[0] + c[0]) / 2, y - 2.5, label, { size: 6, fill: MUTE, anchor: "middle", halo: true }); }
+    };
+    dim(-R, 0, R, 0, 14, "Volume mouth " + ftIn(2 * R));
+    if (opt.area !== "set") { dim(st.xMin, st.zFrontOpen, st.xMax, st.zFrontOpen, 22, "Studio " + ftIn(st.xMax - st.xMin)); dim(st.xMax, st.zBack, st.xMax, st.zFrontOpen, 22, "Studio " + ftIn(st.zFrontOpen - st.zBack), true); }
+    out.push("</g>");
+    // ---- frame, rulers ---------------------------------------------------------------------
+    out.push('<rect x="' + f2(dx0) + '" y="' + f2(dy0) + '" width="' + f2(dW) + '" height="' + f2(dH) + '" fill="none" stroke="' + INK + '" stroke-width="1.2"/>');
+    if (opt.grid) {
+      const major = s >= 0.25 ? 5 : 10;
+      for (let x = Math.ceil(b.x0 / major) * major; x <= b.x1; x += major) { const q = P(x, 0)[0]; if (q < dx0 || q > dx0 + dW) continue; text(q, dy0 - 4, displayUnit === "m" ? (x / FT_PER_M).toFixed(1) : x + "′", { size: 5.5, fill: MUTE, anchor: "middle" }); }
+      for (let z = Math.ceil(b.z0 / major) * major; z <= b.z1; z += major) { const q = P(0, z)[1]; if (q < dy0 || q > dy0 + dH) continue; text(dx0 - 4, q + 2, displayUnit === "m" ? (z / FT_PER_M).toFixed(1) : z + "′", { size: 5.5, fill: MUTE, anchor: "end" }); }
+      text(dx0 + dW, dy0 - 4, "x →   (coordinates from the curve centre, as in the app)", { size: 5, fill: MUTE, anchor: "end" });
+    }
+    // scale bar
+    { const len = s >= 0.25 ? 10 : 20, x = dx0 + 10, y = dy0 + dH - 12, seg = len / 4 * k;
+      for (let i = 0; i < 4; i++) out.push('<rect x="' + f2(x + i * seg) + '" y="' + f2(y) + '" width="' + f2(seg) + '" height="3.5" fill="' + (i % 2 ? "#fff" : INK) + '" stroke="' + INK + '" stroke-width="0.5"/>');
+      text(x, y - 3, "0", { size: 5.5 }); text(x + 4 * seg, y - 3, len + "′", { size: 5.5, anchor: "middle" });
+      text(x + 4 * seg + 10, y + 3.5, "Main LED wall at the top of the sheet · scale " + scaleTxt, { size: 5.5, fill: MUTE }); }
+    // ---- title block -----------------------------------------------------------------------
+    const tx = (PW - m - tbW) * 72, tw = tbW * 72, ty = m * 72, th2 = (PH - 2 * m) * 72, pad = 8, meta = opt.meta;
+    out.push('<rect x="' + f2(tx) + '" y="' + f2(ty) + '" width="' + f2(tw) + '" height="' + f2(th2) + '" fill="#fff" stroke="' + INK + '" stroke-width="1.2"/>');
+    let y = ty + pad;
+    if (planLogoData) { out.push('<image href="' + planLogoData + '" x="' + f2(tx + pad) + '" y="' + f2(y) + '" width="' + f2(Math.min(110, tw - 2 * pad)) + '" height="28" preserveAspectRatio="xMinYMin meet"/>'); y += 34; }
+    text(tx + pad, y + 8, "MOCK & ROLL · STAGE PLAN", { size: 6, weight: 700, fill: MUTE }); y += 22;
+    text(tx + pad, y, meta.production || "Production", { size: 12, weight: 700, fill: meta.production ? INK : "#b4b9be" }); y += 14;
+    text(tx + pad, y, meta.scene || "Set / scene", { size: 8, fill: meta.scene ? INK : "#b4b9be" }); y += 10;
+    const rule = () => { out.push('<line x1="' + f2(tx) + '" y1="' + f2(y) + '" x2="' + f2(tx + tw) + '" y2="' + f2(y) + '" stroke="' + INK + '" stroke-width="0.6"/>'); y += 11; };
+    const head = t => { text(tx + pad, y, t, { size: 6, weight: 700, fill: MUTE }); y += 9; };
+    const wrap = (t, size, maxW) => { const cw = size * 0.52, per = Math.max(8, Math.floor(maxW / cw)), lines = []; let line = "";
+      String(t).split(/\s+/).forEach(w => { if ((line + " " + w).trim().length > per && line) { lines.push(line); line = w; } else line = (line + " " + w).trim(); }); if (line) lines.push(line); return lines; };
+    const footY = ty + th2 - 58;                               // fixed footer grid at the bottom
+    const room = () => footY - 8 - y;
+    rule();
+    head("LEGEND");
+    const legend = [["led", "LED surface"], ["ceil", "LED ceiling above"], ["deck", "Deck / riser"], ["flat", "Wall / flat (face side)"], ["veh", "Vehicle (chevron = front)"], ["cam", "Camera, field of view, focus"], ["person", "Person (dot = facing)"]];
+    legend.forEach(([kind, t]) => {
+      const lx = tx + pad, ly = y - 3;
+      if (kind === "led") out.push('<line x1="' + lx + '" y1="' + ly + '" x2="' + (lx + 16) + '" y2="' + ly + '" stroke="' + LED + '" stroke-width="2.6"/>');
+      if (kind === "ceil") out.push('<rect x="' + lx + '" y="' + (ly - 3) + '" width="16" height="6" fill="none" stroke="' + LED + '" stroke-width="0.8" stroke-dasharray="4 2 1 2"/>');
+      if (kind === "deck") out.push('<rect x="' + lx + '" y="' + (ly - 3) + '" width="16" height="6" fill="#eef0f2" stroke="#5a6270" stroke-width="0.7"/>');
+      if (kind === "flat") out.push('<rect x="' + lx + '" y="' + (ly - 1.5) + '" width="16" height="3" fill="#d8d2c4" stroke="' + INK + '" stroke-width="1"/>');
+      if (kind === "veh") out.push('<rect x="' + lx + '" y="' + (ly - 3) + '" width="16" height="6" fill="#dfe3e7" stroke="#4b525a" stroke-width="0.7"/><polyline points="' + (lx + 4) + "," + (ly - 2) + " " + (lx + 1.5) + "," + ly + " " + (lx + 4) + "," + (ly + 2) + '" fill="none" stroke="#4b525a" stroke-width="0.8"/>');
+      if (kind === "cam") out.push('<polygon points="' + (lx + 2) + "," + ly + " " + (lx + 16) + "," + (ly - 4) + " " + (lx + 16) + "," + (ly + 4) + '" fill="rgba(255,176,0,.15)" stroke="#d99a00" stroke-width="0.7"/><rect x="' + lx + '" y="' + (ly - 1.5) + '" width="4" height="3" fill="' + INK + '"/>');
+      if (kind === "person") out.push('<circle cx="' + (lx + 8) + '" cy="' + ly + '" r="2.6" fill="#b9bec4" stroke="' + INK + '" stroke-width="0.5"/>');
+      text(lx + 22, y, t, { size: 6 }); y += 9;
+    });
+    y += 2; rule();
+    if (opt.labels !== "names" && schedule.length) {
+      head("ON STAGE");
+      for (let i = 0; i < schedule.length; i++) {
+        if (room() < 30) { text(tx + pad, y, "+ " + (schedule.length - i) + " more", { size: 6, fill: MUTE }); y += 9; break; }
+        const l = schedule[i];
+        out.push('<circle cx="' + f2(tx + pad + 4) + '" cy="' + f2(y - 2.2) + '" r="4.2" fill="#fff" stroke="' + INK + '" stroke-width="0.6"/>');
+        text(tx + pad + 4, y, String(i + 1), { size: 5, weight: 700, anchor: "middle" });
+        text(tx + pad + 12, y, l.name, { size: 6, weight: 700 });
+        if (l.dims) { y += 7.5; text(tx + pad + 12, y, l.dims, { size: 5.2, fill: MUTE }); }
+        y += 9.5;
+      }
+      y += 2; rule();
+    }
+    if (cams.length && room() > 40) {
+      head("CAMERAS");
+      cams.forEach(c => { if (room() < 20) return; const pa = c.pa, o = camOptics(pa), no = allCams.indexOf(pa) + 1;
+        text(tx + pad, y, "CAM " + no, { size: 6, weight: 700, fill: "#a86f00" });
+        text(tx + pad + 30, y, o.f + "mm " + o.S.name + " · lens " + ftIn(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°", { size: 5.6 }); y += 8;
+        text(tx + pad + 30, y, "at x " + ftIn(pa.x) + ", z " + ftIn(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "° · focus " + ftIn(camVal(pa, "focusFt")), { size: 5.2, fill: MUTE }); y += 10; });
+      y += 1; rule();
+    }
+    if (heroes.length && room() > 34) {
+      head("CAST");
+      heroes.forEach(p => { if (room() < 16) return;
+        out.push('<circle cx="' + f2(tx + pad + 3) + '" cy="' + f2(y - 2.2) + '" r="3" fill="' + p.pa.role.color + '" stroke="' + INK + '" stroke-width="0.5"/>');
+        const sp2 = pinnedSpot(p.pa);
+        text(tx + pad + 10, y, (p.pa.role.name || "Role") + " — " + p.e.name + (sp2 ? " · " + sp2.spot.name : ""), { size: 5.8 }); y += 9; });
+      y += 1; rule();
+    }
+    if (meta.notes && room() > 24) {
+      head("NOTES");
+      wrap(meta.notes, 5.8, tw - 2 * pad).forEach(l => { if (room() < 10) return; text(tx + pad, y, l, { size: 5.8 }); y += 8; });
+    }
+    if (overflow) text(tx + pad, footY - 6, "Drawing is larger than the sheet at this scale — try Auto.", { size: 5.5, weight: 700, fill: "#c0392b" });
+    // footer grid
+    out.push('<line x1="' + f2(tx) + '" y1="' + f2(footY) + '" x2="' + f2(tx + tw) + '" y2="' + f2(footY) + '" stroke="' + INK + '" stroke-width="0.8"/>');
+    const cells = [["SCALE", scaleTxt.split("  (")[0]], ["SHEET", paper.name.split(" ")[0]], ["DATE", meta.date || new Date().toLocaleDateString()], ["DRAWN BY", meta.drawnBy || "—"], ["REV", meta.rev || "—"], ["STUDIO", "Lumostage LED volume"]];
+    cells.forEach((c, i) => {
+      const cx = tx + (i % 2) * tw / 2, cy = footY + Math.floor(i / 2) * 19;
+      if (i % 2) out.push('<line x1="' + f2(cx) + '" y1="' + f2(cy) + '" x2="' + f2(cx) + '" y2="' + f2(cy + 19) + '" stroke="' + INK + '" stroke-width="0.5"/>');
+      if (i > 1 && !(i % 2)) out.push('<line x1="' + f2(tx) + '" y1="' + f2(cy) + '" x2="' + f2(tx + tw) + '" y2="' + f2(cy) + '" stroke="' + INK + '" stroke-width="0.5"/>');
+      text(cx + 5, cy + 7, c[0], { size: 4.6, weight: 700, fill: MUTE });
+      text(cx + 5, cy + 15, c[1], { size: 6.2, weight: 700 });
+    });
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + PW + 'in" height="' + PH + 'in" viewBox="0 0 ' + f2(PW * 72) + " " + f2(PH * 72) + '" font-family="Arial, Helvetica, sans-serif">' +
+      '<rect width="100%" height="100%" fill="#fff"/>' + out.join("") + "</svg>";
+  }
+
+  // ---- the Stage plan sheet (dialog) -------------------------------------------------
+  function planFileBase() {
+    const m = planOpts().meta;
+    return ("stage-plan_" + (m.production || "mock-and-roll") + (m.scene ? "_" + m.scene : "") + "_rev" + (m.rev || "A")).replace(/[^\w\-]+/g, "_");
+  }
+  function renderPlanSheet() {
+    const opt = planOpts(), el = document.getElementById("planPreview");
+    if (!el) return;
+    try { el.innerHTML = buildPlanSVG(opt); }
+    catch (err) { el.textContent = "Couldn't draw the plan: " + (err && err.message ? err.message : err); console.warn(err); }
+  }
+  function openPlanSheet() {
+    closeMenus();
+    const opt = planOpts(), d = document.getElementById("planSheet");
+    d.querySelectorAll("[data-plan]").forEach(inp => {
+      const k = inp.dataset.plan, v = k.indexOf("meta.") === 0 ? opt.meta[k.slice(5)] : opt[k];
+      if (inp.type === "checkbox") inp.checked = !!v; else inp.value = v == null ? "" : v;
+    });
+    d.classList.remove("hidden");
+    renderPlanSheet();
+    loadPlanLogo().then(() => renderPlanSheet());
+    document.getElementById("planClose").focus();
+  }
+  function closePlanSheet() { document.getElementById("planSheet").classList.add("hidden"); }
+  function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function wirePlanSheet() {
+    const d = document.getElementById("planSheet");
+    d.querySelectorAll("[data-plan]").forEach(inp => inp.addEventListener(inp.tagName === "TEXTAREA" || inp.type === "text" ? "input" : "change", () => {
+      const opt = planOpts(), k = inp.dataset.plan, v = inp.type === "checkbox" ? inp.checked : inp.value;
+      if (k.indexOf("meta.") === 0) opt.meta[k.slice(5)] = v; else opt[k] = v;
+      renderPlanSheet(); scheduleAutosave();
+    }));
+    document.getElementById("planClose").addEventListener("click", closePlanSheet);
+    d.addEventListener("keydown", e => { if (e.key === "Escape") { closePlanSheet(); e.stopPropagation(); } });
+    document.getElementById("planSvgBtn").addEventListener("click", () => {
+      downloadBlob(new Blob([buildPlanSVG(planOpts())], { type: "image/svg+xml" }), planFileBase() + ".svg"); toast("Saved " + planFileBase() + ".svg");
+    });
+    document.getElementById("planPngBtn").addEventListener("click", () => {
+      const opt = planOpts(), pp = PLAN_PAPERS[opt.paper] || PLAN_PAPERS.tabloid, dpi = 200;
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas"); c.width = Math.round(pp.w * dpi); c.height = Math.round(pp.h * dpi);
+        const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(b => { if (b) { downloadBlob(b, planFileBase() + ".png"); toast("Saved " + planFileBase() + ".png"); } }, "image/png");
+      };
+      img.onerror = () => toast("Couldn't render the PNG — try SVG or Print");
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(buildPlanSVG(opt));
+    });
+    document.getElementById("planPrintBtn").addEventListener("click", () => {
+      const opt = planOpts(), pp = PLAN_PAPERS[opt.paper] || PLAN_PAPERS.tabloid;
+      const f = document.createElement("iframe");
+      f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+      f.srcdoc = '<!doctype html><html><head><title>' + xmlEsc(planFileBase()) + '</title><style>@page{size:' + pp.w + 'in ' + pp.h + 'in;margin:0}html,body{margin:0}svg{display:block;width:' + pp.w + 'in;height:' + pp.h + 'in}</style></head><body>' + buildPlanSVG(opt) + '</body></html>';
+      f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (err) { toast("Printing was blocked — use Download SVG"); } setTimeout(() => f.remove(), 60000); };
+      document.body.appendChild(f);
+    });
+  }
+
   function wrapText(c, text, x, y, maxW, lh) {
     let line = "";
     text.split(" ").forEach(w => {
@@ -4681,6 +5178,7 @@
     }
 
     const cats = [
+      { key: "set-wall", label: "Set walls" },
       { key: "glass-wall", label: "Glass walls" },
       { key: "set-piece", label: "Set pieces" },
       { key: "vehicle", label: "Vehicles" },
@@ -5766,6 +6264,8 @@
       if (!document.getElementById("help").classList.contains("hidden")) { if (e.key === "Escape") { setHelp(false); e.preventDefault(); } return; }
       if (e.key === "Escape" && document.querySelector(".menu:not(.hidden)")) { closeMenus(); e.preventDefault(); return; }
       if (!typing && e.key === "?") { setHelp(true); e.preventDefault(); return; }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); return; }
+      if (!document.getElementById("planSheet").classList.contains("hidden")) return;    // the plan sheet keeps its own keys
       if (!typing && (e.ctrlKey || e.metaKey) && !e.altKey) {
         const k = e.key.toLowerCase();
         if (k === "z") { stepHistory(e.shiftKey ? 1 : -1); e.preventDefault(); return; }
