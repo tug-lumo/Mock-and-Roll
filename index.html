@@ -663,18 +663,25 @@
   }
   // Car seating fitted to a car's size. front: -1 = nose toward local -X (default), +1 = +X.
   // Left-hand drive puts the driver on the occupant's left; rhd flips it.
-  function carSpots(L, W, H, front, rhd) {
+  // opt (per vehicle type): fx / rx = front / rear row offset as a fraction of L (toward the nose /
+  // toward the tail), y = seat height as a fraction of H, seats = which of the five to offer.
+  function carSpots(L, W, H, front, rhd, opt) {
+    opt = opt || {};
     front = front === 1 ? 1 : -1;
-    const left = -front, dz = 0.22 * W, figH = Math.max(3.2, Math.min(4.3, 0.8 * H)), y = Math.max(0.6, 0.18 * H);
-    const rot = front === -1 ? -90 : 90, fx = front * 0.08 * L, rx = -front * 0.17 * L;
+    // Seated in a car is low: feet on the floor (y), crown about 3.6–4' above it, under the roof
+    // (opt.roof when the overall height includes a light bar etc.).
+    const roof = opt.roof || H;
+    const left = -front, dz = 0.22 * W, figH = Math.max(3.1, Math.min(4.0, 0.72 * roof)), y = Math.max(0.5, (opt.y != null ? opt.y : 0.14) * roof);
+    const rot = front === -1 ? -90 : 90, fx = front * (opt.fx != null ? opt.fx : 0.08) * L, rx = -front * (opt.rx != null ? opt.rx : 0.17) * L;
     const drv = (rhd ? -1 : 1) * left * dz;
-    return [
+    const all = [
       { id: "driver", name: "Driver", group: "Front", x: fx, y: y, z: drv, rot: rot, pose: "seated", figH: figH },
       { id: "passenger", name: "Passenger", group: "Front", x: fx, y: y, z: -drv, rot: rot, pose: "seated", figH: figH },
       { id: "rearL", name: "Rear L", group: "Rear", x: rx, y: y, z: left * dz, rot: rot, pose: "seated", figH: figH },
       { id: "rearMid", name: "Rear Mid", group: "Rear", x: rx, y: y, z: 0, rot: rot, pose: "seated", figH: figH },
       { id: "rearR", name: "Rear R", group: "Rear", x: rx, y: y, z: -left * dz, rot: rot, pose: "seated", figH: figH }
     ];
+    return opt.seats ? all.filter(s => opt.seats.indexOf(s.id) !== -1) : all;
   }
 
   const DEFAULT_CONFIG = {
@@ -739,7 +746,7 @@
     // User-imported .glb models (library records only; the file bytes live in IndexedDB).
     customModels: [],
     // One-time data fixes already applied to this layout (see migrateConfig).
-    migrations: { ceiling20: true },
+    migrations: { ceiling20: true, people2: true },
     // Live reflections on vehicles / imported models / the subway shell (Settings → Reflections).
     reflections: { live: true, quality: "balanced", floor: "satin" },
     // 360° environment on the LED surfaces (LED → 360° environment). libraryId points into
@@ -803,6 +810,18 @@
           { name: "Interior, center aisle",    x: -14,   z: 0,   heightFt: 7, rotationDeg: 270, focusFt: 20 },
           { name: "Interior, looking out door", x: 7,    z: 2.5, heightFt: 7, rotationDeg: 0,   focusFt: 8 }
         ] },
+      // Vehicle pack (assets/vehicles, prepared by tools/prep-vehicle.py): nose to -X, real-world lengths
+      // (averaged for the type), windows split into see-through Glass. Widths include mirrors.
+      { assetId: "v_classic_sedan", name: "Classic sedan ('50s)", category: "vehicle", prepped: true, car: { front: -1 }, lengthFt: 16.5, widthFt: 6.72, heightFt: 5.08, model: "assets/vehicles/classic-sedan.glb" },
+      { assetId: "v_hatchback", name: "Hatchback", category: "vehicle", prepped: true, car: { front: -1, fx: 0.06, rx: 0.2 }, lengthFt: 13.8, widthFt: 6.28, heightFt: 4.97, model: "assets/vehicles/hatchback.glb" },
+      { assetId: "v_police_sedan", name: "Police sedan", category: "vehicle", prepped: true, car: { front: -1, roof: 4.95 }, lengthFt: 17.0, widthFt: 7.29, heightFt: 5.69, model: "assets/vehicles/police-sedan.glb" },
+      { assetId: "v_muscle_car", name: "Muscle car", category: "vehicle", prepped: true, car: { front: -1, fx: -0.02, rx: 0.22 }, lengthFt: 15.7, widthFt: 6.86, heightFt: 4.87, model: "assets/vehicles/muscle-car.glb" },
+      { assetId: "v_sports_car", name: "Sports car (2 seats)", category: "vehicle", prepped: true, car: { front: -1, fx: -0.02, seats: ["driver", "passenger"] }, lengthFt: 15.0, widthFt: 6.63, heightFt: 4.33, model: "assets/vehicles/sports-car.glb" },
+      { assetId: "v_pickup_crew_cab", name: "Pickup — crew cab", category: "vehicle", prepped: true, car: { front: -1, fx: 0.2, rx: 0.02, y: 0.3 }, lengthFt: 19.5, widthFt: 8.03, heightFt: 6.36, model: "assets/vehicles/pickup-crew-cab.glb" },
+      { assetId: "v_panel_van", name: "Panel van", category: "vehicle", prepped: true, car: { front: -1, fx: 0.27, y: 0.3, seats: ["driver", "passenger"] }, lengthFt: 16.4, widthFt: 7.47, heightFt: 6.25, model: "assets/vehicles/panel-van.glb" },
+      { assetId: "v_military_utility", name: "Military utility (Humvee-size)", category: "vehicle", prepped: true, car: { front: -1, fx: 0.04, rx: 0.16, y: 0.28 }, lengthFt: 15.6, widthFt: 7.91, heightFt: 6.48, model: "assets/vehicles/military-utility.glb" },
+      { assetId: "v_monster_truck", name: "Monster truck", category: "vehicle", prepped: true, lengthFt: 17.0, widthFt: 8.26, heightFt: 8.08, model: "assets/vehicles/monster-truck.glb" },
+      { assetId: "v_light_aircraft", name: "Light aircraft (Cessna-size)", category: "vehicle", prepped: true, lengthFt: 27.2, widthFt: 29.04, heightFt: 10.88, model: "assets/vehicles/light-aircraft.glb" },
       { assetId: "sedan_generic", name: "Sedan (generic)", category: "vehicle", car: { front: -1 }, lengthFt: 15, widthFt: 6, heightFt: 5, model: "assets/sedan_generic.glb",
         // Local frame: car faces -X (front seats forward of center), left-hand drive so driver is +Z.
         // y = seated eye height; rotationDeg = which way the seated figure faces relative to the car.
@@ -816,14 +835,33 @@
       // Low-poly people (free_pack_lowpoly_people.glb, split by tools/split-glb.py into assets/people/).
       // Each is scaled uniformly to heightFt (adjustable per instance); 0° faces +Z (toward the
       // shooting floor / camera side). widthFt/depthFt are the footprint at that height.
-      { assetId: "person_01", name: "Seated — reading", category: "person", pose: "seated", heightFt: 4.25, widthFt: 2.2, depthFt: 2.55, model: "assets/people/person-01.glb" },
-      { assetId: "person_02", name: "Seated — leaning forward", category: "person", pose: "seated", heightFt: 4.3, widthFt: 2.05, depthFt: 2.15, model: "assets/people/person-02.glb" },
-      { assetId: "person_03", name: "Woman — short dress", category: "person", pose: "standing", heightFt: 5.5, widthFt: 2.0, depthFt: 2.1, model: "assets/people/person-03.glb" },
-      { assetId: "person_04", name: "Woman — hand on hip", category: "person", pose: "standing", heightFt: 5.6, widthFt: 2.2, depthFt: 1.0, model: "assets/people/person-04.glb" },
-      { assetId: "person_05", name: "Man — on the phone", category: "person", pose: "standing", heightFt: 5.9, widthFt: 1.9, depthFt: 1.2, model: "assets/people/person-05.glb" },
-      { assetId: "person_06", name: "Man — hands on hips", category: "person", pose: "standing", heightFt: 5.95, widthFt: 2.4, depthFt: 1.3, model: "assets/people/person-06.glb" },
-      { assetId: "person_07", name: "Man — arms crossed", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.95, depthFt: 1.2, model: "assets/people/person-07.glb" },
-      { assetId: "person_08", name: "Man — standing", category: "person", pose: "standing", heightFt: 5.8, widthFt: 1.8, depthFt: 2.5, model: "assets/people/person-08.glb" }
+      // People (assets/people2): standing figures posed from a rigged low-poly pack (tools/bake-pose.py), seated
+      // photo-scans decimated with gltf-transform. Heights are averaged real-world figures (US adult men ~5'9",
+      // women ~5'4"; a seated adult is ~4'2" floor to crown); each is adjustable per instance.
+      { assetId: "p2_doctor", name: "Doctor", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.80, depthFt: 1.27, model: "assets/people2/doctor.glb" },
+      { assetId: "p2_police_officer", name: "Police officer", category: "person", pose: "standing", heightFt: 5.60, widthFt: 1.46, depthFt: 1.70, model: "assets/people2/police-officer.glb" },
+      { assetId: "p2_construction_worker", name: "Construction worker", category: "person", pose: "standing", heightFt: 5.95, widthFt: 1.66, depthFt: 1.38, model: "assets/people2/construction-worker.glb" },
+      { assetId: "p2_man_phone", name: "Man on the phone", category: "person", pose: "standing", heightFt: 5.80, widthFt: 2.32, depthFt: 1.98, model: "assets/people2/man-phone.glb" },
+      { assetId: "p2_man_walking", name: "Man walking", category: "person", pose: "standing", heightFt: 5.75, widthFt: 2.25, depthFt: 1.55, model: "assets/people2/man-walking.glb" },
+      { assetId: "p2_woman_standing", name: "Woman standing", category: "person", pose: "standing", heightFt: 5.40, widthFt: 1.98, depthFt: 1.02, model: "assets/people2/woman-standing.glb" },
+      { assetId: "p2_woman_walking", name: "Woman walking", category: "person", pose: "standing", heightFt: 5.35, widthFt: 1.59, depthFt: 1.37, model: "assets/people2/woman-walking.glb" },
+      { assetId: "p2_older_woman", name: "Older woman", category: "person", pose: "standing", heightFt: 5.15, widthFt: 1.34, depthFt: 1.07, model: "assets/people2/older-woman.glb" },
+      { assetId: "p2_girl", name: "Girl (teen)", category: "person", pose: "standing", heightFt: 5.00, widthFt: 1.98, depthFt: 0.98, model: "assets/people2/girl.glb" },
+      { assetId: "p2_boy", name: "Boy (about 6)", category: "person", pose: "standing", heightFt: 3.90, widthFt: 1.16, depthFt: 0.82, model: "assets/people2/boy.glb" },
+      { assetId: "p2_seated_scan_1", name: "Seated — legs out", category: "person", pose: "seated", noCar: true, heightFt: 3.90, widthFt: 1.68, depthFt: 4.35, model: "assets/people2/seated-scan-1.glb" },
+      { assetId: "p2_seated_scan_2", name: "Seated — relaxed", category: "person", pose: "seated", heightFt: 4.30, widthFt: 1.60, depthFt: 2.75, model: "assets/people2/seated-scan-2.glb" },
+      { assetId: "p2_seated_scan_3", name: "Seated — upright", category: "person", pose: "seated", heightFt: 4.40, widthFt: 1.22, depthFt: 2.56, model: "assets/people2/seated-scan-3.glb" },
+      { assetId: "p2_seated_scan_4", name: "Seated — hands in lap", category: "person", pose: "seated", heightFt: 4.27, widthFt: 1.86, depthFt: 2.34, model: "assets/people2/seated-scan-4.glb" },
+      { assetId: "p2_seated_scan_5", name: "Seated — leaning back", category: "person", pose: "seated", heightFt: 4.27, widthFt: 1.86, depthFt: 1.99, model: "assets/people2/seated-scan-5.glb" },
+      { assetId: "p2_seated_mannequin", name: "Seated — mannequin", category: "person", pose: "seated", heightFt: 4.15, widthFt: 1.52, depthFt: 2.38, model: "assets/people2/seated-mannequin.glb" },
+      { assetId: "person_01", status: "legacy", name: "Seated — reading", category: "person", pose: "seated", heightFt: 4.25, widthFt: 2.2, depthFt: 2.55, model: "assets/people/person-01.glb" },
+      { assetId: "person_02", status: "legacy", name: "Seated — leaning forward", category: "person", pose: "seated", heightFt: 4.3, widthFt: 2.05, depthFt: 2.15, model: "assets/people/person-02.glb" },
+      { assetId: "person_03", status: "legacy", name: "Woman — short dress", category: "person", pose: "standing", heightFt: 5.5, widthFt: 2.0, depthFt: 2.1, model: "assets/people/person-03.glb" },
+      { assetId: "person_04", status: "legacy", name: "Woman — hand on hip", category: "person", pose: "standing", heightFt: 5.6, widthFt: 2.2, depthFt: 1.0, model: "assets/people/person-04.glb" },
+      { assetId: "person_05", status: "legacy", name: "Man — on the phone", category: "person", pose: "standing", heightFt: 5.9, widthFt: 1.9, depthFt: 1.2, model: "assets/people/person-05.glb" },
+      { assetId: "person_06", status: "legacy", name: "Man — hands on hips", category: "person", pose: "standing", heightFt: 5.95, widthFt: 2.4, depthFt: 1.3, model: "assets/people/person-06.glb" },
+      { assetId: "person_07", status: "legacy", name: "Man — arms crossed", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.95, depthFt: 1.2, model: "assets/people/person-07.glb" },
+      { assetId: "person_08", status: "legacy", name: "Man — standing", category: "person", pose: "standing", heightFt: 5.8, widthFt: 1.8, depthFt: 2.5, model: "assets/people/person-08.glb" }
     ],
     // First load is the BASE VOLUME only (main wall + rolling walls + ceiling + studio + pillar),
     // plus one camera to look through. Sets/humans are added on demand (Sets menu / Piece Library).
@@ -1308,6 +1346,21 @@
   // glTF files are authored for a converted pipeline — so imported models came out dark and muddy.
   // Bring each model into the app's pipeline once: textures pass straight through, and the file's
   // linear colour factors are re-expressed as the sRGB values they were meant to display as.
+  // Vehicle glass must read as glass: see through the car to the far side, with the stage's light
+  // playing on it. Any material/mesh named like glazing — or authored see-through — becomes a dark,
+  // glossy, mostly transparent pane that mirrors the volume through the piece's reflection probe.
+  // (Packs that paint windows from a texture atlas are split first: tools/prep-vehicle.py --glass-uv.)
+  const GLASS_RE = /glass|window|windscreen|windshield|glazing|wind_?shield/i;
+  function isGlassMaterial(mt, mesh) {
+    return GLASS_RE.test(mt.name || "") || GLASS_RE.test((mesh && mesh.name) || "") || (mt.transparent && mt.opacity < 0.85);
+  }
+  function makeSeeThroughGlass(mt) {
+    mt.map = null;
+    if (mt.color) mt.color.setHex(0x1b2328);
+    mt.transparent = true; mt.opacity = 0.3; mt.depthWrite = false; mt.side = THREE.DoubleSide;
+    if ("roughness" in mt) { mt.roughness = 0.04; mt.metalness = 0.9; }
+    mt.userData.reflective = true;
+  }
   function fixModelColors(root) {
     root.traverse(n => {
       if (!n.isMesh) return;
@@ -1317,6 +1370,7 @@
         ["map", "emissiveMap"].forEach(k => { if (mt[k]) { mt[k].encoding = THREE.LinearEncoding; mt[k].needsUpdate = true; } });
         if (mt.color) mt.color.convertLinearToSRGB();
         if (mt.emissive) mt.emissive.convertLinearToSRGB();
+        if (isGlassMaterial(mt, n)) makeSeeThroughGlass(mt);
         mt.needsUpdate = true;
       });
     });
@@ -1470,6 +1524,25 @@
     return g;
   }
 
+  // Library vehicles prepared at real size (metres, nose to -X, on the floor, centred): ghost box at
+  // the catalog size straight away, then the model, scaled to feet; paint, chrome and glass reflect.
+  function buildLibraryVehicle(entry, pa) {
+    const g = buildBox({ lengthFt: entry.lengthFt, widthFt: entry.widthFt, heightFt: entry.heightFt }, 0x7a8494);
+    g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.35; o.material.depthWrite = false; } });
+    loadModelUrl(entry.model).then(tpl => {
+      if (!tpl || !g.parent) return;
+      const m = tpl.clone(true);
+      m.traverse(n => { n.userData.sharedModel = true; });
+      m.scale.setScalar(FT_PER_M);
+      const holder = new THREE.Group(); holder.add(m);
+      g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
+      g.add(holder);
+      g.userData.hasModel = true;
+      attachProbe(g, holder, pa, { cloneMats: true });
+    });
+    return g;
+  }
+
   // ---- Library people (catalog .glb files shipped in assets/people/) -------------------
   const urlModelCache = {};                                // url -> Promise<template|null>
   function loadModelUrl(url) {
@@ -1581,7 +1654,7 @@
     if (!e) return null;
     if (e.spots) return e.spots;
     if (e.platform) { const d = platformDims(e, pa); return platformSpots(d.L, d.W); }
-    if (e.car) return carSpots(e.lengthFt, e.widthFt, e.heightFt, e.car.front, pa.car && pa.car.rhd);
+    if (e.car) return carSpots(e.lengthFt, e.widthFt, e.heightFt, e.car.front, pa.car && pa.car.rhd, e.car);
     if (e.custom && pa.car) return carSpots(pa.lengthFt || 15, pa.widthFt || 6, pa.heightFt || 5, pa.car.front, pa.car.rhd);
     return null;
   }
@@ -1617,8 +1690,8 @@
   function castOf(host) { return host && host.key ? config.placedAssets.filter(p => p.pin && p.pin.host === host.key) : []; }
   // Default figure for a spot: seated poses alternate, standing poses rotate through the six.
   function figureForSpot(spot, i) {
-    const people = config.assetCatalog.filter(e => e.category === "person");
-    const pool = people.filter(e => e.pose === spot.pose);
+    const people = config.assetCatalog.filter(e => e.category === "person" && e.status !== "legacy");
+    const pool = people.filter(e => e.pose === spot.pose && !(spot.figH && e.noCar));   // legs-out poses don't fit a car seat
     const list = pool.length ? pool : people;
     return list.length ? list[i % list.length].assetId : null;
   }
@@ -2301,6 +2374,8 @@
       const W = pa.widthFt || entry.defaultWidthFt || 8;
       g = buildBox({ lengthFt: L, widthFt: W, heightFt: entry.heightFt || 2 }, 0x5a6270);
       g.userData.walk = [{ x0: -L / 2, x1: L / 2, z0: -W / 2, z1: W / 2, y: entry.heightFt || 2 }];
+    } else if (entry.category === "vehicle" && entry.prepped) {
+      return buildLibraryVehicle(entry, pa);
     } else if (entry.category === "vehicle") {
       g = buildBox({ lengthFt: entry.lengthFt, widthFt: entry.widthFt, heightFt: entry.heightFt }, 0x556677);
       // Ghosted so a seated figure inside stays visible.
@@ -5277,6 +5352,22 @@
       const c = (cfg.fixedElements || []).find(e => e.id === "ceiling");
       if (c && c.heightFt === 12) c.heightFt = 20;
       cfg.migrations.ceiling20 = true;
+    }
+    // One-time: the low-poly people were replaced by the people2 pack — swap placed figures by pose,
+    // keeping their pins, roles and any height set by hand.
+    if (!cfg.migrations.people2) {
+      // Same pose and gender as before (person_03/04 were women, 05–08 men), varied within that.
+      const pick = { seated: ["p2_seated_scan_3", "p2_seated_scan_4", "p2_seated_scan_2", "p2_seated_scan_5", "p2_seated_mannequin"],
+                     woman: ["p2_woman_standing", "p2_woman_walking", "p2_police_officer", "p2_older_woman"],
+                     man: ["p2_man_phone", "p2_doctor", "p2_man_walking", "p2_construction_worker"] };
+      const kind = id => ["person_01", "person_02"].indexOf(id) !== -1 ? "seated" : ["person_03", "person_04"].indexOf(id) !== -1 ? "woman" : "man";
+      const n = { seated: 0, woman: 0, man: 0 };
+      (cfg.placedAssets || []).forEach(p => {
+        if (!/^person_0\d$/.test(p.assetId || "")) return;
+        const k = kind(p.assetId);
+        p.assetId = pick[k][n[k]++ % pick[k].length];
+      });
+      cfg.migrations.people2 = true;
     }
     // Station platform v1-v3 were stage-deck presets; they stay as plain decks (the set is its own piece now).
     (cfg.placedAssets || []).forEach(p => { if (p._setKey && /^station-v\d$/.test(p._setKey)) { delete p._setKey; delete p.preset; } });
