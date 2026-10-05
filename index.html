@@ -168,6 +168,7 @@
   }
   #inspector .tools { padding: 0 16px 10px; }
   #inspector .tools .seg { width: 100%; }
+  #inspector.multiMode .tools { display: none; }           /* Move / Rotate is a single-piece tool */
   #inspector .tools .seg button { flex: 1; justify-content: center; }
   #inspector.wide { width: 340px; }
   #inspector .paneBody { padding-bottom: 0; }
@@ -178,6 +179,14 @@
   #inspector .foot button { flex: 1; }
   .field label { color: var(--muted); font-size: 12.5px; }
   .field .inl { display: flex; gap: 4px; align-items: center; }
+  .dial { margin: 2px 0 12px; }
+  .dial .dialTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .dial .dialTop label { color: var(--muted); font-size: 12.5px; }
+  .dial input[type="number"] { width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+  .dial .unit { color: var(--muted); font-size: 12px; width: 14px; }
+  .dial input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+  .stepRow { display: flex; gap: 4px; }
+  .stepRow button { flex: 1; padding: 6px 0; font-variant-numeric: tabular-nums; }
   .rowSeg { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 10px; }
   .rowSeg > span { color: var(--muted); font-size: 12.5px; }
   .rowSeg .seg button { padding: 5px 12px; }
@@ -588,6 +597,8 @@
           <dt>Drag</dt><dd>Move along the floor</dd>
           <dt><kbd>2</kbd> then drag ring</dt><dd>Rotate (<kbd>Shift</kbd> for 1°)</dd>
           <dt><kbd>Shift</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Turn 15°</dd>
+          <dt><kbd>Ctrl</kbd> click</dt><dd>Add to / drop from a group selection</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>A</kbd></dt><dd>Select every person</dd>
           <dt><kbd>Del</kbd></dt><dd>Remove</dd>
           <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo (moves, adds, removes, cast, film camera)</dd>
           <dt><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dt><dd>Redo (or <kbd>Ctrl</kbd> <kbd>Y</kbd>)</dd>
@@ -1829,7 +1840,9 @@
     });
     return best;
   }
-  function reanchor(pa) {
+  // batch: the caller re-settles floors once at the end (a per-person refresh would yank other
+  // still-pinned people back to their seats before their own turn).
+  function reanchor(pa, batch) {
     const g = placedGroupByUid[pa._uid], e = catalogEntry(pa.assetId);
     if (!g || !e) return null;
     const x = g.position.x, z = g.position.z, rot = normDeg(radToDeg(g.rotation.y));
@@ -1868,7 +1881,7 @@
     }
     // 4. free
     if (pa.pin) { delete pa.pin; pa.x = round2(x); pa.z = round2(z); pa.rotationDeg = rot; }
-    refreshElevations();
+    if (!batch) refreshElevations();
     return { kind: "free" };
   }
   function reanchorSelected() {
@@ -2890,10 +2903,19 @@
       // Grab a piece by its body: select it and drag it along the floor.
       if (mode !== "edit") return;
       const hit = pickAt(e); if (!hit) return;
-      if (hit.human != null) { if (!(selected && selected.type === "human" && selected.instanceId === hit.human)) selectHuman(hit.human); }
-      else if (!(selectedObject && selectedObject === hit.obj)) selectObject(hit.obj);
-      const cfg = cfgForSelected(); if (!cfg) return;
-      bodyDrag = { y: hit.point.y, dx: cfg.x - hit.point.x, dz: cfg.z - hit.point.z };
+      const hitPlaced = hit.obj && hit.obj.userData.kind === "placed";
+      if ((e.ctrlKey || e.metaKey) && hitPlaced) {              // Ctrl/Cmd-click: add to / drop from the selection
+        toggleMulti(hit.obj);
+        e.stopImmediatePropagation(); e.preventDefault(); return;
+      }
+      if (multi.length > 1 && hitPlaced && multi.indexOf(hit.obj.userData.uid) !== -1) startGroupDrag(hit);
+      else {
+        clearMulti();
+        if (hit.human != null) { if (!(selected && selected.type === "human" && selected.instanceId === hit.human)) selectHuman(hit.human); }
+        else if (!(selectedObject && selectedObject === hit.obj)) selectObject(hit.obj);
+        const cfg = cfgForSelected(); if (!cfg) return;
+        bodyDrag = { y: hit.point.y, dx: cfg.x - hit.point.x, dz: cfg.z - hit.point.z };
+      }
     }
     try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
     renderer.domElement.style.cursor = "grabbing";
@@ -2955,9 +2977,162 @@
     return best;
   }
 
+
+  // ==================================================================
+  //  MULTI-SELECT (Ctrl/Cmd-click, Ctrl+A = all people) + group tools
+  // ==================================================================
+  // multi = uids of placed pieces. With 2+ the inspector shows group tools; dragging any member
+  // moves them all. People riding a host that's also selected travel with the host; everyone
+  // else re-anchors where they land (seat, floor or free), as a single drag would.
+  let multi = [], multiMarks = [];
+  function multiPAs() { return multi.map(getPlacedByUid).filter(Boolean); }
+  function ridesSelectedHost(pa, set) {
+    if (!pa.pin) return false;
+    const host = config.placedAssets.find(h => h.key === pa.pin.host);
+    return !!(host && set.indexOf(host) !== -1);
+  }
+  function multiMovers() { const all = multiPAs(); return all.filter(pa => !ridesSelectedHost(pa, all)); }
+  function refreshMultiMarks() {
+    multiMarks.forEach(m => { if (m.parent) m.parent.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    multiMarks = [];
+    multi = multi.filter(uid => placedGroupByUid[uid]);
+    if (multi.length < 2) return;
+    multi.forEach(uid => {
+      const g = placedGroupByUid[uid], b = g && localBoxOfGroup(g); if (!b) return;
+      const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+      const ln = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(sz.x + 0.3, sz.y + 0.3, sz.z + 0.3)),
+        new THREE.LineBasicMaterial({ color: 0x00efea, depthTest: false, transparent: true }));
+      ln.position.copy(c); ln.renderOrder = 998; ln.raycast = function () {}; ln.layers.set(1);
+      g.add(ln); multiMarks.push(ln);
+    });
+  }
+  function clearMulti() { if (!multi.length) return; multi = []; refreshMultiMarks(); }
+  function toggleMulti(g) {
+    const uid = g.userData.uid;
+    if (!multi.length && selected && selected.kind === "placed" && selected.uid !== uid) multi = [selected.uid];
+    const i = multi.indexOf(uid);
+    if (i >= 0) multi.splice(i, 1); else multi.push(uid);
+    if (multi.length === 1) { const only = placedGroupByUid[multi[0]]; multi = []; refreshMultiMarks(); if (only) selectObject(only); return; }
+    if (!multi.length) { refreshMultiMarks(); deselect(); return; }
+    selected = null; selectedObject = null; bodyDrag = null; updateYawRing(true);
+    refreshMultiMarks(); renderInspector();
+  }
+  function selectAllPeople() {
+    multi = config.placedAssets.filter(pa => isPersonEntry(pa) && placedGroupByUid[pa._uid]).map(pa => pa._uid);
+    if (multi.length === 1) { const g = placedGroupByUid[multi[0]]; multi = []; selectObject(g); return; }
+    selected = null; selectedObject = null; updateYawRing(true);
+    refreshMultiMarks(); renderInspector();
+    toast(multi.length ? multi.length + " people selected" : "No people placed");
+  }
+  function isPersonEntry(pa) { const e = pa && catalogEntry(pa.assetId); return !!(e && e.category === "person"); }
+  // Turn one placed piece to an absolute heading, keeping pins consistent (as setSelectedYaw does).
+  function setYawFor(pa, deg) {
+    const g = placedGroupByUid[pa._uid]; if (!g) return;
+    deg = normDeg(deg); pa.rotationDeg = deg; g.rotation.y = degToRad(deg);
+    const s = pa.pin && pinnedSpot(pa);
+    if (s) {
+      if (pa.pin.floor) pa.pin.lrot = round2(normDeg(deg - (s.host.rotationDeg || 0)));
+      else pa.pin.drot = round2(normDeg(deg - (s.host.rotationDeg || 0) - (s.spot.rot || 0)));
+    }
+    syncSeatedTo(pa); syncCastTo(pa);
+  }
+  function setPosFor(pa, x, z) {
+    const g = placedGroupByUid[pa._uid]; if (!g) return;
+    pa.x = round2(x); pa.z = round2(z); g.position.x = pa.x; g.position.z = pa.z;
+    syncSeatedTo(pa); syncCastTo(pa);
+  }
+  // After a group change: people land somewhere (seat / floor / free), floors settle, save.
+  function settleMulti(msg, keepAnchors) {
+    if (!keepAnchors) multiMovers().forEach(pa => { if (isPersonEntry(pa)) { delete pa.noAnchor; reanchor(pa, true); } });
+    refreshElevations();
+    renderInspector();
+    scheduleAutosave();
+    if (msg) toast(msg);
+  }
+  function multiMoveBy(dx, dz) { multiMovers().forEach(pa => setPosFor(pa, pa.x + dx, pa.z + dz)); settleMulti("Moved " + multi.length + " pieces"); }
+  function multiFace(deg) {
+    const all = multiPAs(), movers = multiMovers();
+    movers.filter(pa => !isPersonEntry(pa)).concat(all.filter(pa => isPersonEntry(pa))).forEach(pa => setYawFor(pa, deg));
+    settleMulti("All facing " + Math.round(deg * 10) / 10 + "°", true);
+  }
+  function multiTurnEach(delta) { multiMovers().forEach(pa => setYawFor(pa, (pa.rotationDeg || 0) + delta)); settleMulti("Turned each " + (delta > 0 ? "+" : "") + delta + "°", true); }
+  function multiRotateGroup(delta) {
+    const movers = multiMovers(); if (!movers.length) return;
+    const cx = movers.reduce((a, pa) => a + pa.x, 0) / movers.length, cz = movers.reduce((a, pa) => a + pa.z, 0) / movers.length;
+    const t = degToRad(delta), c = Math.cos(t), sn = Math.sin(t);
+    movers.forEach(pa => {
+      const x = pa.x - cx, z = pa.z - cz;
+      setPosFor(pa, cx + x * c + z * sn, cz - x * sn + z * c);   // same sense as a piece's own turn
+      setYawFor(pa, (pa.rotationDeg || 0) + delta);
+    });
+    settleMulti("Rotated the group " + (delta > 0 ? "+" : "") + delta + "°");
+  }
+  function multiRemove() {
+    const all = multiPAs(), n = all.length, gone = [];
+    all.forEach(pa => { gone.push(pa); castOf(pa).forEach(c => gone.push(c)); });
+    const goneKeys = gone.filter(pa => pa.key).map(pa => pa.key);
+    config.placedAssets.forEach(p => { if (p.pin && p.pin.floor && goneKeys.indexOf(p.pin.host) !== -1 && gone.indexOf(p) === -1) delete p.pin; });
+    config.placedAssets = config.placedAssets.filter(p => gone.indexOf(p) === -1);
+    multi = [];
+    rebuildPlaced(); buildLibrary(); refreshCamPicker(); scheduleAutosave();
+    toast("Removed " + n + " pieces" + (gone.length > n ? " (with " + (gone.length - n) + " cast)" : ""));
+  }
+  function renderMultiInspector() {
+    const body = document.getElementById("inspectorBody"), panel = document.getElementById("inspector");
+    panel.classList.remove("hidden"); panel.classList.remove("wide"); panel.classList.add("multiMode");
+    const all = multiPAs(), people = all.filter(isPersonEntry).length, other = all.length - people;
+    document.getElementById("inspTitle").textContent = all.length + " selected";
+    const turnBtns = [-90, -15, 15, 90, 180].map(d => '<button data-turn="' + d + '">' + (d > 0 && d !== 180 ? "+" : "") + d + '°</button>').join("");
+    const rotBtns = [-90, -15, 15, 90, 180].map(d => '<button data-rot="' + d + '">' + (d > 0 && d !== 180 ? "+" : "") + d + '°</button>').join("");
+    body.innerHTML =
+      '<div class="dims" style="margin-top:0">' + [people ? people + (people === 1 ? " person" : " people") : "", other ? other + (other === 1 ? " piece" : " pieces") : ""].filter(Boolean).join(" · ") +
+        '<br>Ctrl-click to add or drop pieces · drag any of them to move them all</div>' +
+      grpHTML("mMove", "Move all", "", '<div class="field"><label for="mDx">Left / right by</label><input type="number" id="mDx" step="0.25" value="0"></div>' +
+        '<div class="field"><label for="mDz">Front / back by</label><input type="number" id="mDz" step="0.25" value="0"></div>' +
+        '<div class="btnRow"><button id="mMoveGo">Move</button></div>', true) +
+      grpHTML("mTurn", "Turn", "", '<div class="field"><label for="mFace">Face all to</label><div class="inl"><input type="number" id="mFace" step="1" placeholder="°"><button id="mFaceGo">Set</button></div></div>' +
+        '<div class="subhead">Turn each in place</div><div class="stepRow">' + turnBtns + '</div>' +
+        '<div class="field" style="margin-top:8px"><label for="mTurnBy">Turn each by</label><div class="inl"><input type="number" id="mTurnBy" step="1" placeholder="°"><button id="mTurnGo">Turn</button></div></div>' +
+        '<div class="subhead">Rotate the group around its centre</div><div class="stepRow">' + rotBtns + '</div>' +
+        '<div class="hint">0° faces the main wall. People riding a selected car or set turn with it.</div>', true) +
+      '<div class="foot"><button id="mClear">Clear selection</button><button id="mRemove" class="danger">Remove all</button></div>';
+    body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
+      inspOpenState()[d.dataset.k] = d.open;
+      try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
+    }));
+    const num = id => parseFloat(document.getElementById(id).value);
+    document.getElementById("mMoveGo").addEventListener("click", () => { const dx = fromDisplay(num("mDx") || 0), dz = fromDisplay(num("mDz") || 0); if (dx || dz) multiMoveBy(dx, dz); });
+    document.getElementById("mFaceGo").addEventListener("click", () => { const v = num("mFace"); if (!isNaN(v)) multiFace(v); });
+    document.getElementById("mFace").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("mFaceGo").click(); });
+    document.getElementById("mTurnGo").addEventListener("click", () => { const v = num("mTurnBy"); if (v) multiTurnEach(v); });
+    document.getElementById("mTurnBy").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("mTurnGo").click(); });
+    body.querySelectorAll("[data-turn]").forEach(b => b.addEventListener("click", () => multiTurnEach(+b.dataset.turn)));
+    body.querySelectorAll("[data-rot]").forEach(b => b.addEventListener("click", () => multiRotateGroup(+b.dataset.rot)));
+    document.getElementById("mClear").addEventListener("click", () => { clearMulti(); deselect(); });
+    document.getElementById("mRemove").addEventListener("click", multiRemove);
+  }
+  // Group drag: every mover keeps its offset from the grab point.
+  function startGroupDrag(hit) {
+    const movers = multiMovers().map(pa => ({ pa: pa, x0: pa.x, z0: pa.z }));
+    bodyDrag = { group: true, y: hit.point.y, ax: hit.point.x, az: hit.point.z, movers: movers };
+  }
+  function groupDragTo(e) {
+    _dragPlane.constant = -bodyDrag.y;
+    const r = renderer.domElement.getBoundingClientRect();
+    _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    camera.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, camera);
+    const p = raycaster.ray.intersectPlane(_dragPlane, _gp);
+    if (!p || Math.hypot(p.x, p.z) > 300) return;
+    const dx = snap(p.x - bodyDrag.ax), dz = snap(p.z - bodyDrag.az);
+    bodyDrag.movers.forEach(m => setPosFor(m.pa, m.x0 + dx, m.z0 + dz));
+    scheduleAutosave();
+  }
+
   // Slide the grabbed piece to where the cursor is, on the horizontal plane it was grabbed at.
   const _dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   function dragBodyTo(e) {
+    if (bodyDrag && bodyDrag.group) { groupDragTo(e); return; }
     if (!selected || (selected.type !== "human" && !selectedObject)) { bodyDrag = null; return; }
     _dragPlane.constant = -bodyDrag.y;
     const r = renderer.domElement.getBoundingClientRect();
@@ -3012,9 +3187,10 @@
 
   function onWindowPointerUp() {
     if (yawDrag) { yawDrag = null; if (viewCamUid == null) nav.enabled = true; }
-    const dropped = bodyDrag && selected && selected.kind === "placed";
+    const dropped = bodyDrag && !bodyDrag.group && selected && selected.kind === "placed", groupDrop = bodyDrag && bodyDrag.group;
     bodyDrag = null; camLook = null; nav.look = null;
     if (dropped) reanchorSelected();
+    if (groupDrop) settleMulti("Moved " + multi.length + " pieces");
     renderer.domElement.style.cursor = "";
   }
 
@@ -3073,6 +3249,7 @@
     const hit = pickAt(e);
     if (hit && hit.human != null) { selectHuman(hit.human); return; }
     if (hit && hit.obj) { if (selectedObject !== hit.obj) selectObject(hit.obj); return; }
+    clearMulti();
     deselect();
   }
 
@@ -3082,6 +3259,8 @@
   function renderInspector() {
     const body = document.getElementById("inspectorBody"), panel = document.getElementById("inspector");
     renderSections();                                      // Stage / LED drawer content follows the same data
+    panel.classList.remove("multiMode");
+    if (mode === "edit" && multi.length) { refreshMultiMarks(); if (multi.length > 1) { renderMultiInspector(); return; } }
     if (mode === "view" || !selected) { body.innerHTML = ""; panel.classList.add("hidden"); return; }
     panel.classList.remove("hidden");
     let name, dims = "", uid = selected.uid;
@@ -5071,6 +5250,15 @@
     toast("360° environment removed");
   }
 
+  // Fine dial: a full-width slider plus a number box you can type into (arrows step, Shift = x10).
+  // factor converts the shown value to the stored one (brightness is shown in %, stored 0.2–2).
+  function envDialHTML(id, label, min, max, step, shown, unit, factor, title) {
+    const v = Math.round(shown / step) * step, dp = step < 1 ? 1 : 0;
+    return '<div class="dial" title="' + title + '"><div class="dialTop"><label for="' + id + 'N">' + label + '</label><span class="inl">' +
+      '<input type="number" id="' + id + 'N" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v.toFixed(dp) + '" data-factor="' + factor + '">' +
+      '<span class="unit">' + unit + '</span></span></div>' +
+      '<input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v + '" aria-label="' + label + '"></div>';
+  }
   // The LED section's 360° group.
   function envControlsHTML() {
     const e = envCfg(), p = envPlate();
@@ -5090,9 +5278,9 @@
     h += '<div class="dims" style="margin:8px 0 6px">Showing <b>' + escapeHtml(p.name.replace(/^360° · /, "")) + '</b>' +
       (local ? '<br><span class="warnTxt">Local file — not saved with the layout; load it again after a refresh.</span>' : "") + '</div>';
     h += '<div class="field"><label for="envFollow">Seen from</label><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
-      '<div class="field"><label for="envYaw">Turn</label><div class="inl"><input type="range" id="envYaw" min="-180" max="180" step="1" value="' + (e.yaw || 0) + '" style="width:110px"><output id="envYawV">' + Math.round(e.yaw || 0) + '°</output></div></div>' +
-      '<div class="field" title="Raise (+) or lower (−) the world’s horizon"><label for="envPitch">Horizon</label><div class="inl"><input type="range" id="envPitch" min="-45" max="45" step="0.5" value="' + (e.pitch || 0) + '" style="width:110px"><output id="envPitchV">' + (e.pitch || 0) + '°</output></div></div>' +
-      '<div class="field"><label for="envBright">Brightness</label><div class="inl"><input type="range" id="envBright" min="0.2" max="2" step="0.05" value="' + (e.brightness != null ? e.brightness : 1) + '" style="width:110px"><output id="envBrightV">' + Math.round((e.brightness != null ? e.brightness : 1) * 100) + '%</output></div></div>';
+      envDialHTML("envYaw", "Turn", -180, 180, 0.1, e.yaw || 0, "°", 1, "Rotate the world left / right") +
+      envDialHTML("envPitch", "Horizon", -45, 45, 0.1, e.pitch || 0, "°", 1, "Raise (+) or lower (−) the world’s horizon") +
+      envDialHTML("envBright", "Brightness", 20, 200, 1, (e.brightness != null ? e.brightness : 1) * 100, "%", 0.01, "LED output");
     h += '<div class="btnRow">' + (p.video ? '<button id="envPlay">' + (p.video.paused ? "Play" : "Pause") + '</button><button id="envRestart">Restart</button>' : "") +
       '<button id="envRemove" class="danger">Remove</button></div>';
     h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street or horizon with the set. Choose which surfaces show it in the list above.</div>';
@@ -5105,10 +5293,28 @@
     const fb = $("envFileBtn"); if (fb) fb.addEventListener("click", () => $("envFile").click());
     wireSurfSelects();
     const e = envCfg();
-    const slider = (id, key, fmt) => { const s = $(id), o = $(id + "V"); if (!s) return; s.addEventListener("input", () => { e[key] = parseFloat(s.value); if (o) o.textContent = fmt(e[key]); scheduleAutosave(); }); };
-    slider("envYaw", "yaw", v => Math.round(v) + "°");
-    slider("envPitch", "pitch", v => v + "°");
-    slider("envBright", "brightness", v => Math.round(v * 100) + "%");
+    const dial = (id, key) => {
+      const sl = $(id), nb = $(id + "N"); if (!sl || !nb) return;
+      const f = parseFloat(nb.dataset.factor) || 1, step = parseFloat(nb.step) || 1, dp = step < 1 ? 1 : 0;
+      const lo = parseFloat(nb.min), hi = parseFloat(nb.max);
+      const set = (v, from) => {
+        v = Math.min(hi, Math.max(lo, v));
+        e[key] = Math.round(v * f * 1000) / 1000;
+        if (from !== sl) sl.value = v;
+        if (from !== nb) nb.value = v.toFixed(dp);
+        scheduleAutosave();
+      };
+      sl.addEventListener("input", () => set(parseFloat(sl.value), sl));
+      nb.addEventListener("input", () => { const v = parseFloat(nb.value); if (!isNaN(v)) set(v, nb); });
+      nb.addEventListener("change", () => { const v = parseFloat(nb.value); set(isNaN(v) ? parseFloat(sl.value) : v, null); });
+      nb.addEventListener("keydown", ev => {                 // Shift+arrows = 10 steps
+        if (!ev.shiftKey || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+        ev.preventDefault(); set(parseFloat(nb.value || 0) + (ev.key === "ArrowUp" ? 10 : -10) * step, null);
+      });
+    };
+    dial("envYaw", "yaw");
+    dial("envPitch", "pitch");
+    dial("envBright", "brightness");
     const fo = $("envFollow"); if (fo) fo.addEventListener("change", () => { e.follow = fo.value; scheduleAutosave(); });
     const p = envPlate();
     const pl = $("envPlay"); if (pl && p && p.video) pl.addEventListener("click", () => {
@@ -5946,7 +6152,8 @@
     const d = JSON.parse(hist[histAt]), uid = selected && selected.uid;
     config.placedAssets = d.placedAssets; config.rollingWalls = d.rollingWalls;
     rebuildPlaced();
-    if (uid != null && placedGroupByUid[uid]) reselectUid(uid);
+    if (multi.length > 1) renderInspector();
+    else if (uid != null && placedGroupByUid[uid]) reselectUid(uid);
     refreshCamPicker();
     buildLibrary();                                                   // Sets toggles follow what's placed
     clearTimeout(autosaveTimer); saveAutosave();
@@ -6270,6 +6477,7 @@
         const k = e.key.toLowerCase();
         if (k === "z") { stepHistory(e.shiftKey ? 1 : -1); e.preventDefault(); return; }
         if (k === "y") { stepHistory(1); e.preventDefault(); return; }
+        if (k === "a" && mode === "edit" && viewCamUid == null) { selectAllPeople(); e.preventDefault(); return; }
       }
       if (!typing && NAV_KEYS.indexOf(e.code) !== -1) { const h = document.getElementById("navHud"); if (h && !pad.connected) { clearTimeout(hudFadeTimer); hudFadeTimer = setTimeout(() => h.classList.add("faded"), 1500); } }
       // Lens menu: L toggles; while open, ↑/↓ lens, ←/→ sensor, Enter/Esc close.
@@ -6291,10 +6499,11 @@
       }
       if (typing) return;
       // Main-view navigation keys (Shift+←/→ with a selection is the rotate nudge, handled below).
-      const rotNudge = mode === "edit" && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && selected;
+      const rotNudge = mode === "edit" && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && (selected || multi.length > 1);
       if (!e.ctrlKey && !e.metaKey && !e.altKey && !rotNudge && NAV_KEYS.indexOf(e.code) !== -1) { navKeys[e.code] = true; e.preventDefault(); }
       if (mode !== "edit") return;
-      if (rotNudge) {
+      if (rotNudge && multi.length > 1) { multiTurnEach((e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG)); e.preventDefault(); }
+      else if (rotNudge) {
         // Keyboard turn: Shift+arrows = 15°, Shift+Alt+arrows = 1°. Left = counter-clockwise from above.
         const cfg = cfgForSelected();
         if (cfg) setSelectedYaw((cfg.rotationDeg || 0) + (e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG));
@@ -6302,7 +6511,8 @@
       }
       else if (e.key === "1") gm.click();
       else if (e.key === "2") gr.click();
-      else if (e.key === "Escape") deselect();
+      else if (e.key === "Escape") { clearMulti(); deselect(); }
+      else if ((e.key === "Delete" || e.key === "Backspace") && multi.length > 1) multiRemove();
       else if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         if (isRemovable()) removeSelected();
         else toast("Rolling walls are fixtures — they can't be removed.");
