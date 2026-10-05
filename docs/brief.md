@@ -230,3 +230,11 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - **LED drawer**: one list of surfaces (Main wall, Ceiling, each rolling wall), each set to **Off / a flat plate / 360° world**; then a collapsible **360° world** group (library, load a file, Seen from, Turn, Horizon, Brightness, transport, Remove) and **Flat plates** (add image/video). A world loaded from a local file is flagged "not saved with the layout". The proxy-script note moved to Help.
 - **Overlap banner**: the piece is always outlined, but the banner only appears once it has been moved since it was selected (intentional overlaps stay quiet), and it can be dismissed per piece.
 - **Help**: new Cast & seats, People and 360° world sections.
+
+## Station platform (2026-10-04, from Station_FMC / Station_topdown_FMC, set photos, Unreal "Canal Street")
+- Its own set (`stationPlatform`, Stage → Sets → Station Platform), replacing the three stage-deck presets "Station Platform v1–v3" (saved layouts keep those as plain decks).
+- **Size**: 20 × 20 (default) or 16 × 20, across × along the track (~95% of deployments). Other footprints: add stage deck alongside.
+- **Deck**: 2' rolling stage deck — aluminium frame band, steel legs on casters (4' module spacing), grey slate tiles on a 2' grid, a 2' yellow tactile strip along both track edges (±x). Walkable at 2'.
+- **Pillars**: four 12' green I-beams, 10 3/4" × 11 3/4", outer faces 5' in from the edges of the 20 × 20 (8' 2 1/2" clear between faces), flanges facing along the track, bottom 1.3' boxed with a sloped fill to the web (the flared foot the Unreal columns share). The grid stays fixed and centred on the 16 × 20 deck — **assumption, to confirm**.
+- **Dressing**: timber bracing over the pillar tops (on by default, as on the stage); optional "Canal Street" plates on the pillars to match the Unreal world.
+- **Cast**: 13 standing spots (both yellow edges, beside each pillar, centre line) on the same seat map, with pillars and strips drawn.

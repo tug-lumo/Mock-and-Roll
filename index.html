@@ -187,6 +187,8 @@
   /* Cast seat map: the host from above, spots you click */
   .seatMap { display: block; width: 100%; height: auto; margin: 2px 0 6px; }
   .seatMap .shell { fill: #0e1314; stroke: var(--line); stroke-width: 1.5; }
+  .seatMap .strip { fill: rgba(227,176,44,.35); pointer-events: none; }
+  .seatMap .pillar { fill: #2f5a3a; stroke: #4f8a5e; pointer-events: none; }
   .seatMap .endLbl { fill: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .08em; pointer-events: none; }
   .seatMap .spot { cursor: pointer; outline: none; }
   .seatMap .spot .mk { fill: transparent; stroke: #6b7a7c; stroke-width: 1.25; transition: fill .12s, stroke .12s; }
@@ -721,10 +723,9 @@
     // Stage-deck presets: named size configurations (station/rooftop/etc.) that spawn a
     // stage deck at set dimensions so users pick a role instead of typing numbers.
     stageDeckPresets: [
-      { preset: "station-v1", name: "Station Platform v1", lengthFt: 24, widthFt: 16 },
-      { preset: "station-v2", name: "Station Platform v2", lengthFt: 24, widthFt: 20 },
-      { preset: "station-v3", name: "Station Platform v3", lengthFt: 16, widthFt: 20 }
-      // rooftop-set presets deferred (per brief)
+      { preset: "deck-4x8", name: "Single deck", lengthFt: 8, widthFt: 4 },
+      { preset: "deck-8x16", name: "Four decks", lengthFt: 16, widthFt: 8 }
+      // The station platform is its own set (stationPlatform); rooftop presets deferred (per brief)
     ],
     // Phase 3 — camera/lens. Edit lensSetMm to match the primes actually on the truck.
     lensSetMm: [18, 24, 35, 50, 85, 100],
@@ -749,9 +750,7 @@
     // OFF removes it. The Piece Library stays alongside for placing multiples / custom sizes.
     sets: [
       { key: "subway",     label: "Subway Car",          assetId: "subwayCar",                home: { x: 46.5, z: 18, rotationDeg: 90 } },
-      { key: "station-v1", label: "Station Platform v1",  assetId: "stageDeck", preset: "station-v1", home: { x: 0, z: 6, rotationDeg: 0 } },
-      { key: "station-v2", label: "Station Platform v2",  assetId: "stageDeck", preset: "station-v2", home: { x: 0, z: 6, rotationDeg: 0 } },
-      { key: "station-v3", label: "Station Platform v3",  assetId: "stageDeck", preset: "station-v3", home: { x: 0, z: 6, rotationDeg: 0 } }
+      { key: "station",    label: "Station Platform",    assetId: "stationPlatform", variant: "20x20", home: { x: 0, z: 6, rotationDeg: 0 } }
     ],
     // Saved camera bookmarks. Two kinds (see the shot bar): a "mark" stores just position + aim
     // (recall keeps the current lens — for quick blocking); a "shot" also stores lens/sensor/focus
@@ -766,6 +765,10 @@
       // platform / rooftop are just presets of this piece, not separate objects.
       { assetId: "stageDeck", name: "Stage Deck", category: "stage-deck", heightFt: 2, defaultLengthFt: 8, defaultWidthFt: 8, model: "assets/stage_deck.glb",
         note: "custom-dimensioned decking; plays many roles (station platform, rooftop base, custom works)" },
+      // Island platform with four I-beam pillars (see buildStationPlatform). 20x20 or 16x20 covers
+      // ~95% of deployments; anything else = add stage deck alongside.
+      { assetId: "stationPlatform", name: "Station Platform", category: "set", heightFt: 14, platform: true,
+        variants: [{ variant: "20x20", name: "20 × 20", lengthFt: 20, widthFt: 20 }, { variant: "16x20", name: "16 × 20", lengthFt: 16, widthFt: 20 }] },
       { assetId: "rooftopSet", name: "Rooftop Set", category: "stage-deck-preset", status: "deferred",
         variants: [
           { variant: "v1", parapetHeightFt: 1.3125, model: "assets/rooftop_v1.glb" },
@@ -1577,6 +1580,7 @@
     const e = pa && catalogEntry(pa.assetId);
     if (!e) return null;
     if (e.spots) return e.spots;
+    if (e.platform) { const d = platformDims(e, pa); return platformSpots(d.L, d.W); }
     if (e.car) return carSpots(e.lengthFt, e.widthFt, e.heightFt, e.car.front, pa.car && pa.car.rhd);
     if (e.custom && pa.car) return carSpots(pa.lengthFt || 15, pa.widthFt || 6, pa.heightFt || 5, pa.car.front, pa.car.rhd);
     return null;
@@ -1755,6 +1759,148 @@
     s.holes.push(rrPath(new THREE.Path(), -w / 2, 0, w / 2, h, r || 0));
     const m = new THREE.Mesh(new THREE.ShapeGeometry(s, 6), mat);
     return m;
+  }
+
+  // Station platform — Lumostage's island-platform set (Station_FMC + Station_topdown_FMC drawings,
+  // set photos, and the Unreal "Canal Street" environment it blends into).
+  //   Frame:   x = across the platform (W, track edges at ±x), z = along the track (L, -z = toward
+  //            the main wall, where the Unreal platform carries on into the distance).
+  //   Deck:    2' rolling stage deck (aluminium frame, steel legs on casters), grey slate tiles on a
+  //            2' grid, a 2' yellow tactile warning strip along both track edges.
+  //   Pillars: four 12' green I-beam columns (10 3/4" across the flanges x 11 3/4" deep), outer
+  //            faces 5' in from the edges of the 20x20 — a fixed 2x2 grid (8' 2 1/2" clear between
+  //            faces), centred on the deck. Bottom 1.3' boxed in, then a sloped fill to the web —
+  //            the flared foot the Unreal columns share. Timber bracing ties the tops together.
+  //   pa.variant: "20x20" (default) | "16x20" (16' along the track). pa.bracing (default on),
+  //   pa.signs (default off): black "Canal Street" plates on the pillars, as in the Unreal world.
+  const PLATFORM = { deckH: 2, pillarH: 12, pw: 10.75 / 12, pd: 11.75 / 12, inset: 5, grid: 20, strip: 2 };
+  function platformDims(entry, pa) {
+    const v = (entry.variants || []).find(x => x.variant === (pa && pa.variant)) || entry.variants[0];
+    return { L: v.lengthFt, W: v.widthFt };
+  }
+  // Pillar centres (local x, z): the 20x20 drawing's grid, kept whatever the deck length.
+  function platformPillars() {
+    const c = PLATFORM.grid / 2 - PLATFORM.inset;
+    return [[-c + PLATFORM.pw / 2, -c + PLATFORM.pd / 2], [c - PLATFORM.pw / 2, -c + PLATFORM.pd / 2],
+            [-c + PLATFORM.pw / 2, c - PLATFORM.pd / 2], [c - PLATFORM.pw / 2, c - PLATFORM.pd / 2]];
+  }
+  // Standing spots: along both yellow edges, beside each pillar, and the centre line.
+  function platformSpots(L, W) {
+    const y = PLATFORM.deckH, ex = W / 2 - PLATFORM.strip - 0.9, zs = [-L / 2 + 3, 0, L / 2 - 3];
+    const out = [];
+    zs.forEach((z, i) => out.push({ id: "eL" + (i + 1), name: "Left edge · " + ["wall end", "middle", "camera end"][i], group: "Left edge", x: -ex, y: y, z: z, rot: 90, pose: "standing" }));
+    zs.forEach((z, i) => out.push({ id: "eR" + (i + 1), name: "Right edge · " + ["wall end", "middle", "camera end"][i], group: "Right edge", x: ex, y: y, z: z, rot: -90, pose: "standing" }));
+    platformPillars().forEach((p, i) => out.push({ id: "p" + (i + 1), name: "By pillar · " + ["back left", "back right", "front left", "front right"][i], group: "Pillars",
+      x: p[0] + (p[0] < 0 ? 1.4 : -1.4), y: y, z: p[1] + 0.2, rot: p[0] < 0 ? 90 : -90, pose: "standing" }));
+    [-L / 2 + 2.5, 0, L / 2 - 2.5].forEach((z, i) => out.push({ id: "c" + (i + 1), name: "Centre · " + ["wall end", "middle", "camera end"][i], group: "Centre", x: 0, y: y, z: z, rot: 0, pose: "standing" }));
+    return out;
+  }
+  let _platformTex = null;
+  function platformTextures() {
+    if (_platformTex) return _platformTex;
+    // Slate tiles: one canvas = 4' x 4' (2 x 2 tiles), mottled grey-green with dark grout.
+    const c = document.createElement("canvas"); c.width = c.height = 512;
+    const x = c.getContext("2d");
+    x.fillStyle = "#454b49"; x.fillRect(0, 0, 512, 512);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    [[0, 0], [256, 0], [0, 256], [256, 256]].forEach(([tx, ty], k) => {
+      const base = [88, 95, 91], d = (k % 3 - 1) * 5;
+      x.fillStyle = "rgb(" + (base[0] + d) + "," + (base[1] + d) + "," + (base[2] + d) + ")";
+      x.fillRect(tx + 2, ty + 2, 252, 252);
+      for (let i = 0; i < 260; i++) {                           // slate mottling
+        const v = rnd() < 0.5 ? 0 : 255;
+        x.fillStyle = "rgba(" + v + "," + v + "," + v + "," + (0.02 + rnd() * 0.05) + ")";
+        x.beginPath(); x.ellipse(tx + 2 + rnd() * 252, ty + 2 + rnd() * 252, 4 + rnd() * 22, 2 + rnd() * 10, rnd() * 3, 0, 6.3); x.fill();
+      }
+    });
+    const tiles = new THREE.CanvasTexture(c);
+    tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.anisotropy = 4;
+    // Tactile strip: one canvas = 1' square, truncated domes on a ~2.4" grid.
+    const d = document.createElement("canvas"); d.width = d.height = 128;
+    const y = d.getContext("2d");
+    y.fillStyle = "#c8981f"; y.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+      const cx = 12.8 + i * 25.6, cy = 12.8 + j * 25.6;
+      y.fillStyle = "#9c7212"; y.beginPath(); y.arc(cx + 1.5, cy + 1.5, 7.5, 0, 6.3); y.fill();
+      y.fillStyle = "#d9a92c"; y.beginPath(); y.arc(cx, cy, 7, 0, 6.3); y.fill();
+    }
+    const domes = new THREE.CanvasTexture(d);
+    domes.wrapS = domes.wrapT = THREE.RepeatWrapping; domes.anisotropy = 4;
+    // Station sign plate.
+    const s = document.createElement("canvas"); s.width = 256; s.height = 256;
+    const z = s.getContext("2d");
+    z.fillStyle = "#111315"; z.fillRect(0, 0, 256, 256);
+    z.strokeStyle = "#f2f2f2"; z.lineWidth = 6; z.strokeRect(10, 10, 236, 236);
+    z.fillStyle = "#f2f2f2"; z.font = "bold 70px Arial, Helvetica, sans-serif"; z.textAlign = "center";
+    z.fillText("Canal", 128, 112); z.fillText("Street", 128, 192);
+    const sign = new THREE.CanvasTexture(s);
+    return (_platformTex = { tiles: tiles, domes: domes, sign: sign });
+  }
+  function buildStationPlatform(entry, pa) {
+    pa = pa || {};
+    const { L, W } = platformDims(entry, pa), H = PLATFORM.deckH, T = platformTextures();
+    const g = new THREE.Group();
+    g.userData.baseY = 0;
+    const alu = new THREE.MeshStandardMaterial({ color: 0xb4b9be, roughness: 0.45, metalness: 0.55 });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.6 });
+    const wheel = makeStandardMat(0x1d2024);
+    const tileTex = T.tiles.clone(); tileTex.needsUpdate = true; tileTex.repeat.set(W / 4, L / 4);
+    const top = new THREE.MeshStandardMaterial({ map: tileTex, roughness: 0.82, metalness: 0 });
+    const domeTex = T.domes.clone(); domeTex.needsUpdate = true; domeTex.repeat.set(PLATFORM.strip, L);
+    const strip = new THREE.MeshStandardMaterial({ map: domeTex, roughness: 0.6 });
+    const green = new THREE.MeshStandardMaterial({ color: 0x2f5a3a, roughness: 0.72, metalness: 0.08 });
+    const timber = new THREE.MeshStandardMaterial({ color: 0xcfb48a, roughness: 0.85 });
+
+    // Deck: tiled top over an aluminium frame band (BoxGeometry faces: +x -x +y -y +z -z).
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(W, 0.3, L), [alu, alu, top, alu, alu, alu]);
+    deck.position.y = H - 0.15; g.add(deck);
+    [-1, 1].forEach(sx => {                                    // tactile strips on both track edges
+      const m = new THREE.Mesh(new THREE.BoxGeometry(PLATFORM.strip, 0.02, L), strip);
+      m.position.set(sx * (W / 2 - PLATFORM.strip / 2), H + 0.01, 0); g.add(m);
+    });
+    // Legs + casters around the perimeter (4' module spacing) and down the middle.
+    const legGeo = new THREE.CylinderGeometry(0.1, 0.1, H - 0.55, 10), wheelGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.09, 12);
+    const xs = [], zs = [];
+    for (let v = -W / 2; v <= W / 2 + 1e-6; v += 4) xs.push(Math.max(-W / 2 + 0.3, Math.min(W / 2 - 0.3, v)));
+    for (let v = -L / 2; v <= L / 2 + 1e-6; v += 4) zs.push(Math.max(-L / 2 + 0.3, Math.min(L / 2 - 0.3, v)));
+    const legAt = (lx, lz) => {
+      const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.3 + (H - 0.55) / 2, lz); g.add(leg);
+      const wh = new THREE.Mesh(wheelGeo, wheel); wh.rotation.z = Math.PI / 2; wh.position.set(lx, 0.13, lz); g.add(wh);
+    };
+    xs.forEach(lx => { legAt(lx, zs[0]); legAt(lx, zs[zs.length - 1]); });
+    zs.slice(1, -1).forEach(lz => { legAt(xs[0], lz); legAt(xs[xs.length - 1], lz); legAt(0, lz); });
+
+    // Pillars: I-beam, flanges facing along the track, channels open toward the tracks.
+    const tf = 0.75 / 12, tw = 0.5 / 12, ph = PLATFORM.pillarH, pw = PLATFORM.pw, pd = PLATFORM.pd;
+    const cd = pw / 2 - tw / 2, footH = 1.3, flareH = 1.0;
+    const flare = Math.atan2(cd, flareH), plateLen = Math.hypot(cd, flareH);
+    platformPillars().forEach(([px, pz]) => {
+      const col = new THREE.Group(); col.position.set(px, H, pz);
+      [-1, 1].forEach(sz => { const f = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, tf), green); f.position.set(0, ph / 2, sz * (pd / 2 - tf / 2)); col.add(f); });
+      const web = new THREE.Mesh(new THREE.BoxGeometry(tw, ph, pd - 2 * tf), green); web.position.y = ph / 2; col.add(web);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(pw, footH, pd - 0.01), green); foot.position.y = footH / 2; col.add(foot);
+      [-1, 1].forEach(sx => {                                // sloped fill from the box to the web
+        const pl = new THREE.Mesh(new THREE.BoxGeometry(0.05, plateLen, pd - 2 * tf), green);
+        pl.position.set(sx * (tw / 2 + cd / 2), footH + flareH / 2, 0); pl.rotation.z = sx * flare; col.add(pl);
+      });
+      if (pa.signs) [-1, 1].forEach(sz => {
+        const sg = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), new THREE.MeshStandardMaterial({ map: T.sign, roughness: 0.5 }));
+        sg.position.set(0, 7.2, sz * (pd / 2 + 0.01)); if (sz < 0) sg.rotation.y = Math.PI; col.add(sg);
+      });
+      g.add(col);
+    });
+    // Timber bracing across the pillar tops (as on the stage).
+    if (pa.bracing !== false) {
+      const p = platformPillars(), yTop = H + ph - 0.2;
+      const beam = (a, b) => {
+        const dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.3, len), timber);
+        m.position.set((a[0] + b[0]) / 2, yTop, (a[1] + b[1]) / 2); m.rotation.y = Math.atan2(dx, dz); g.add(m);
+      };
+      beam(p[0], p[1]); beam(p[2], p[3]); beam(p[0], p[2]); beam(p[1], p[3]); beam(p[0], p[3]);
+    }
+    g.userData.walk = [{ x0: -W / 2, x1: W / 2, z0: -L / 2, z1: L / 2, y: H }];
+    return g;
   }
 
   // Subway car — modelled on Lumostage's set (Subway Train Floor Plan v1 + set photos).
@@ -2143,6 +2289,8 @@
     } else if (entry.assetId === "subwayCar") {
       g = buildSubwayCar(entry, pa);
       attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // stainless shell mirrors the volume
+    } else if (entry.assetId === "stationPlatform") {
+      g = buildStationPlatform(entry, pa);
     } else if (entry.assetId === "glassWall") {
       g = buildGlassWall(entry);
     } else if (entry.assetId === "cornerPillar") {
@@ -2672,7 +2820,8 @@
       dims = "L " + fmtLen(cur.lengthFt) + " × W " + fmtLen(cur.widthFt) + " × H " + fmtLen(catalogEntry("stageDeck").heightFt);
     } else {
       const pa = cur, e = catalogEntry(pa.assetId);
-      if (e) { name = e.name + (pa.variant ? " · " + pa.variant : ""); dims = assetDimsText(e, pa); }
+      const vn = pa.variant && e && e.variants && (e.variants.find(v => v.variant === pa.variant) || {}).name;
+      if (e) { name = e.name + (pa.variant ? " · " + (vn || pa.variant) : ""); dims = assetDimsText(e, pa); }
       else { name = pa.assetId + " (not in catalog)"; dims = ""; }
     }
     const canDup = selected.type === "human" || selected.kind === "placed";
@@ -2688,6 +2837,7 @@
         fieldHTML("rot", "Turn (°)", cur.rotationDeg || 0, true) +
         (isStageDeck ? fieldHTML("deckL", "Length", toDisplay(cur.lengthFt)) + fieldHTML("deckW", "Width", toDisplay(cur.widthFt)) : ""), true) +
       doorsHTML(cur) +
+      platformHTML(cur) +
       (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
       (isPerson ? grpHTML("figure", "Figure", fmtLen(personHeight(catalogEntry(cur.assetId), cur)), figureHTML(cur)) : "") +
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
@@ -2815,6 +2965,27 @@
         ? "Glossy paint, chrome and glass pick up the volume, rolling walls and ceiling — and their colour lights the body."
         : "Live reflections are switched off in Settings, so this piece won't pick up the volume until they're back on.") + '</div>';
   }
+  // Station platform: deck size (the two standard builds) and the optional dressing.
+  function platformHTML(pa) {
+    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
+    if (!e || !e.platform) return "";
+    const cur = (e.variants.find(v => v.variant === pa.variant) || e.variants[0]).variant;
+    return '<div class="rowSeg"><span id="platLbl">Size</span><div class="seg" role="group" aria-labelledby="platLbl">' +
+      e.variants.map(v => '<button data-plat="' + v.variant + '" class="' + (v.variant === cur ? "active" : "") + '" aria-pressed="' + (v.variant === cur) + '">' + v.name + '</button>').join("") + '</div></div>' +
+      '<div class="hint" style="margin:-4px 0 10px">Across × along the track. Other sizes: add stage deck alongside.</div>' +
+      grpHTML("platDress", "Dressing", (pa.bracing !== false ? "bracing" : "") + (pa.signs ? (pa.bracing !== false ? " · " : "") + "signs" : "") || "bare",
+        '<label class="setToggle"><input type="checkbox" id="platBracing" ' + (pa.bracing !== false ? "checked" : "") + '><span>Timber bracing over the pillar tops</span></label>' +
+        '<label class="setToggle"><input type="checkbox" id="platSigns" ' + (pa.signs ? "checked" : "") + '><span>"Canal Street" signs on the pillars</span></label>' +
+        '<div class="hint">The signs match the Unreal station; the physical pillars are bare.</div>');
+  }
+  function wirePlatformFields() {
+    const redo = fn => { const pa = cfgForSelected(); if (!pa) return; const uid = pa._uid; fn(pa); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); };
+    document.querySelectorAll("#inspectorBody [data-plat]").forEach(b => b.addEventListener("click", () => redo(pa => { pa.variant = b.dataset.plat; })));
+    const br = document.getElementById("platBracing"), sg = document.getElementById("platSigns");
+    if (br) br.addEventListener("change", () => redo(pa => { pa.bracing = br.checked; }));
+    if (sg) sg.addEventListener("change", () => redo(pa => { pa.signs = sg.checked; }));
+  }
+
   // Subway doors: a quick state, so it sits right under Position as a two-way switch.
   function doorsHTML(pa) {
     if (selected.kind !== "placed" || pa.assetId !== "subwayCar") return "";
@@ -3049,14 +3220,20 @@
   }
   // Plan-view map in the host's own frame (x → right, z → down, as Plan view shows it at 0° turn).
   function seatMapHTML(pa, e, spots, occ) {
-    const L = e.custom ? (pa.lengthFt || 15) : e.lengthFt, W = e.custom ? (pa.widthFt || 6) : e.widthFt;
+    // L = extent along local x, W = along local z (the platform runs its length down z).
+    const pd = e.platform && platformDims(e, pa);
+    const L = pd ? pd.W : e.custom ? (pa.lengthFt || 15) : e.lengthFt, W = pd ? pd.L : e.custom ? (pa.widthFt || 6) : e.widthFt;
     // Long hosts (the subway) get their width stretched up to 1.8x so the bench rows stay clickable.
-    const vw = 308, pad = 4, s = (vw - 2 * pad) / L, sz = Math.min(150 / W, s * 1.8);
+    const vw = 308, pad = 4, s = Math.min((vw - 2 * pad) / L, 150 / W), sz = Math.min(150 / W, s * 1.8);
     const vh = Math.round(W * sz + 2 * pad), X = x => vw / 2 + x * s, Y = z => vh / 2 + z * sz, f1 = v => Math.round(v * 10) / 10;
     const front = e.assetId === "subwayCar" ? -1 : ((pa.car && pa.car.front) || (e.car && e.car.front) || -1);
     let h = '<svg class="seatMap" viewBox="0 0 ' + vw + ' ' + vh + '" role="group" aria-label="Seat map of the ' + escapeHtml(e.name) + '">' +
       '<rect class="shell" x="' + f1(X(-L / 2)) + '" y="' + f1(Y(-W / 2)) + '" width="' + f1(L * s) + '" height="' + f1(W * sz) + '" rx="' + f1(Math.min(W * sz * 0.22, 14)) + '"/>' +
-      '<text class="endLbl" x="' + f1(front < 0 ? X(-L / 2) + 7 : X(L / 2) - 7) + '" y="' + f1(vh / 2 + 3) + '" text-anchor="' + (front < 0 ? "start" : "end") + '">' + (e.assetId === "subwayCar" ? "CAB" : "FRONT") + '</text>';
+      (pd
+        ? [-1, 1].map(sx => '<rect class="strip" x="' + f1(sx < 0 ? X(-L / 2) : X(L / 2 - PLATFORM.strip)) + '" y="' + f1(Y(-W / 2)) + '" width="' + f1(PLATFORM.strip * s) + '" height="' + f1(W * sz) + '"/>').join("") +
+          platformPillars().map(q => '<rect class="pillar" x="' + f1(X(q[0] - PLATFORM.pw / 2)) + '" y="' + f1(Y(q[1] - PLATFORM.pd / 2)) + '" width="' + f1(Math.max(PLATFORM.pw * s, 5)) + '" height="' + f1(Math.max(PLATFORM.pd * sz, 5)) + '"/>').join("") +
+          '<text class="endLbl" x="' + f1(vw / 2) + '" y="' + f1(Y(-W / 2) + 11) + '" text-anchor="middle">WALL END</text>'
+        : '<text class="endLbl" x="' + f1(front < 0 ? X(-L / 2) + 7 : X(L / 2) - 7) + '" y="' + f1(vh / 2 + 3) + '" text-anchor="' + (front < 0 ? "start" : "end") + '">' + (e.assetId === "subwayCar" ? "CAB" : "FRONT") + '</text>');
     spots.forEach((sp, i) => {
       const o = occ[sp.id], c = o && o.role && o.role.color, x = X(sp.x), y = Y(sp.z);
       const style = c ? ' style="fill:' + c + ';stroke:' + c + '"' : "";
@@ -3087,6 +3264,11 @@
       const uc = e.undercarriageFt != null ? e.undercarriageFt : 0;
       return "L " + fmtLen(e.lengthFt) + " × W " + fmtLen(e.widthFt) + " × H " + fmtLen(e.heightFt + uc) + " · hollow" +
         (uc ? "<br>on " + fmtLen(uc) + " air-caster undercarriage (floor at " + fmtLen(uc) + ")" : "");
+    }
+    if (e.platform) {
+      const d = platformDims(e, pa);
+      return "Deck " + fmtLen(d.W) + " across × " + fmtLen(d.L) + " along the track × " + fmtLen(PLATFORM.deckH) +
+        "<br>4 pillars " + fmtLen(PLATFORM.pillarH) + " (tops at " + fmtLen(PLATFORM.deckH + PLATFORM.pillarH) + ")";
     }
     if (e.deck) {
       const d = e.deck;
@@ -3133,6 +3315,7 @@
     };
     [dL, dW].forEach(el => el && el.addEventListener("change", applyDeckDims));
     wireReflectFields();
+    wirePlatformFields();
     wirePeopleAndCast();
     // Imported model: pick which real dimension you know, enter it, the model scales uniformly.
     const fitAxis = document.getElementById("fitAxis"), fitVal = document.getElementById("fitVal");
@@ -4387,6 +4570,7 @@
       if (setIsOn(key)) return;
       const home = sd.home || { x: 0, z: 0, rotationDeg: 0 };
       const pa = { assetId: sd.assetId, x: home.x, z: home.z, rotationDeg: home.rotationDeg || 0, _setKey: key };
+      if (sd.variant) pa.variant = sd.variant;
       if (sd.preset) {
         pa.preset = sd.preset;
         const pr = (config.stageDeckPresets || []).find(p => p.preset === sd.preset);
@@ -4401,7 +4585,8 @@
       toast("Added " + sd.label);
     } else {
       if (!setIsOn(key)) return;
-      config.placedAssets = config.placedAssets.filter(p => p._setKey !== key);
+      const hostKeys = config.placedAssets.filter(p => p._setKey === key && p.key).map(p => p.key);
+      config.placedAssets = config.placedAssets.filter(p => p._setKey !== key && !(p.pin && hostKeys.indexOf(p.pin.host) !== -1));   // its cast goes with it
       rebuildPlaced();
       scheduleAutosave();
       toast("Removed " + sd.label);
@@ -5093,6 +5278,8 @@
       if (c && c.heightFt === 12) c.heightFt = 20;
       cfg.migrations.ceiling20 = true;
     }
+    // Station platform v1-v3 were stage-deck presets; they stay as plain decks (the set is its own piece now).
+    (cfg.placedAssets || []).forEach(p => { if (p._setKey && /^station-v\d$/.test(p._setKey)) { delete p._setKey; delete p.preset; } });
     // placedAssets hygiene: drop any duplicate vehicle seat key.
     const seenKeys = {};
     (cfg.placedAssets || []).forEach(p => { if (p.key) { if (seenKeys[p.key]) delete p.key; else seenKeys[p.key] = 1; } });
