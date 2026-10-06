@@ -30,7 +30,7 @@
   html, body { margin: 0; height: 100%; overflow: hidden; font-family: Arial, Helvetica, sans-serif; color: var(--text); background: var(--bg); }
   /* The 3D view fills the space the bars leave (panels float over it, the bars never do). */
   #canvasWrap { position: absolute; top: var(--top); left: var(--rail); right: 0; bottom: 0; }
-  body.phone #canvasWrap { bottom: 64px; }
+  body.phone #canvasWrap { bottom: 0; }
   canvas { display: block; }
 
   /* ---------- App shell: top bar · section rail · drawer · contextual inspector ---------- */
@@ -255,8 +255,6 @@
   #planSheet .foot > .primary { width: 100%; }
   #planSheet textarea { width: 100%; box-sizing: border-box; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font: 13px Arial, Helvetica, sans-serif; resize: vertical; }
   #planSheet .planNotes { display: block; color: var(--muted); font-size: 12.5px; margin: 4px 0 6px; }
-  body.phone #planSheet .planWrap { flex-direction: column; }
-  body.phone #planSheet .planSide { width: auto; max-height: 50%; }
   /* Controls reference (Help) */
   #help { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; background: rgba(10,11,13,.6); }
   #help .card { width: min(780px, calc(100% - 32px)); max-height: calc(100% - 64px); overflow: auto; background: var(--panel);
@@ -399,28 +397,64 @@
     position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
     border-radius: 50%; background: rgba(76,159,254,.55); border: 2px solid rgba(255,255,255,.6);
   }
-  /* Phone: top bar = view switch only; the rail becomes a bottom tab row; panels become a bottom sheet */
-  body.phone { --top: 56px; --rail: 0px; }
-  body.phone #topbar { gap: 8px; padding: 0 8px; }
-  body.phone #topbar .brand { width: 40px; border-right: 0; }
-  body.phone #topbar .title, body.phone #fileWrap, body.phone #setWrap, body.phone #helpBtn,
-  body.phone #modeBadge, body.phone #navHud, body.phone #welcome { display: none !important; }
-  body.phone .seg { flex: 1; }
-  body.phone .seg button { flex: 1; justify-content: center; padding: 9px 6px; }
-  body.phone button, body.phone select { min-height: 42px; font-size: 14px; }
-  body.phone #rail { top: auto; bottom: 0; left: 0; right: 0; width: auto; height: 64px; flex-direction: row; justify-content: center; border-right: 0; border-top: 1px solid var(--line); padding: 6px; }
-  body.phone #rail button { flex: 0 1 120px; padding: 6px 0; }
-  body.phone #drawer { top: auto; left: 8px; right: 8px; bottom: 72px; width: auto; max-height: 62vh; }
-  body.phone #drawer.closed { transform: translateY(12px); }
-  body.phone #lensBar { bottom: 74px; max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; }
-  body.phone #joy { bottom: 84px; }
-  body.phone.drawerOpen #joy { display: none; }
-  body.phone #camHud { top: 58px; font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
+  /* ---- Touch (phones + tablets): bigger targets, quick menu, touch bar, steppers ---- */
+  body.touch button, body.touch select { min-height: 38px; }
+  body.touch input[type="number"] { min-height: 36px; font-size: 15px; }
+  body.touch .roleSw { width: 34px; height: 34px; }
+  body.touch .chips button { min-height: 34px; }
+  .stepper { display: inline-flex; align-items: center; gap: 3px; }
+  .stepper .stp { width: 34px; min-height: 36px; padding: 0; font-size: 18px; line-height: 1; }
+  .stepper input[type="number"] { width: 64px; text-align: center; }
+  .dial .stepper input[type="number"] { width: 58px; }
+  #lpMenu { position: fixed; z-index: 48; min-width: 180px; background: #1f282a; border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: var(--panelShadow); display: flex; flex-direction: column; gap: 2px; }
+  #lpMenu.hidden { display: none; }
+  #lpMenu .lpTitle { font-size: 12px; color: var(--muted); padding: 6px 10px 4px; }
+  #lpMenu button { text-align: left; border: 0; background: transparent; padding: 11px 12px; font-size: 15px; border-radius: 8px; }
+  #lpMenu button:active { background: var(--panel2); }
+  #touchBar { position: absolute; z-index: 18; left: 50%; transform: translateX(-50%); bottom: 14px; display: flex; gap: 6px; padding: 6px;
+    background: rgba(20,22,26,.92); border: 1px solid var(--line); border-radius: 14px; }
+  #touchBar.hidden { display: none; }
+  #touchBar button { min-height: 44px; padding: 0 14px; font-size: 14px; }
+  body.touch #navHud { display: none !important; }
+  body.touch:not(.phone) #joy { left: calc(var(--rail) + 18px); bottom: 18px; }
+  body.touch.drawerOpen:not(.phone) #joy { left: calc(var(--rail) + 330px); }
+  #rotatePrompt, #newSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #rotatePrompt.hidden, #newSheet.hidden { display: none; }
+  #rotatePrompt .card, #newSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #rotatePrompt h3, #newSheet h3 { margin: 0 0 6px; font-size: 16px; }
+  #rotatePrompt p, #newSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  #newSheet .btnRow button { flex: 1 1 auto; }
+
+  /* ---- Phone (landscape first): slim top bar, icon rail on the left, side panels ---- */
+  body.phone { --top: 46px; --rail: 58px; }
+  body.phone #topbar { gap: 6px; padding: 0 6px 0 0; }
+  body.phone #topbar .brand { width: var(--rail); }
+  body.phone #topbar .title, body.phone #modeBadge, body.phone #welcome { display: none !important; }
+  body.phone #fileMenuBtn, body.phone #setMenuBtn, body.phone #helpBtn { font-size: 0; gap: 0; padding: 8px 10px; }
+  body.phone #fileMenuBtn svg, body.phone #setMenuBtn svg, body.phone #helpBtn svg { width: 20px; height: 20px; }
+  body.phone .seg button { padding: 6px 10px; font-size: 13px; }
+  body.phone #rail { padding: 6px 4px; gap: 2px; }
+  body.phone #rail button { padding: 7px 0 5px; font-size: 10px; gap: 3px; }
+  body.phone #rail button svg { width: 20px; height: 20px; }
+  body.phone #drawer { top: calc(var(--top) + 6px); left: calc(var(--rail) + 6px); bottom: 6px; width: min(330px, 48vw); }
+  body.phone #inspector { top: calc(var(--top) + 6px); right: 6px; width: min(310px, 46vw); max-height: calc(100% - var(--top) - 12px); }
+  body.phone #inspector.wide { width: min(340px, 50vw); }
+  body.phone.drawerOpen #inspector { display: none; }
+  body.phone .paneHead { padding: 10px 10px 6px 12px; }
+  body.phone .paneBody { padding: 2px 12px 12px; }
+  body.phone #joy { left: calc(var(--rail) + 14px); bottom: 14px; width: 104px; height: 104px; }
+  body.phone #joy .knob { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+  body.phone.drawerOpen #joy, body.camview #touchBar { display: none; }
+  body.phone #lensBar { bottom: 8px; max-width: calc(100% - var(--rail) - 16px); flex-wrap: wrap; justify-content: center; padding: 4px; gap: 4px; }
+  body.phone #lensBar button, body.phone #lensBar select { min-height: 36px; padding: 0 10px; font-size: 13px; }
+  body.phone #camHud { top: 50px; font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
   body.phone #camHud .keys { display: none; }
-  body.phone #toast { bottom: 76px; max-width: 90vw; }
-  .histBtns { display: flex; gap: 2px; }
-  .histBtns button { padding: 6px 8px; line-height: 0; }
-  .histBtns button svg { width: 18px; height: 18px; }
+  body.phone #toast { bottom: 70px; max-width: 90vw; }
+  body.phone #touchBar { bottom: 10px; left: auto; right: 10px; transform: none; }
+  body.phone #touchBar button { min-height: 40px; padding: 0 10px; font-size: 13px; }
+  body.phone #vf .blx { display: none; }
+  body.phone #planSheet .planWrap { flex-direction: row; }
+  body.phone #planSheet .planSide { width: 44vw; max-height: none; }
   #modeBadge { color: var(--accent2); font-size: 12px; font-weight: 600; }
 </style>
 </head>
@@ -442,6 +476,7 @@
       <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
       <symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></g></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-new" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v6M9 13h6"/></g></symbol>
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5H9.5a5 5 0 0 0 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
@@ -472,9 +507,11 @@
     <div class="menuWrap" id="fileWrap">
       <button class="ghost" id="fileMenuBtn" aria-haspopup="true" aria-expanded="false"><svg><use href="#i-file"/></svg>File</button>
       <div class="menu hidden" id="fileMenu" role="menu">
+        <button class="item editOnly" id="newBtn" role="menuitem"><svg><use href="#i-new"/></svg><span>New layout…<small>Clear the stage and plan another setup</small></span></button>
         <button class="item editOnly" id="saveBtn" role="menuitem"><svg><use href="#i-save"/></svg><span>Save layout<small>Download this stage as a .json file</small></span></button>
         <button class="item editOnly" id="loadBtn" role="menuitem"><svg><use href="#i-open"/></svg><span>Open layout…<small>Load a saved .json file</small></span></button>
         <input id="fileInput" type="file" accept="application/json,.json" class="hidden" />
+        <button class="item hidden" id="openPublished" role="menuitem"><svg><use href="#i-phone"/></svg><span>Open the published layout<small>The setup last published from the studio PC</small></span></button>
         <div class="sep"></div>
         <button class="item" id="planBtn" role="menuitem"><svg><use href="#i-plan"/></svg><span>Stage plan…<small>A to-scale floor plan to print, PDF or share (Ctrl+P)</small></span></button>
         <div class="sep editOnly"></div>
@@ -657,6 +694,14 @@
           <dt>Start / LB</dt><dd>Save shot / mark</dd>
           <dt>R3</dt><dd>Print shot</dd>
           <dt>B</dt><dd>Drop · deselect · exit</dd></dl></div>
+        <div><h3>Touch (phone / tablet)</h3><dl>
+          <dt>Tap</dt><dd>Select a piece (tap again and drag to move it)</dd>
+          <dt>One finger</dt><dd>Look around / pan the plan</dd>
+          <dt>Two-finger twist</dt><dd>Turn the selected piece or group</dd>
+          <dt>Pinch · two-finger drag</dt><dd>Move in and out · slide the view (in the viewfinder: dolly · truck and boom)</dd>
+          <dt>Hold</dt><dd>Quick menu: duplicate, turn ±90°, select multiple, unpin, remove</dd>
+          <dt>Select multiple</dt><dd>Touch bar toggle: taps add or drop pieces</dd>
+          <dt>− / +</dt><dd>Step any number field</dd></dl></div>
         <div><h3>Cast &amp; seats</h3><dl>
           <dt>Seat map</dt><dd>Select a car or the subway; its Cast map shows every spot from above</dd>
           <dt>Click a spot</dt><dd>Fill it with a figure</dd>
@@ -718,6 +763,26 @@
   <input id="envFile" type="file" accept="image/*,video/*" class="hidden">
 
   <div id="toast"></div>
+  <!-- Touch: quick menu (long-press a piece) and the floating touch bar -->
+  <div id="lpMenu" class="hidden" role="menu"></div>
+  <div id="touchBar" class="hidden" role="toolbar" aria-label="Touch tools">
+    <button id="tbSelect" aria-pressed="false">Select multiple</button>
+    <button id="tbTurnL" class="hidden" title="Turn 15° counter-clockwise">Turn left</button>
+    <button id="tbTurnR" class="hidden" title="Turn 15° clockwise">Turn right</button>
+    <button id="tbRemove" class="danger hidden">Remove</button>
+  </div>
+  <div id="rotatePrompt" class="hidden" role="note">
+    <div class="card"><h3>Turn your phone sideways</h3><p>Mock &amp; Roll is laid out for landscape on a phone — the viewfinder, panels and controls all fit.</p>
+      <button class="primary" id="rotateOk">Continue in portrait</button></div>
+  </div>
+  <!-- File → New layout -->
+  <div id="newSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="newTitle">
+    <div class="card">
+      <h3 id="newTitle">Start a new layout?</h3>
+      <p>This clears the stage: sets, decks, vehicles, people, cameras and saved shots. The studio, LED / 360° setup, settings and your imported 3D models stay. You can undo it straight after.</p>
+      <div class="btnRow"><button id="newCancel">Cancel</button><button id="newSaveGo">Save, then clear</button><button class="primary" id="newGo">Clear the stage</button></div>
+    </div>
+  </div>
   <div id="joy" class="hidden"><div class="knob"></div></div>
 
   <!-- Three.js r128 (pinned UMD) + addons, bundled in vendor/ so the app needs no third-party CDN. -->
@@ -1168,12 +1233,13 @@
     wireUI();
     wireShotBar();
     wireCamPicker();
-    initPhone();        // phone = read-only viewer with touch gestures (no-op on desktop)
+    initPhone();        // touch devices: gestures, touch bar, steppers; phones: compact landscape layout
     applyUrlParams();  // share links: ?view (read-only) and ?config=<url> (auto-load a layout)
     if (histAt < 0) historyReset();
     document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
     wirePlanSheet();
     wireVfBar();
+    wireNewLayout();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
@@ -1190,7 +1256,7 @@
     let params;
     try { params = new URLSearchParams(location.search); } catch (e) { tryLoadAutosave(); return; }
     if (params.get("mode") === "view" || params.has("view")) mode = "view";
-    const cfgUrl = params.get("config") || (isPhone ? "published/layout.json" : null);
+    const cfgUrl = params.get("config");
     if (cfgUrl) { loadConfigFromUrl(cfgUrl); }
     else { tryLoadAutosave(); }
   }
@@ -1206,9 +1272,7 @@
       })
       .catch(err => {
         console.warn("Lumostage: could not load ?config=" + url + " — " + err.message);
-        toast(isPhone && !new URLSearchParams(location.search).get("config")
-          ? "Nothing published yet — use “Publish to phone” on the PC. Showing the base stage."
-          : "Couldn't load the shared layout — showing default.");
+        toast(url.indexOf("published/") === 0 ? "Nothing published yet — use “Publish to phone” on the PC." : "Couldn't load the shared layout — showing default.");
       });
   }
 
@@ -3006,6 +3070,7 @@
   }
 
   function selectObject(g) {
+    if (isPhone && openSection) openDrawer(null);           // phone: the inspector takes the space the drawer had
     selected = { type: "object", uid: g.userData.uid, kind: g.userData.kind, id: g.userData.id };
     selectedObject = g;
     const selPA = g.userData.kind === "placed" && getPlacedByUid(g.userData.uid);
@@ -3130,10 +3195,18 @@
       // Grab a piece by its body: select it and drag it along the floor.
       if (mode !== "edit") return;
       const hit = pickAt(e); if (!hit) return;
-      const hitPlaced = hit.obj && hit.obj.userData.kind === "placed";
-      if ((e.ctrlKey || e.metaKey) && hitPlaced) {              // Ctrl/Cmd-click: add to / drop from the selection
+      const hitPlaced = hit.obj && hit.obj.userData.kind === "placed", touchy = e.pointerType === "touch";
+      if (touchy && !e.isPrimary) return;                       // a second finger is a gesture, not a grab
+      if ((e.ctrlKey || e.metaKey || (touchy && touchSelectMode)) && hitPlaced) {   // Ctrl-click / Select multiple: add or drop
         toggleMulti(hit.obj);
         e.stopImmediatePropagation(); e.preventDefault(); return;
+      }
+      if (touchy) {
+        // Touch: the first tap selects; only an already-selected piece can be dragged, so a finger
+        // swiping to look around never knocks the set over. Holding opens the quick menu.
+        if (hitPlaced) startLongPress(e, hit.obj);
+        const already = hit.obj && ((multi.length > 1 && multi.indexOf(hit.obj.userData.uid) !== -1) || selectedObject === hit.obj);
+        if (!already) return;                                   // selection happens on the tap's release (onPointerUp)
       }
       if (multi.length > 1 && hitPlaced && multi.indexOf(hit.obj.userData.uid) !== -1) startGroupDrag(hit);
       else {
@@ -3337,6 +3410,8 @@
     body.querySelectorAll("[data-rot]").forEach(b => b.addEventListener("click", () => multiRotateGroup(+b.dataset.rot)));
     document.getElementById("mClear").addEventListener("click", () => { clearMulti(); deselect(); });
     document.getElementById("mRemove").addEventListener("click", multiRemove);
+    addSteppers(body);
+    if (isTouch) updateTouchBar();
   }
   // Group drag: every mover keeps its offset from the grab point.
   function startGroupDrag(hit) {
@@ -3412,12 +3487,16 @@
     }
   }
 
-  function onWindowPointerUp() {
-    if (yawDrag) { yawDrag = null; if (viewCamUid == null) nav.enabled = true; }
+  function finishBodyDrag() {
     const dropped = bodyDrag && !bodyDrag.group && selected && selected.kind === "placed", groupDrop = bodyDrag && bodyDrag.group;
-    bodyDrag = null; camLook = null; nav.look = null;
+    bodyDrag = null;
     if (dropped) reanchorSelected();
     if (groupDrop) settleMulti("Moved " + multi.length + " pieces");
+  }
+  function onWindowPointerUp() {
+    if (yawDrag) { yawDrag = null; if (viewCamUid == null) nav.enabled = true; }
+    finishBodyDrag();
+    camLook = null; nav.look = null;
     renderer.domElement.style.cursor = "";
   }
 
@@ -3473,9 +3552,15 @@
     const moved = Math.hypot(e.clientX - downPt.x, e.clientY - downPt.y);
     downPt = null;
     if (moved > 5) return;                 // was a view drag
+    if (e.pointerType === "touch" && performance.now() - (touch.lastMulti || 0) < 500) return;   // end of a two-finger gesture, not a tap
     const hit = pickAt(e);
     if (hit && hit.human != null) { selectHuman(hit.human); return; }
-    if (hit && hit.obj) { if (selectedObject !== hit.obj) selectObject(hit.obj); return; }
+    if (hit && hit.obj) {
+      if (e.pointerType === "touch" && touchSelectMode && hit.obj.userData.kind === "placed") return;   // handled on press
+      if (multi.length > 1 && multi.indexOf(hit.obj.userData.uid) === -1) clearMulti();
+      if (selectedObject !== hit.obj) selectObject(hit.obj);
+      return;
+    }
     clearMulti();
     deselect();
   }
@@ -3488,7 +3573,7 @@
     renderSections();                                      // Stage / LED drawer content follows the same data
     panel.classList.remove("multiMode");
     if (mode === "edit" && multi.length) { refreshMultiMarks(); if (multi.length > 1) { renderMultiInspector(); return; } }
-    if (mode === "view" || !selected) { body.innerHTML = ""; panel.classList.add("hidden"); return; }
+    if (mode === "view" || !selected) { body.innerHTML = ""; panel.classList.add("hidden"); if (isTouch) updateTouchBar(); return; }
     panel.classList.remove("hidden");
     let name, dims = "", uid = selected.uid;
     const cur = cfgForSelected();
@@ -3555,6 +3640,8 @@
       try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
     }));
     wireInspectorFields();
+    addSteppers(body);
+    if (isTouch) updateTouchBar();
   }
 
   // Inspector groups reuse the drawer's collapsible pattern; open/closed is remembered per group.
@@ -4206,6 +4293,7 @@
     document.getElementById("camViewBtn").classList.add("active");
     document.getElementById("lensBar").classList.remove("hidden");
     refreshVfBar();
+    if (isTouch) updateTouchBar();
     openDrawer(null);                                   // the lens image gets the whole window
   }
 
@@ -4223,6 +4311,7 @@
     document.getElementById("lensBar").classList.add("hidden");
     document.getElementById("vfGuides").classList.add("hidden");
     closeLensMenu();
+    if (isTouch) setTimeout(updateTouchBar, 0);
     setNavButtons();
     const s = renderer.getSize(new THREE.Vector2());
     renderer.setScissorTest(false); renderer.setViewport(0, 0, s.x, s.y);
@@ -5255,6 +5344,7 @@
     }
     wireFixedControls();
     wireEnvControls();
+    addSteppers(lb);
   }
 
   function wireFixedControls() {
@@ -6354,24 +6444,49 @@
       return matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;
     } catch (e) { return false; }
   })();
-  const touch = { pts: {}, n: 0, pinch: null, joy: null, jx: 0, jy: 0 };
+  // Any touch-first device (phone or tablet) gets the touch controls; phones also get the compact
+  // landscape layout. ?touch forces touch controls for testing (?phone forces the phone layout).
+  const isTouch = (function () {
+    try {
+      const q = new URLSearchParams(location.search);
+      if (q.has("touch") || q.has("phone")) return true;
+      return matchMedia("(pointer: coarse)").matches;
+    } catch (e) { return false; }
+  })();
+  const touch = { pts: {}, n: 0, pinch: null, joy: null, jx: 0, jy: 0, gest: null, acc: null };
+  let touchSelectMode = false;
 
   function initPhone() {
-    if (!isPhone) return;
-    document.body.classList.add("phone");
-    mode = "view";
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));   // battery/heat over sharpness
+    if (!isTouch) return;
+    document.body.classList.add("touch");
+    if (isPhone) document.body.classList.add("phone");
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isPhone ? 1.5 : 2));   // battery/heat over sharpness
     onResize();
     const cv = renderer.domElement;
-    // Count fingers; with 2+ down, the one-finger look/pan path stands aside for the pinch.
-    cv.addEventListener("pointerdown", e => { if (e.pointerType === "touch") { touch.pts[e.pointerId] = { x: e.clientX, y: e.clientY }; touch.n = Object.keys(touch.pts).length; if (touch.n >= 2) { nav.look = null; camLook = null; touch.pinch = null; } } }, true);
+    // Count fingers; with 2+ down, a one-finger drag/look in progress stands aside for the gesture.
+    cv.addEventListener("pointerdown", e => {
+      if (e.pointerType !== "touch") return;
+      touch.pts[e.pointerId] = { x: e.clientX, y: e.clientY }; touch.n = Object.keys(touch.pts).length;
+      if (touch.n >= 2) { touch.lastMulti = performance.now(); cancelLongPress(); if (bodyDrag) finishBodyDrag(); nav.look = null; camLook = null; touch.pinch = null; touch.gest = null; touch.acc = null; }
+    }, true);
     window.addEventListener("pointermove", e => {
+      if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 9) cancelLongPress();
       if (!touch.pts[e.pointerId]) return;
       touch.pts[e.pointerId] = { x: e.clientX, y: e.clientY };
-      if (touch.n >= 2) { nav.look = null; camLook = null; twoFinger(); }   // runs before the one-finger handler
+      if (touch.n >= 2) { touch.lastMulti = performance.now(); nav.look = null; camLook = null; twoFinger(); }   // runs before the one-finger handler
     }, true);
-    const up = e => { if (touch.pts[e.pointerId]) { delete touch.pts[e.pointerId]; touch.n = Object.keys(touch.pts).length; touch.pinch = null; if (touch.n < 2) { nav.look = null; camLook = null; } } };
+    const up = e => {
+      cancelLongPress();
+      if (!touch.pts[e.pointerId]) return;
+      delete touch.pts[e.pointerId]; touch.n = Object.keys(touch.pts).length; touch.pinch = null;
+      if (touch.n < 2) {
+        if (touch.gest === "turn") { if (multi.length > 1) settleMulti(null, true); else scheduleAutosave(); }
+        touch.gest = null; touch.acc = null; nav.look = null; camLook = null;
+      }
+    };
     window.addEventListener("pointerup", up, true); window.addEventListener("pointercancel", up, true);
+    wireTouchBar();
+    if (isPhone) wirePortraitPrompt();
 
     const joy = document.getElementById("joy"), knob = joy.querySelector(".knob");
     joy.classList.remove("hidden");
@@ -6398,12 +6513,23 @@
   function twoFinger() {
     const ids = Object.keys(touch.pts); if (ids.length < 2) return;
     const a = touch.pts[ids[0]], b = touch.pts[ids[1]];
-    const dist = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    const last = touch.pinch; touch.pinch = { dist: dist, mx: mx, my: my };
+    const dist = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, ang = Math.atan2(b.y - a.y, b.x - a.x);
+    const last = touch.pinch; touch.pinch = { dist: dist, mx: mx, my: my, ang: ang };
     if (!last || dist < 1) return;
     const scale = dist / last.dist, dx = mx - last.mx, dy = my - last.my;
-    if (viewCamUid != null) {                                    // pinch = walk the film camera in/out
-      driveSticks(0, -(scale - 1) * 40, 0, 0, -dy * 0.02, 1, 1 / 60);
+    let dA = ang - last.ang; while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+    // Decide once per gesture: a twist with something selected turns it; otherwise pinch / pan the view.
+    if (!touch.gest) {
+      const canTurn = viewCamUid == null && mode === "edit" && ((selected && selected.kind === "placed") || multi.length > 1);
+      touch.acc = touch.acc || { a: 0, s: 0, px: 0, py: 0 };   // net (not path) amounts: a twist jiggles the midpoint
+      touch.acc.a += dA; touch.acc.s += Math.log(scale); touch.acc.px += dx; touch.acc.py += dy;
+      if (canTurn && Math.abs(touch.acc.a) > 0.12) { touch.gest = "turn"; turnSelectionBy(-radToDeg(touch.acc.a)); return; }   // include the twist so far
+      else if (Math.abs(touch.acc.s) > 0.06 || Math.hypot(touch.acc.px, touch.acc.py) > 18) touch.gest = "view";
+      else return;
+    }
+    if (touch.gest === "turn") { turnSelectionBy(-radToDeg(dA)); return; }   // screen clockwise = clockwise from above
+    if (viewCamUid != null) {                                    // pinch = dolly; two-finger drag = truck / boom
+      driveSticks(dx * 0.03, -(scale - 1) * 40, 0, 0, -dy * 0.02, 1, 1 / 60);
       return;
     }
     if (nav.mode === "top") {
@@ -6419,9 +6545,121 @@
     camera.position.y = clamp(camera.position.y + dy * k, 0.5, 200);
   }
 
+
+  // ---- Touch helpers: long-press menu, touch bar, steppers, portrait prompt ----------------
+  let lp = null;
+  function startLongPress(e, g) {
+    cancelLongPress();
+    lp = { x: e.clientX, y: e.clientY, t: setTimeout(() => {
+      const at = lp; lp = null;
+      if (bodyDrag) bodyDrag = null;                            // it was a hold, not a drag
+      openLpMenu(g, at.x, at.y);
+    }, 550) };
+  }
+  function cancelLongPress() { if (lp) { clearTimeout(lp.t); lp = null; } }
+  function closeLpMenu() { document.getElementById("lpMenu").classList.add("hidden"); }
+  function openLpMenu(g, x, y) {
+    const m = document.getElementById("lpMenu"), uid = g.userData.uid, pa = getPlacedByUid(uid);
+    if (!pa) return;
+    const inGroup = multi.length > 1 && multi.indexOf(uid) !== -1;
+    if (!inGroup && selectedObject !== g) { clearMulti(); selectObject(g); }
+    const items = inGroup
+      ? [["Turn all −90°", () => multiTurnEach(90)], ["Turn all +90°", () => multiTurnEach(-90)], ["Clear selection", () => { clearMulti(); deselect(); }], ["Remove all", multiRemove, true]]
+      : [["Duplicate", duplicateSelected], ["Turn −90°", () => setSelectedYaw((pa.rotationDeg || 0) + 90)], ["Turn +90°", () => setSelectedYaw((pa.rotationDeg || 0) - 90)],
+         ["Select multiple", () => { touchSelectMode = true; multi = [uid]; updateTouchBar(); toast("Tap more pieces to add them"); }]]
+        .concat(pa.pin ? [["Unpin", () => { delete pa.pin; pa.noAnchor = true; pa.x = snap(pa.x + 1.5); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); }]] : [])
+        .concat([["Remove", removeSelected, true]]);
+    m.innerHTML = '<div class="lpTitle">' + escapeHtml(inGroup ? multi.length + " selected" : (catalogEntry(pa.assetId) || {}).name || "Piece") + '</div>' +
+      items.map((it, i) => '<button data-i="' + i + '"' + (it[2] ? ' class="danger"' : "") + '>' + it[0] + '</button>').join("");
+    m.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { closeLpMenu(); items[+b.dataset.i][1](); }));
+    m.classList.remove("hidden");
+    const r = m.getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(window.innerWidth - r.width - 8, x - r.width / 2)) + "px";
+    m.style.top = Math.max(56, Math.min(window.innerHeight - r.height - 8, y - r.height - 16)) + "px";
+  }
+  function turnSelectionBy(d) {
+    if (multi.length > 1) { multiMovers().forEach(pa => setYawFor(pa, (pa.rotationDeg || 0) + d)); scheduleAutosave(); return; }
+    const cfg = cfgForSelected(); if (cfg) setSelectedYaw((cfg.rotationDeg || 0) + d);
+  }
+  function updateTouchBar() {
+    const bar = document.getElementById("touchBar"); if (!bar) return;
+    const show = isTouch && mode === "edit" && viewCamUid == null;
+    bar.classList.toggle("hidden", !show);
+    const sel = (selected && selected.kind === "placed") || multi.length > 1;
+    ["tbTurnL", "tbTurnR", "tbRemove"].forEach(id => document.getElementById(id).classList.toggle("hidden", !sel));
+    const sm = document.getElementById("tbSelect");
+    sm.classList.toggle("active", touchSelectMode); sm.setAttribute("aria-pressed", String(touchSelectMode));
+  }
+  function wireTouchBar() {
+    document.getElementById("tbSelect").addEventListener("click", () => {
+      touchSelectMode = !touchSelectMode;
+      if (touchSelectMode && selected && selected.kind === "placed" && !multi.length) multi = [selected.uid];
+      updateTouchBar(); toast(touchSelectMode ? "Select multiple: tap pieces to add or drop them" : "Select multiple off");
+    });
+    document.getElementById("tbTurnL").addEventListener("click", () => { if (multi.length > 1) multiTurnEach(15); else turnSelectionBy(15); });
+    document.getElementById("tbTurnR").addEventListener("click", () => { if (multi.length > 1) multiTurnEach(-15); else turnSelectionBy(-15); });
+    document.getElementById("tbRemove").addEventListener("click", () => { if (multi.length > 1) multiRemove(); else removeSelected(); });
+    window.addEventListener("pointerdown", e => { const m = document.getElementById("lpMenu"); if (!m.classList.contains("hidden") && !m.contains(e.target)) closeLpMenu(); }, true);
+    updateTouchBar();
+  }
+  // Touch: every number field gets −/+ buttons (degrees step 15°, lengths use the field's step).
+  function addSteppers(root) {
+    if (!isTouch || !root) return;
+    root.querySelectorAll('input[type="number"]:not([data-st])').forEach(inp => {
+      inp.dataset.st = "1";
+      const wrap = document.createElement("span"); wrap.className = "stepper";
+      inp.parentNode.insertBefore(wrap, inp);
+      const mk = sign => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "stp"; b.textContent = sign > 0 ? "+" : "−";
+        b.setAttribute("aria-label", (sign > 0 ? "Increase" : "Decrease") + " " + (inp.id || "value"));
+        b.addEventListener("click", () => {
+          const st = /^(rot|mFace|mTurnBy)$/.test(inp.id) ? 15 : (parseFloat(inp.step) || 1);
+          inp.value = String(Math.round(((parseFloat(inp.value) || 0) + sign * st) * 1000) / 1000);
+          inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        return b;
+      };
+      wrap.appendChild(mk(-1)); wrap.appendChild(inp); wrap.appendChild(mk(1));
+    });
+  }
+  function wirePortraitPrompt() {
+    const el = document.getElementById("rotatePrompt");
+    let dismissed = false;
+    try { dismissed = sessionStorage.getItem("lumostage.portraitOk") === "1"; } catch (e) {}
+    const upd = () => el.classList.toggle("hidden", dismissed || window.innerWidth >= window.innerHeight);
+    document.getElementById("rotateOk").addEventListener("click", () => { dismissed = true; try { sessionStorage.setItem("lumostage.portraitOk", "1"); } catch (e) {} upd(); });
+    window.addEventListener("resize", upd); upd();
+  }
+
+  // ---- File → New layout ---------------------------------------------------------------
+  // Clears the stage back to the base volume + one camera. Studio, LED / 360° setup, settings and
+  // imported 3D models stay. The old layout can be brought back once from the toast.
+  function newLayout() {
+    const prev = exportConfig();
+    const fresh = deepClone(DEFAULT_CONFIG);
+    ["customModels", "reflections", "environment", "vf", "fixedElements", "studio", "pillar"].forEach(k => { if (config[k] != null) fresh[k] = deepClone(config[k]); });
+    fresh.migrations = Object.assign({}, prev.migrations || {}, DEFAULT_CONFIG.migrations);
+    clearMulti();
+    applyConfig(fresh);
+    clearTimeout(autosaveTimer); saveAutosave();
+    document.getElementById("newSheet").classList.add("hidden");
+    toast("New layout — the stage is clear", { label: "Undo", fn: () => { applyConfig(prev); clearTimeout(autosaveTimer); saveAutosave(); toast("Previous layout restored"); } });
+  }
+  function wireNewLayout() {
+    const sh = document.getElementById("newSheet");
+    document.getElementById("newBtn").addEventListener("click", () => { closeMenus(); sh.classList.remove("hidden"); document.getElementById("newCancel").focus(); });
+    document.getElementById("newCancel").addEventListener("click", () => sh.classList.add("hidden"));
+    document.getElementById("newGo").addEventListener("click", newLayout);
+    document.getElementById("newSaveGo").addEventListener("click", () => { saveJSON(); setTimeout(newLayout, 300); });
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { sh.classList.add("hidden"); e.stopPropagation(); } });
+    // On the studio PC's server (or a phone reaching it), offer the layout published from the PC.
+    fetch("published/layout.json", { method: "HEAD" }).then(r => { if (r.ok) document.getElementById("openPublished").classList.remove("hidden"); }).catch(() => {});
+    document.getElementById("openPublished").addEventListener("click", () => { closeMenus(); loadConfigFromUrl("published/layout.json"); });
+  }
+
   // Joystick each frame: walk (first-person), pan (plan), or drive the film camera.
   function updatePhone(dt) {
-    if (!isPhone) return;
+    if (!isTouch) return;
     if (touch.jx || touch.jy) driveSticks(touch.jx, touch.jy, 0, 0, 0, 1, dt);
   }
 
