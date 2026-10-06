@@ -266,8 +266,31 @@
   #help dt { white-space: nowrap; }
   #help dd { margin: 0; color: var(--muted); }
   kbd { font: 700 11px/1 Arial, Helvetica, sans-serif; padding: 3px 6px; border-radius: 5px; background: #0e1314; border: 1px solid var(--line); border-bottom-width: 2px; color: var(--text); }
-  #planStyle { position: absolute; top: calc(var(--top) + 12px); left: 50%; transform: translateX(-50%); z-index: 17; box-shadow: var(--panelShadow); }
-  #planStyle.hidden { display: none; }
+  #planBar { position: absolute; top: calc(var(--top) + 12px); left: 50%; transform: translateX(-50%); z-index: 17; display: flex; gap: 8px; align-items: stretch; }
+  #planBar.hidden { display: none; }
+  #planBar .seg { box-shadow: var(--panelShadow); }
+  #pickWrap { position: relative; display: flex; }
+  .pickBtn { color: var(--text); padding: 0 12px 0 10px; height: auto; align-self: stretch; border-radius: 9px; align-items: center; gap: 7px; font-weight: 550; cursor: pointer; }
+  .pickBtn svg { width: 15px; height: 15px; color: var(--muted); }
+  .pickBtn b { font-weight: 600; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .pickBtn[aria-expanded="true"] { border-color: var(--accent); }
+  #pickPanel { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 300px; max-height: min(62vh, 520px); display: flex; flex-direction: column;
+    background: #1f282a; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--panelShadow); overflow: hidden; }
+  #pickPanel.hidden { display: none; }
+  #pickFilter { margin: 8px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: #0e1314; color: var(--text); font: inherit; font-size: 13px; }
+  #pickList { overflow-y: auto; padding: 0 6px 6px; }
+  #pickList h4 { margin: 10px 6px 4px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 650; }
+  #pickList h4:first-child { margin-top: 2px; }
+  .pkRow { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: transparent; color: var(--text); padding: 6px 8px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer; }
+  .pkRow:hover, .pkRow.kb { background: var(--panel2); }
+  .pkRow.on { background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 2px 0 0 var(--accent); }
+  .pkRow i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--c, #6b7278); }
+  .pkRow span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pkRow small { color: var(--muted); font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pkRow.hid span { color: var(--muted); }
+  .pickEmpty { color: var(--muted); font-size: 12.5px; padding: 10px 8px; }
+  .pickFoot { border-top: 1px solid var(--line); padding: 7px 12px; font-size: 11px; color: var(--muted); }
+  .pickFoot kbd { font-size: 10px; }
   #camHud {
     position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 16;
     background: rgba(0,0,0,.65); padding: 4px 10px; border-radius: 5px;
@@ -618,9 +641,21 @@
     <div class="paneBody" id="inspectorBody"></div>
   </aside>
 
-  <div id="planStyle" class="seg hidden" role="group" aria-label="Plan style">
-    <button data-ps="3d" title="Plan in 3D (perspective)">3D</button>
-    <button data-ps="flat" title="Flat footprints, true scale — no perspective (F)">Footprints</button>
+  <div id="planBar" class="hidden">
+    <div id="planStyle" class="seg" role="group" aria-label="Plan style">
+      <button data-ps="3d" title="Plan in 3D (perspective)">3D</button>
+      <button data-ps="flat" title="Flat footprints, true scale — no perspective (F)">Footprints</button>
+    </div>
+    <div id="pickWrap">
+      <button id="pickBtn" class="seg pickBtn" aria-haspopup="listbox" aria-expanded="false" title="Pick a piece from a list (Tab)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>
+        <span>Pieces</span><b id="pickCount"></b></button>
+      <div id="pickPanel" class="hidden">
+        <input id="pickFilter" type="search" placeholder="Filter pieces…" autocomplete="off" aria-label="Filter pieces">
+        <div id="pickList" role="listbox" aria-label="Pieces"></div>
+        <div class="pickFoot"><kbd>Ctrl</kbd>-click adds to a group · <kbd>Tab</kbd> opens this list</div>
+      </div>
+    </div>
   </div>
   <div id="camHud" class="hidden"></div>
   <div id="vf" class="hidden">
@@ -685,7 +720,10 @@
           <h3>Plan view</h3><dl>
           <dt>Drag or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Pan</dd>
           <dt>Scroll or <kbd>Q</kbd> <kbd>E</kbd></dt><dd>Zoom</dd>
-          <dt><kbd>F</kbd></dt><dd>3D / flat footprints (true scale, no perspective)</dd></dl></div>
+          <dt><kbd>F</kbd></dt><dd>3D / flat footprints (true scale, no perspective)</dd>
+          <dt><kbd>Tab</kbd></dt><dd>Pieces list — pick overlapping pieces by name</dd>
+          <dt><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></dt><dd>Move the selection one snap step (<kbd>Shift</kbd> for 1″ / 1 cm)</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Turn 15° (<kbd>Ctrl</kbd> <kbd>Shift</kbd> for 1°)</dd></dl></div>
         <div><h3>Pieces</h3><dl>
           <dt>Click</dt><dd>Select</dd>
           <dt>Drag</dt><dd>Move along the floor</dd>
@@ -1316,6 +1354,7 @@
     wirePlanSheet();
     wireTabSync();
     document.querySelectorAll("#planStyle button").forEach(b => b.addEventListener("click", () => setFlatPlan(b.dataset.ps === "flat")));
+    wirePicker();
     updatePlanStyleUI();
     wireCamSetup();
     wireVfBar();
@@ -3200,6 +3239,7 @@
     if (isPhone && openSection) openDrawer(null);           // phone: the inspector takes the space the drawer had
     selected = { type: "object", uid: g.userData.uid, kind: g.userData.kind, id: g.userData.id };
     selectedObject = g;
+    if (pickerOpen()) setTimeout(renderPicker, 0);
     const selPA = g.userData.kind === "placed" && getPlacedByUid(g.userData.uid);
     if (selPA && selPA.assetId === "camera") { activeCamUid = selPA._uid; refreshCamPicker(); }
     updateYawRing(true);
@@ -3304,6 +3344,7 @@
   let hoverEv = null, hoverRaf = 0;
   function onCanvasDownCapture(e) {
     if (e.button !== 0) return;
+    if (nav.mode === "top" && viewCamUid == null) { const gp = groundPoint(e); planHere = gp ? { x: gp.x, z: gp.z } : null; }   // for Pieces → "Under your last click"
     const ae = document.activeElement;
     if (ae && ae !== document.body && ae !== renderer.domElement && ae.blur) ae.blur();
     if (viewCamUid != null) {
@@ -6277,6 +6318,122 @@
     orthoCam.updateMatrixWorld(true);
     return orthoCam;
   }
+  // ---- Plan → Pieces: pick from a list instead of hunting for overlapping pieces with the mouse.
+  let planHere = null;                                       // floor point of the last plain click in Plan
+  const PICK_GROUPS = [["here", "Under your last click"], ["walls", "LED walls"], ["set", "Set, walls & decks"], ["veh", "Vehicles"], ["people", "People"], ["cams", "Cameras"], ["other", "Other"]];
+  const PICK_DOT = { walls: "#0060fe", set: "#c9a77c", veh: "#9aa3ad", cams: "#f2bf1b", other: "#6b7278", people: "#b9bec4" };
+  function pickItems() {
+    const out = [], camN = {}; let ci = 0;
+    config.placedAssets.filter(p => p.assetId === "camera").forEach(p => { camN[p._uid] = ++ci; });
+    selectableObjects.forEach(g => {
+      const u = g.userData;
+      if (u.kind === "rollingWall") {
+        const rw = config.rollingWalls.find(w => w.id === u.id); if (!rw) return;
+        out.push({ key: "r:" + u.id, g: g, grp: "walls", name: "Rolling wall" + (/R$/i.test(u.id) ? " · right" : /L$/i.test(u.id) ? " · left" : ""), dims: fmtLen(u.dims.wallLen) + " wide", hid: rw.deployed === false });
+        return;
+      }
+      if (u.kind !== "placed") return;
+      const pa = getPlacedByUid(u.uid), e = pa && catalogEntry(pa.assetId); if (!pa || !e) return;
+      const c = e.category, it = { key: "p:" + pa._uid, g: g, uid: pa._uid, hid: pa.deployed === false };
+      if (pa.assetId === "camera") { Object.assign(it, { grp: "cams", name: "Camera " + camN[pa._uid], dims: camVal(pa, "focalMm") + "mm" }); }
+      else if (c === "person") {
+        const vn = pa.variant && e.variants && (e.variants.find(v => v.variant === pa.variant) || {}).name;
+        const s = pa.pin && pinnedSpot(pa), host = s && catalogEntry(s.host.assetId);
+        Object.assign(it, { grp: "people", name: (pa.role && pa.role.name ? pa.role.name + " · " : "") + (vn || e.name.replace(/\s*\(.*\)\s*$/, "")).replace(/^Seated\s*[—-]\s*/i, s && !s.spot.floor ? "" : "Seated — ").replace(/^./, c => c.toUpperCase()),
+          dims: s ? (s.spot.floor ? "on " + host.name.replace(/\s*\(.*\)\s*$/, "").toLowerCase() : s.spot.name) : "standing", dot: pa.role && pa.role.color,
+          sortKey: s ? s.host._uid + ":" + String((spotsFor(s.host) || []).indexOf(s.spot)).padStart(3, "0") : "~" });
+      } else {
+        const lb = planLabel(pa, e);
+        Object.assign(it, { grp: c === "vehicle" ? "veh" : /^(set|set-wall|set-piece|glass-wall|stage-deck|stage-deck-preset)$/.test(c) ? "set" : "other", name: lb.name, dims: lb.dims.split(" · ")[0] });
+      }
+      out.push(it);
+    });
+    // People: grouped by what they're on / in, seats in the vehicle's own order; free-standing people last.
+    const ppl = out.filter(it => it.grp === "people").sort((p1, p2) => p1.sortKey < p2.sortKey ? -1 : p1.sortKey > p2.sortKey ? 1 : 0);
+    return out.filter(it => it.grp !== "people").concat(ppl);
+  }
+  function underHere(it) {
+    if (!planHere) return false;
+    const fp = footprintOf(it.g, 0.25);
+    return fp ? pointInPoly(planHere.x, planHere.z, fp) : Math.hypot(it.g.position.x - planHere.x, it.g.position.z - planHere.z) < 1.5;
+  }
+  function isPicked(it) {
+    if (multi.length > 1) return it.uid != null && multi.indexOf(it.uid) !== -1;
+    return !!selectedObject && selectedObject === it.g;
+  }
+  function refreshPickCount() { const b = document.getElementById("pickCount"); if (b) b.textContent = String(pickItems().length); }
+  function renderPicker() {
+    const list = document.getElementById("pickList"); if (!list) return;
+    const q = document.getElementById("pickFilter").value.trim().toLowerCase();
+    const items = pickItems().filter(it => !q || (it.name + " " + it.dims).toLowerCase().indexOf(q) !== -1);
+    const here = q ? [] : items.filter(underHere);
+    let html = "";
+    const row = it => '<button class="pkRow' + (isPicked(it) ? " on" : "") + (it.hid ? " hid" : "") + '" role="option" aria-selected="' + isPicked(it) + '" data-k="' + it.key + '">' +
+      '<i style="--c:' + (it.dot || PICK_DOT[it.grp]) + '"></i><span>' + escapeHtml(it.name) + (it.hid ? " (hidden)" : "") + '</span><small>' + escapeHtml(it.dims || "") + '</small></button>';
+    PICK_GROUPS.forEach(([k, title]) => {
+      const rows = k === "here" ? (here.length > 1 ? here : []) : items.filter(it => it.grp === k);
+      if (rows.length) html += "<h4>" + title + (k === "here" ? " · " + rows.length : "") + "</h4>" + rows.map(row).join("");
+    });
+    list.innerHTML = html || '<div class="pickEmpty">' + (q ? "Nothing matches “" + escapeHtml(q) + "”." : "Nothing placed yet — add pieces from the left rail.") + '</div>';
+    refreshPickCount();
+  }
+  function openPicker() {
+    const pnl = document.getElementById("pickPanel"); if (!pnl) return;
+    pnl.classList.remove("hidden"); document.getElementById("pickBtn").setAttribute("aria-expanded", "true");
+    const f = document.getElementById("pickFilter"); f.value = ""; renderPicker();
+    const on = document.querySelector("#pickList .pkRow.on"); if (on) on.scrollIntoView({ block: "nearest" });
+    f.focus();
+  }
+  function closePicker() {
+    const pnl = document.getElementById("pickPanel"); if (!pnl || pnl.classList.contains("hidden")) return;
+    pnl.classList.add("hidden"); document.getElementById("pickBtn").setAttribute("aria-expanded", "false");
+  }
+  function pickerOpen() { const pnl = document.getElementById("pickPanel"); return !!pnl && !pnl.classList.contains("hidden"); }
+  function choosePick(key, addToGroup) {
+    const it = pickItems().find(x => x.key === key); if (!it) return;
+    if (addToGroup && it.uid != null) toggleMulti(it.g);
+    else { clearMulti(); selectObject(it.g); }
+    // Bring it into view if it's off screen.
+    const vc = viewCam(), v = it.g.position.clone().project(vc);
+    if (Math.abs(v.x) > 0.85 || Math.abs(v.y) > 0.85) { camera.position.x = it.g.position.x; camera.position.z = it.g.position.z; }
+    renderPicker();
+  }
+  function wirePicker() {
+    const btn = document.getElementById("pickBtn"), list = document.getElementById("pickList"), f = document.getElementById("pickFilter");
+    btn.addEventListener("click", () => pickerOpen() ? closePicker() : openPicker());
+    list.addEventListener("click", e => { const r = e.target.closest(".pkRow"); if (r) choosePick(r.dataset.k, e.ctrlKey || e.metaKey || e.shiftKey); });
+    f.addEventListener("input", renderPicker);
+    document.getElementById("pickPanel").addEventListener("keydown", e => {
+      const rows = [].slice.call(list.querySelectorAll(".pkRow")); let i = rows.findIndex(r => r.classList.contains("kb"));
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (i < 0) i = rows.findIndex(r => r.classList.contains("on"));
+        i = clamp(i + (e.key === "ArrowDown" ? 1 : -1), 0, rows.length - 1);
+        rows.forEach((r, j) => r.classList.toggle("kb", j === i)); if (rows[i]) rows[i].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "Enter") { const r = rows[i] || rows[0]; if (r) choosePick(r.dataset.k, e.ctrlKey || e.metaKey); }
+      else if (e.key === "Escape") { closePicker(); btn.focus(); }
+      else return;
+      e.preventDefault(); e.stopPropagation();
+    });
+    document.addEventListener("pointerdown", e => { if (pickerOpen() && !e.target.closest("#pickWrap")) closePicker(); });
+  }
+  // Plan view keyboard nudges: arrows move by the snap step (Shift = 1″ / 1 cm), Ctrl+←/→ turn 15° (Ctrl+Shift = 1°).
+  function planNudge(e) {
+    const arrow = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!arrow || nav.mode !== "top" || viewCamUid != null || mode !== "edit" || e.altKey) return false;
+    const group = multi.length > 1, cfg = !group && cfgForSelected();
+    if (!group && !cfg) return false;
+    if (e.ctrlKey || e.metaKey) {
+      if (!arrow[0]) return true;                            // Ctrl+↑/↓: nothing, but don't pan either
+      const d = (arrow[0] < 0 ? 1 : -1) * (e.shiftKey ? 1 : ROT_SNAP_DEG);   // ← = counter-clockwise from above
+      if (group) multiTurnEach(d); else setSelectedYaw((cfg.rotationDeg || 0) + d);
+      return true;
+    }
+    const step = e.shiftKey ? (displayUnit === "m" ? 0.01 * FT_PER_M : 1 / 12) : snapIncrement;   // screen up = north… = -Z in plan
+    const dx = arrow[0] * step, dz = arrow[1] * step;
+    if (group) { multiMovers().forEach(pa => setPosFor(pa, pa.x + dx, pa.z + dz)); settleMulti(null); }
+    else { applyTransformTo(round2(cfg.x + dx), round2(cfg.z + dz), cfg.rotationDeg || 0); updateInspectorFields(); }
+    return true;
+  }
   function setFlatPlan(on) {
     flatPlan = !!on;
     try { localStorage.setItem("lumostage.flatPlan", flatPlan ? "1" : "0"); } catch (e) {}
@@ -6284,7 +6441,9 @@
   }
   function updatePlanStyleUI() {
     const el = document.getElementById("planStyle"); if (!el) return;
-    el.classList.toggle("hidden", !(nav.mode === "top" && viewCamUid == null));
+    const on = nav.mode === "top" && viewCamUid == null;
+    document.getElementById("planBar").classList.toggle("hidden", !on);
+    if (!on) closePicker(); else refreshPickCount();
     el.querySelectorAll("button").forEach(b => { const on = (b.dataset.ps === "flat") === flatPlan; b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on)); });
   }
   function fpMat(color, opacity) {
@@ -7577,6 +7736,8 @@
         return;
       }
       if (typing) return;
+      if (planNudge(e)) { e.preventDefault(); return; }
+      if (e.key === "Tab" && nav.mode === "top" && mode === "edit" && !e.ctrlKey && !e.altKey && (e.target === document.body || e.target.tagName === "CANVAS")) { pickerOpen() ? closePicker() : openPicker(); e.preventDefault(); return; }
       // Main-view navigation keys (Shift+←/→ with a selection is the rotate nudge, handled below).
       const rotNudge = mode === "edit" && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && (selected || multi.length > 1);
       if (!e.ctrlKey && !e.metaKey && !e.altKey && !rotNudge && NAV_KEYS.indexOf(e.code) !== -1) { navKeys[e.code] = true; e.preventDefault(); }
