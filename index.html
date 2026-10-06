@@ -265,6 +265,8 @@
   #help dt { white-space: nowrap; }
   #help dd { margin: 0; color: var(--muted); }
   kbd { font: 700 11px/1 Arial, Helvetica, sans-serif; padding: 3px 6px; border-radius: 5px; background: #0e1314; border: 1px solid var(--line); border-bottom-width: 2px; color: var(--text); }
+  #planStyle { position: absolute; top: calc(var(--top) + 12px); left: 50%; transform: translateX(-50%); z-index: 17; box-shadow: var(--panelShadow); }
+  #planStyle.hidden { display: none; }
   #camHud {
     position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 16;
     background: rgba(0,0,0,.65); padding: 4px 10px; border-radius: 5px;
@@ -316,6 +318,10 @@
     padding: 8px 14px; font-size: 12px; z-index: 30; opacity: 0; transition: opacity .25s; pointer-events: none;
   }
   #toast.show { opacity: 1; }
+  #tabSync { position: absolute; top: calc(var(--top) + 10px); left: 50%; transform: translateX(-50%); z-index: 44; display: flex; align-items: center; gap: 10px;
+    background: #2a2412; border: 1px solid #a8801f; color: #f5e6c0; border-radius: 10px; padding: 8px 10px 8px 14px; font-size: 13px; box-shadow: var(--panelShadow); max-width: calc(100% - 24px); }
+  #tabSync.hidden { display: none; }
+  #tabSync span { line-height: 1.4; }
   #toast.act { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; }
   #toast.act.show { pointer-events: auto; }
   #toast button { padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--accent); }
@@ -611,6 +617,10 @@
     <div class="paneBody" id="inspectorBody"></div>
   </aside>
 
+  <div id="planStyle" class="seg hidden" role="group" aria-label="Plan style">
+    <button data-ps="3d" title="Plan in 3D (perspective)">3D</button>
+    <button data-ps="flat" title="Flat footprints, true scale — no perspective (F)">Footprints</button>
+  </div>
   <div id="camHud" class="hidden"></div>
   <div id="vf" class="hidden">
     <div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div>
@@ -673,7 +683,8 @@
           <dt><kbd>Shift</kbd></dt><dd>Move faster</dd></dl>
           <h3>Plan view</h3><dl>
           <dt>Drag or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Pan</dd>
-          <dt>Scroll or <kbd>Q</kbd> <kbd>E</kbd></dt><dd>Zoom</dd></dl></div>
+          <dt>Scroll or <kbd>Q</kbd> <kbd>E</kbd></dt><dd>Zoom</dd>
+          <dt><kbd>F</kbd></dt><dd>3D / flat footprints (true scale, no perspective)</dd></dl></div>
         <div><h3>Pieces</h3><dl>
           <dt>Click</dt><dd>Select</dd>
           <dt>Drag</dt><dd>Move along the floor</dd>
@@ -773,6 +784,10 @@
   <input id="envFile" type="file" accept="image/*,video/*" class="hidden">
 
   <div id="toast"></div>
+  <div id="tabSync" class="hidden" role="alert">
+    <span>This layout was changed in another tab. This tab has stopped saving so nothing is overwritten.</span>
+    <button id="tsLoad" class="primary">Load the latest</button><button id="tsKeep">Keep this tab's version</button>
+  </div>
   <!-- Touch: quick menu (long-press a piece) and the floating touch bar -->
   <div id="lpMenu" class="hidden" role="menu"></div>
   <div id="touchBar" class="hidden" role="toolbar" aria-label="Touch tools">
@@ -1267,6 +1282,7 @@
     yawRing = new THREE.Group();
     yawRing.visible = false;
     scene.add(yawRing);
+    scene.add(fpGroup);
 
     shotCam = new THREE.PerspectiveCamera(40, 1.5, 0.1, 5000);
 
@@ -1284,6 +1300,9 @@
     if (histAt < 0) historyReset();
     document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
     wirePlanSheet();
+    wireTabSync();
+    document.querySelectorAll("#planStyle button").forEach(b => b.addEventListener("click", () => setFlatPlan(b.dataset.ps === "flat")));
+    updatePlanStyleUI();
     wireCamSetup();
     wireVfBar();
     wireNewLayout();
@@ -1380,6 +1399,11 @@
       // uses the same fitter as everything else. Fixed: not added to selectables.
       mainWallGroup = new THREE.Group();
       mainWallGroup.add(mainWallMesh);
+      {                                                // footprints view: the LED face as a flat blue band
+        const ring = new THREE.Mesh(new THREE.RingGeometry(radius, radius + 0.6, 96, 1, delta, Math.PI - 2 * delta), fpMat(0x0060fe, 1));
+        ring.rotation.x = -Math.PI / 2; ring.position.y = -footing - wallH / 2 + 0.06; ring.renderOrder = 6;
+        ring.layers.set(2); ring.raycast = function () {}; mainWallMesh.add(ring);
+      }
       scene.add(mainWallGroup);
       fitAndSwapModel(mainWallGroup, modelUrlIfReady(wallCfg));
     }
@@ -1416,6 +1440,11 @@
         rail.raycast = function () {};                   // part of the fixed rig, never a pick target
         ceilingGroup.add(rail);
       });
+      {                                                // footprints view: dashed outline of the LED ceiling above
+        const hw = ceilW / 2, hl = ceilL / 2, ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints([[-hw, -hl], [hw, -hl], [hw, hl], [-hw, hl], [-hw, -hl]].map(v => new THREE.Vector3(v[0], 0, v[1]))),
+          new THREE.LineDashedMaterial({ color: 0x5aa0ff, dashSize: 0.8, gapSize: 0.5, depthTest: false }));
+        ln.computeLineDistances(); ln.renderOrder = 7; ln.layers.set(2); ln.raycast = function () {}; ceilingGroup.add(ln);
+      }
       ceilingGroup.position.set(0, ceilCfg.heightFt, ceilNearZ + ceilL / 2);
       ceilingGroup.visible = ceilCfg.visible !== false;
       scene.add(ceilingGroup);
@@ -1551,6 +1580,7 @@
     const floor = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), floorMat);
     floor.position.set(cx, floorMirror ? -0.06 : -0.08, cz);         // glossy: top face (-0.01) just above the mirror (-0.04)
     floor.renderOrder = 1;                                           // drawn after the mirror it lets through
+    floor.layers.enable(2);                                          // footprints view draws the floor too
     studioGroup.add(floor);
 
     // Walls, rooms and partition read as solid from the studio floor but are see-through from
@@ -1612,14 +1642,17 @@
       const sh = new THREE.Shape(G.staff.map(v => new THREE.Vector2(v[0], -v[1])));
       const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);
       const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }));
-      m.position.y = 0.02; m.raycast = function () {}; studioGroup.add(m);
+      m.position.y = 0.02; m.raycast = function () {}; m.layers.enable(2); studioGroup.add(m);
     }
     // Fire lane: dashed yellow line 3.5' inside the crew area (incl. inside the curve).
     if (G && G.lane.length > 2) {
       const geo = new THREE.BufferGeometry().setFromPoints(G.lane.concat([G.lane[0]]).map(v => new THREE.Vector3(v[0], 0.04, v[1])));
       const line = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: s.fireLaneColor || 0xd8b54a, dashSize: 1.2, gapSize: 0.8, transparent: true, opacity: 0.9 }));
-      line.computeLineDistances(); line.raycast = function () {}; studioGroup.add(line);
+      line.computeLineDistances(); line.raycast = function () {}; line.layers.enable(2); studioGroup.add(line);
     }
+
+    // Footprints view (Plan → Footprints): flat drawings of the shell on layer 2 only.
+    buildShellFootprints(s);
 
     // Fixed structural pillar (real obstacle, not movable).
     const p = config.pillar;
@@ -3191,7 +3224,7 @@
       ring.rotation.x = -Math.PI / 2;
       const tip = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.6, 4), mat());   // heading marker, local -Z
       tip.rotation.x = -Math.PI / 2; tip.position.set(0, 0, -R - 0.9);
-      [ring, tip].forEach(m => { m.renderOrder = 999; m.raycast = function () {}; yawRing.add(m); });
+      [ring, tip].forEach(m => { m.renderOrder = 999; m.raycast = function () {}; m.layers.enable(2); yawRing.add(m); });
     }
     yawRing.position.set(cx, 0.08, cz);
     yawRing.rotation.y = degToRad(cfg.rotationDeg || 0);
@@ -3221,8 +3254,8 @@
   function groundPoint(e) {
     const r = renderer.domElement.getBoundingClientRect();
     _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    camera.updateMatrixWorld(true);
-    raycaster.setFromCamera(_ndc, camera);
+    const vc = viewCam(); vc.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, vc);
     return raycaster.ray.intersectPlane(_floor, _gp);
   }
   function overYawRing(e) {
@@ -3276,6 +3309,7 @@
         const cfg = cfgForSelected(); if (!cfg) return;
         bodyDrag = { y: hit.point.y, dx: cfg.x - hit.point.x, dz: cfg.z - hit.point.z };
       }
+      if (bodyDrag) { bodyDrag.sx = e.clientX; bodyDrag.sy = e.clientY; }   // a drag only starts past a few pixels
     }
     try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
     renderer.domElement.style.cursor = "grabbing";
@@ -3288,8 +3322,8 @@
   function pickAt(e, minDist) {
     const r = renderer.domElement.getBoundingClientRect();
     _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    camera.updateMatrixWorld(true);
-    raycaster.setFromCamera(_ndc, camera);
+    const vc = viewCam(); vc.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, vc);
     raycaster.near = minDist || 0;
     if (humanMesh && humanMesh.count > 0) {
       const h = raycaster.intersectObject(humanMesh, false);
@@ -3321,13 +3355,13 @@
   // Name tags are labels drawn over everything (no depth), so pick them in screen space.
   const _tagV = new THREE.Vector3();
   function tagAt(e) {
-    const r = renderer.domElement.getBoundingClientRect(), P = camera.projectionMatrix.elements;
+    const vc = viewCam(), r = renderer.domElement.getBoundingClientRect(), P = vc.projectionMatrix.elements;
     let best = null, bestD = Infinity;
     selectableObjects.forEach(g => {
       if (!g.visible) return;
       const tg = g.children.find(c => c.userData.tag); if (!tg) return;
       tg.getWorldPosition(_tagV);
-      const d = _tagV.distanceTo(camera.position), p = _tagV.clone().project(camera);
+      const d = _tagV.distanceTo(vc.position), p = _tagV.clone().project(vc);
       if (p.z > 1) return;
       const sx = (p.x + 1) / 2 * r.width + r.left, sy = (1 - p.y) / 2 * r.height + r.top;
       // Tags have a fixed screen size: half-extent in pixels straight from the projection scale.
@@ -3482,28 +3516,37 @@
     _dragPlane.constant = -bodyDrag.y;
     const r = renderer.domElement.getBoundingClientRect();
     _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    camera.updateMatrixWorld(true);
-    raycaster.setFromCamera(_ndc, camera);
+    const vc = viewCam(); vc.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, vc);
     const p = raycaster.ray.intersectPlane(_dragPlane, _gp);
     if (!p || Math.hypot(p.x, p.z) > 300) return;
     const dx = snap(p.x - bodyDrag.ax), dz = snap(p.z - bodyDrag.az);
+    if (dx || dz) bodyDrag.moved = true;
     bodyDrag.movers.forEach(m => setPosFor(m.pa, m.x0 + dx, m.z0 + dz));
     scheduleAutosave();
   }
 
   // Slide the grabbed piece to where the cursor is, on the horizontal plane it was grabbed at.
   const _dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  // Pointer drags wait until the pointer has really travelled (a click with a 1px wobble must not
+  // snap a piece onto the grid); gamepad carries (no press point) move straight away.
+  function pastDragThreshold(e) {
+    if (bodyDrag.moved || bodyDrag.sx == null) return true;
+    return Math.hypot(e.clientX - bodyDrag.sx, e.clientY - bodyDrag.sy) > 5;
+  }
   function dragBodyTo(e) {
+    if (bodyDrag && !pastDragThreshold(e)) return;
     if (bodyDrag && bodyDrag.group) { groupDragTo(e); return; }
     if (!selected || (selected.type !== "human" && !selectedObject)) { bodyDrag = null; return; }
     _dragPlane.constant = -bodyDrag.y;
     const r = renderer.domElement.getBoundingClientRect();
     _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    camera.updateMatrixWorld(true);
-    raycaster.setFromCamera(_ndc, camera);
+    const vc = viewCam(); vc.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, vc);
     const p = raycaster.ray.intersectPlane(_dragPlane, _gp);
     if (!p || Math.hypot(p.x, p.z) > 300) return;   // ray parallel to / far along the floor
     const x = p.x + bodyDrag.dx, z = p.z + bodyDrag.dz;
+    bodyDrag.moved = true;
     if (selected.type === "human") humanProxy.position.set(x, HUMAN_H / 2, z);
     else { selectedObject.position.x = x; selectedObject.position.z = z; }
     applyDragMove();
@@ -3548,7 +3591,9 @@
   }
 
   function finishBodyDrag() {
-    const dropped = bodyDrag && !bodyDrag.group && selected && selected.kind === "placed", groupDrop = bodyDrag && bodyDrag.group;
+    // Only a drag that actually moved re-anchors — a plain click must never shift anyone.
+    const moved = !!(bodyDrag && bodyDrag.moved);
+    const dropped = moved && !bodyDrag.group && selected && selected.kind === "placed", groupDrop = moved && bodyDrag.group;
     bodyDrag = null;
     if (dropped) reanchorSelected();
     if (groupDrop) settleMulti("Moved " + multi.length + " pieces");
@@ -4358,6 +4403,7 @@
     document.getElementById("camViewBtn").classList.add("active");
     document.getElementById("lensBar").classList.remove("hidden");
     refreshVfBar();
+    updatePlanStyleUI();
     if (isTouch) updateTouchBar();
     openDrawer(null);                                   // the lens image gets the whole window
   }
@@ -6112,6 +6158,7 @@
   function setNavButtons() {
     document.getElementById("camOrbit").classList.toggle("active", nav.mode === "fly");
     document.getElementById("camTop").classList.toggle("active", nav.mode === "top");
+    updatePlanStyleUI();
   }
   function setCamOrbit() {
     exitCameraView();
@@ -6130,6 +6177,155 @@
     camera.position.set(0, 90, 8);
     nav.yaw = 0; nav.pitch = -Math.PI / 2;   // straight down, screen-up = -Z
     applyNavPose(); setNavButtons();
+  }
+
+
+  // ==================================================================
+  //  PLAN → FOOTPRINTS  (flat, orthographic, true-scale top view)
+  // ==================================================================
+  // Plan view can draw the stage as flat footprints through an orthographic camera that follows the
+  // plan camera's pan / zoom: nothing leans, so distances read true against the 1' grid. Footprint
+  // shapes live on layer 2 (only this camera draws it); the 3D meshes stay on layer 0 and still take
+  // the clicks (rays go through the same camera), so selecting and dragging work exactly as before.
+  let flatPlan = false;
+  try { flatPlan = localStorage.getItem("lumostage.flatPlan") === "1"; } catch (e) {}
+  let orthoCam = null;
+  const fpGroup = new THREE.Group();
+  const fpByKey = {};
+  function flatActive() { return flatPlan && nav.mode === "top" && viewCamUid == null; }
+  function viewCam() {
+    if (!flatActive()) return camera;
+    if (!orthoCam) { orthoCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000); orthoCam.layers.set(2); orthoCam.layers.enable(1); }
+    const hh = Math.max(1, camera.position.y) * Math.tan(degToRad(camera.fov / 2)), hw = hh * camera.aspect;   // same ground area as the plan view
+    orthoCam.left = -hw; orthoCam.right = hw; orthoCam.top = hh; orthoCam.bottom = -hh; orthoCam.updateProjectionMatrix();
+    orthoCam.position.set(camera.position.x, camera.position.y + 300, camera.position.z);
+    orthoCam.quaternion.copy(camera.quaternion);
+    orthoCam.updateMatrixWorld(true);
+    return orthoCam;
+  }
+  function setFlatPlan(on) {
+    flatPlan = !!on;
+    try { localStorage.setItem("lumostage.flatPlan", flatPlan ? "1" : "0"); } catch (e) {}
+    updatePlanStyleUI();
+  }
+  function updatePlanStyleUI() {
+    const el = document.getElementById("planStyle"); if (!el) return;
+    el.classList.toggle("hidden", !(nav.mode === "top" && viewCamUid == null));
+    el.querySelectorAll("button").forEach(b => { const on = (b.dataset.ps === "flat") === flatPlan; b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on)); });
+  }
+  function fpMat(color, opacity) {
+    // Always in the transparent pass so renderOrder puts footprints above the (semi-transparent) glossy floor.
+    return new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: opacity, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
+  }
+  // A flat rectangle (x0..x1, z0..z1) in a footprint's local frame.
+  function fpRect(parent, x0, x1, z0, z1, color, opacity, order, outline) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(x1 - x0), Math.abs(z1 - z0)), fpMat(color, opacity));
+    m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); m.renderOrder = order; parent.add(m);
+    if (outline != null) fpPoly(parent, [[x0, z0], [x1, z0], [x1, z1], [x0, z1]], outline, order + 0.5, true);
+    return m;
+  }
+  function fpPoly(parent, pts, color, order, closed, dashed) {
+    const v = pts.map(q => new THREE.Vector3(q[0], 0, q[1])); if (closed) v.push(v[0].clone());
+    const mat = dashed ? new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2, depthTest: false, transparent: true }) : new THREE.LineBasicMaterial({ color: color, depthTest: false, transparent: true });
+    const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(v), mat);
+    if (dashed) ln.computeLineDistances();
+    ln.renderOrder = order; parent.add(ln); return ln;
+  }
+  function fpShape(parent, pts, color, opacity, order) {
+    const sh = new THREE.Shape(pts.map(q => new THREE.Vector2(q[0], -q[1])));
+    const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(geo, fpMat(color, opacity)); m.renderOrder = order; parent.add(m); return m;
+  }
+  function buildFootprint(g, isSel) {
+    const fp = new THREE.Group();
+    if (isSel) { const lb = localBoxOfGroup(g); if (lb) { const m = 0.35; fpPoly(fp, [[lb.min.x - m, lb.min.z - m], [lb.max.x + m, lb.min.z - m], [lb.max.x + m, lb.max.z + m], [lb.min.x - m, lb.max.z + m]], 0x00efea, 10, true); } }
+    if (g.userData.kind === "rollingWall") {
+      const d = g.userData.dims;
+      fpRect(fp, -d.deckDepth, 0, -d.deckLen / 2, d.deckLen / 2, 0x6f7a86, 0.85, 2, 0x2b3038);
+      fpRect(fp, 0, d.thickness, -d.wallLen / 2, d.wallLen / 2, 0x0060fe, 1, 3);
+    } else {
+      const pa = getPlacedByUid(g.userData.uid), e = pa && catalogEntry(pa.assetId);
+      if (!pa || !e) return fp;
+      if (e.category === "camera") {
+        const o = camOptics(pa), D = Math.min(Math.max(camVal(pa, "focusFt"), 6), 40);
+        fpShape(fp, [[0, 0], [-o.halfW * D, -D], [o.halfW * D, -D]], 0xffb000, 0.16, 8);
+        fpPoly(fp, [[0, 0], [-o.halfW * D, -D], [o.halfW * D, -D]], 0xd99a00, 8.5, true);
+        fpRect(fp, -0.45, 0.45, -0.55, 0.55, 0x1d2124, 1, 9, 0xffd24a);
+      } else if (e.category === "person") {
+        const col = pa.role && pa.role.color ? parseInt(pa.role.color.slice(1), 16) : 0xc3c8ce;
+        const c = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20), fpMat(col, 1)); c.rotation.x = -Math.PI / 2; c.renderOrder = 6; fp.add(c);
+        fpPoly(fp, Array.from({ length: 20 }, (_, i) => [0.85 * Math.cos(i / 20 * 2 * Math.PI), 0.85 * Math.sin(i / 20 * 2 * Math.PI)]), 0x1d2124, 6.5, true);
+        fpPoly(fp, [[0, 0], [0, 1.4]], 0x1d2124, 6.6, false);          // facing (0° = +Z)
+      } else if (e.deck && (pa.assetId === "glassWall" || pa.assetId === "setFlat" || pa.assetId === "cornerPillar")) {
+        const dk = e.deck, D = e.widthFt || 0.25, zW = -dk.widthFt / 2;
+        fpRect(fp, -dk.lengthFt / 2, dk.lengthFt / 2, -dk.widthFt / 2, dk.widthFt / 2, 0x6f7a86, 0.85, 2, 0x2b3038);
+        if (pa.assetId === "cornerPillar") fpRect(fp, -dk.lengthFt / 2, dk.lengthFt / 2, -dk.widthFt / 2, dk.widthFt / 2, 0x7a3b2e, 0.9, 3, 0x1d2124);
+        else fpRect(fp, -e.lengthFt / 2, e.lengthFt / 2, zW, zW + Math.max(D, 0.35), pa.assetId === "setFlat" ? parseInt((pa.paint || FLAT_PAINTS[0][0]).slice(1), 16) : 0x9cc7e6, 1, 4, 0x1d2124);
+      } else if (e.platform) {
+        const d = platformDims(e, pa), hx = d.W / 2, hz = d.L / 2;
+        fpRect(fp, -hx, hx, -hz, hz, 0x8a939c, 0.9, 2, 0x2b3038);
+        [-1, 1].forEach(sx => { const x0 = sx < 0 ? -hx : hx - PLATFORM.strip; fpRect(fp, x0, x0 + PLATFORM.strip, -hz, hz, 0xd9a92c, 0.95, 3); });
+        platformPillars().forEach(q => fpRect(fp, q[0] - PLATFORM.pw / 2, q[0] + PLATFORM.pw / 2, q[1] - PLATFORM.pd / 2, q[1] + PLATFORM.pd / 2, 0x2f5a3a, 1, 4));
+      } else {
+        const lb = localBoxOfGroup(g); if (!lb) return fp;
+        const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar";
+        const col = pa.assetId === "stageDeck" ? 0x6f7a86 : veh ? 0xaab4be : e.custom ? 0xaab4be : 0xb9b1a3;
+        fpRect(fp, lb.min.x, lb.max.x, lb.min.z, lb.max.z, col, 0.85, veh ? 3 : 2, 0x2b3038);
+        if (veh) {                                                       // chevron at the front
+          const front = pa.assetId === "subwayCar" ? -1 : ((pa.car && pa.car.front) || (e.car && e.car.front) || -1);
+          const xf = front < 0 ? lb.min.x : lb.max.x, xi = xf - front * Math.min(2, (lb.max.x - lb.min.x) * 0.12), hw = (lb.max.z - lb.min.z) * 0.22;
+          fpPoly(fp, [[xi, -hw], [xf - front * 0.3, 0], [xi, hw]], 0x1d2124, 3.6, false);
+        }
+      }
+    }
+    fp.traverse(o => { o.layers.set(2); o.raycast = function () {}; });
+    return fp;
+  }
+  // Each frame in footprints mode: footprints follow their pieces (rebuilt when a piece changes).
+  function syncFootprints() {
+    fpGroup.visible = flatActive();
+    if (!fpGroup.visible) return;
+    const seen = {};
+    selectableObjects.forEach(g => {
+      if (!g.visible) return;
+      const pa = g.userData.kind === "placed" && getPlacedByUid(g.userData.uid);
+      const isSel = g === selectedObject || (multi.length > 1 && pa && multi.indexOf(pa._uid) !== -1);
+      const sig = g.children.length + "|" + isSel + "|" + (pa ? JSON.stringify([pa.role, pa.paint, pa.variant, pa.focalMm, pa.sensor, pa.format, pa.squeeze, pa.focusFt, pa.lengthFt, pa.widthFt]) : "");
+      let f = fpByKey[g.uuid];
+      if (!f || f.sig !== sig) { if (f) { fpGroup.remove(f.obj); disposeObject3D(f.obj); } f = fpByKey[g.uuid] = { obj: buildFootprint(g, isSel), sig: sig }; fpGroup.add(f.obj); }
+      f.obj.position.set(g.position.x, 0.05, g.position.z); f.obj.rotation.y = g.rotation.y;
+      seen[g.uuid] = 1;
+    });
+    Object.keys(fpByKey).forEach(k => { if (!seen[k]) { fpGroup.remove(fpByKey[k].obj); disposeObject3D(fpByKey[k].obj); delete fpByKey[k]; } });
+  }
+  // The studio shell as flat drawings (walls, doors, rooms, partition, column) on layer 2.
+  function buildShellFootprints(s) {
+    const G = studioGeom(), sh = new THREE.Group(), t = 0.6;
+    fpRect(sh, s.xMin - t, s.xMax + t, s.zFrontOpen, s.zFrontOpen + t, 0xb4bac0, 1, 5);
+    fpRect(sh, s.xMin - t, s.xMax + t, s.zBack - t, s.zBack, 0xb4bac0, 1, 5);
+    fpRect(sh, s.xMin - t, s.xMin, s.zBack, s.zFrontOpen, 0xb4bac0, 1, 5);
+    fpRect(sh, s.xMax, s.xMax + t, s.zBack, s.zFrontOpen, 0xb4bac0, 1, 5);
+    (G ? G.doors : []).forEach(d => {
+      const [a0, a1] = d.ends, horiz = Math.abs(a1[0] - a0[0]) > Math.abs(a1[1] - a0[1]), col = d.type === "fire" ? 0x2ecc71 : d.type === "grade" ? 0xb4b9be : 0x8a9097;
+      const o = [d.inward[0] * -t / 2, d.inward[1] * -t / 2];
+      if (horiz) fpRect(sh, Math.min(a0[0], a1[0]), Math.max(a0[0], a1[0]), a0[1] + o[1] - t / 2, a0[1] + o[1] + t / 2, col, 1, 6);
+      else fpRect(sh, a0[0] + o[0] - t / 2, a0[0] + o[0] + t / 2, Math.min(a0[1], a1[1]), Math.max(a0[1], a1[1]), col, 1, 6);
+    });
+    (G ? G.rooms : []).forEach(r => fpRect(sh, r.x0, r.x1, r.z0, r.z1, 0x3a4048, 1, 4, 0x8a9097));
+    partitionSegments().forEach(([a0, a1]) => {
+      const x0 = Math.min(a0[0], a1[0]) - 0.15, x1 = Math.max(a0[0], a1[0]) + 0.15, z0 = Math.min(a0[1], a1[1]) - 0.15, z1 = Math.max(a0[1], a1[1]) + 0.15;
+      fpRect(sh, x0, x1, z0, z1, 0xb4bac0, 1, 5);
+    });
+    const p = config.pillar;
+    if (p) {
+      const h = (p.sizeFt || 1) / 2, c = h + (p.clearanceFt || 0);
+      fpRect(sh, p.x - h, p.x + h, p.z - h, p.z + h, 0x8a9097, 1, 6, 0x0b0d10);
+      if (p.coreSizeFt) { const cz = p.coreZ != null ? p.coreZ : p.z, k = p.coreSizeFt / 2; fpRect(sh, p.x - k, p.x + k, cz - k, cz + k, 0x0b0d10, 1, 7); }
+      if (p.clearanceFt) fpPoly(sh, [[p.x - c, p.z - c], [p.x + c, p.z - c], [p.x + c, p.z + c], [p.x - c, p.z + c]], 0xffb020, 6.5, true, true);
+    }
+    sh.position.y = 0.05;
+    sh.traverse(o => { o.layers.set(2); o.raycast = function () {}; });
+    studioGroup.add(sh);
   }
 
   // Ground point the main view is centred on (where new pieces spawn).
@@ -6337,7 +6533,7 @@
     const size = lb.getSize(new THREE.Vector3()), ctr = lb.getCenter(new THREE.Vector3());
     const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size.x + 0.15, size.y + 0.15, size.z + 0.15));
     collOutline = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: color, depthTest: false, transparent: true }));
-    collOutline.renderOrder = 998; collOutline.raycast = function () {};
+    collOutline.renderOrder = 998; collOutline.raycast = function () {}; collOutline.layers.enable(2);
     collOutline.position.copy(g.position); collOutline.rotation.y = g.rotation.y;
     collOutline.position.x += ctr.x * Math.cos(g.rotation.y) + ctr.z * Math.sin(g.rotation.y);
     collOutline.position.z += -ctr.x * Math.sin(g.rotation.y) + ctr.z * Math.cos(g.rotation.y);
@@ -6445,8 +6641,9 @@
   }
   function padRelease(gp) {
     if (!pad.held) return;
+    const moved = !!(bodyDrag && bodyDrag.moved);
     pad.held = false; bodyDrag = null;
-    if (selected && selected.kind === "placed") reanchorSelected();
+    if (moved && selected && selected.kind === "placed") reanchorSelected();
     if (gp) padRumble(gp, 0.1, 0.3, 40);
   }
 
@@ -6907,8 +7104,27 @@
     if (r) r.disabled = histAt < 0 || histAt >= hist.length - 1;
   }
   function saveAutosave() {
+    if (otherTabChanged) return;                 // another tab saved since: don't clobber it until the user chooses
     try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(exportConfig())); }
     catch (err) { /* disposable — never the source of truth */ }
+  }
+  // Two tabs share one autosave. When another tab saves, this one stops saving and asks which
+  // version to keep — otherwise the last tab to save would silently overwrite the other's work.
+  let otherTabChanged = false;
+  function wireTabSync() {
+    const bar = document.getElementById("tabSync");
+    window.addEventListener("storage", e => {
+      if (e.key !== AUTOSAVE_KEY || e.newValue == null || otherTabChanged) return;
+      otherTabChanged = true; clearTimeout(autosaveTimer);
+      bar.classList.remove("hidden");
+    });
+    document.getElementById("tsLoad").addEventListener("click", () => {
+      otherTabChanged = false; bar.classList.add("hidden");
+      try { const d = JSON.parse(localStorage.getItem(AUTOSAVE_KEY)); if (isValidConfig(d)) { applyConfig(d); toast("Loaded the latest layout from the other tab"); } } catch (err) {}
+    });
+    document.getElementById("tsKeep").addEventListener("click", () => {
+      otherTabChanged = false; bar.classList.add("hidden"); saveAutosave(); toast("Kept this tab's layout");
+    });
   }
   function tryLoadAutosave() {
     try {
@@ -7275,6 +7491,7 @@
         if (cfg) setSelectedYaw((cfg.rotationDeg || 0) + (e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG));
         e.preventDefault();
       }
+      else if ((e.key === "f" || e.key === "F") && nav.mode === "top" && !e.ctrlKey && !e.metaKey) setFlatPlan(!flatPlan);
       else if (e.key === "1") gm.click();
       else if (e.key === "2") gr.click();
       else if (e.key === "Escape") { clearMulti(); deselect(); }
@@ -7304,7 +7521,8 @@
     updateProbes(performance.now());   // reflections snapshot the stage before the frame is drawn
     if (viewCamUid != null) { updateCameraFPS(dt); renderCameraView(); return; }
     updateNav(dt);
-    renderer.render(scene, camera);
+    syncFootprints();
+    renderer.render(scene, viewCam());
   }
 
   // Go.
