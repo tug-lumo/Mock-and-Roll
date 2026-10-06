@@ -355,6 +355,8 @@
   #vf .fl { position: absolute; box-sizing: border-box; }
   #vf .fl.lines { outline: 1.5px solid rgba(255,255,255,.95); }
   #vf .fl .lbl, #vf .pl .lbl { position: absolute; left: 6px; top: 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.9); }
+  #vf .vfWarn { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); background: rgba(160,36,44,.94); color: #fff; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 6px; white-space: nowrap; text-shadow: none; }
+  #vf .vfWarn.hidden { display: none; }
   #vf .pl { position: absolute; box-sizing: border-box; border: 1px dashed rgba(255,214,74,.95); }
   #vf .pl .lbl { color: rgba(255,214,74,.95); top: auto; bottom: 4px; }
   #vf .safe i { position: absolute; border: 1px dashed rgba(255,255,255,.55); }
@@ -567,6 +569,7 @@
     <div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div>
     <div class="fl"><div class="safe"><i class="act"></i><i class="ttl"></i></div><div class="thirds"><i></i><i></i><i></i><i></i></div><span class="lbl"></span></div>
     <div class="pl hidden"><span class="lbl"></span></div>
+    <div class="vfWarn hidden"></div>
     <div class="af"><i></i><i></i><i></i><i></i></div><div class="plus"></div>
     <div class="tlx"><b></b><span class="cam">CAM 1</span></div>
     <div class="trx"></div>
@@ -793,7 +796,7 @@
     units: "ft",
     panelSizeM: 0.5,
     fixedElements: [
-      { id: "mainVolumeWall", type: "curvedWall", panelsHigh: 10, panelsWideAtArc: 36, arcDegAchieved: 180, footingHeightFt: 0.5625 },
+      { id: "mainVolumeWall", type: "curvedWall", panelsHigh: 10, panelsWideAtArc: 36, arcDegAchieved: 180, footingHeightFt: 0.5625, diameterFt: 38 },
       // Ceiling is the real LED grid: 16.5ft x 10ft per the floor plan. panelsWide 10 => 16.4ft (~16.5),
       // panelsLong 6 => 9.84ft (~10). (Was 8 long; trimmed to match the plan.)
       { id: "ceiling", panelsLong: 6, panelsWide: 10, motorMountHeightFt: 24, panelRigMinHeightFt: 4, panelRigMaxHeightFt: 20, adjustable: true, adjustableAxis: "height-only", positionOffsetFromMainWallFrontFt: 10.75, positionOffsetFromCurveDeepestFt: 16, heightFt: 20, visible: true }
@@ -801,36 +804,50 @@
       // wall's own base (below), fixed to it as one object. General stage decking is a
       // separate, custom-sized placeable piece (see the "stageDeck" catalog entry).
     ],
-    // The physical studio the volume sits in (from the Lumostage floor plan, 20315 96 Ave).
-    // Coordinate frame: world origin = centre of the volume's curvature; +Z faces OUT of the
-    // curve (the open shooting floor / "front"), -Z is the apex/back. X is the cross axis.
-    //  - Main wall is 38' dia (radius ~18.8'), 180°, 16' high; mouth tips at z=0, apex at z=-18.8.
-    //  - Mouth sits 40' from the front fire-lane edge; apex backs up near the rear wall.
-    //  - Cross axis ~79' (42' + 37' either side of the pillar line), volume offset toward +X.
-    //  - Front wall (the one the curve opens toward) is LEFT OPEN; no roof. Walls 27' tall.
-    //  - Fire lane: 4' keep-clear band marked on the floor around the interior (not a wall).
+    // The physical studio (20315 96 Ave), from the 2026-10 floor-plan revision. Volume frame: origin =
+    // centre of the curve (midpoint of the tips), +Z = NORTH (the shooting floor the volume faces),
+    // -Z = south (the apex), -X = EAST, +X = WEST. Measured: room 80' E-W x 71' N-S; east wall 3.66'
+    // beyond the east tip; the tip line 42' from the north wall; 38' volume square to the north wall;
+    // a ~1' I-beam column 42' from the east wall, 22' from the north wall. The kitchen / WR block and
+    // green room are estimates (to be revised); doors from the 2024 plan. Walls 27' high, all four
+    // closed (see-through from behind). Fire lane: 3.5' band inside the crew area, including inside
+    // the curve; behind the volume and the partition is staff-only.
     studio: {
-      // From the position markup: the volume sits on the LEFT of the room and the floor opens out
-      // to the RIGHT (where the subway lives). Left wall is just past the left rolling-wall deck;
-      // right wall is far. Front (+Z, the side the curve opens toward) is left OPEN; no roof.
-      xMin: -23.5, xMax: 56.2,       // cross axis ~80'; volume (x=±18.8) offset toward -X (left)
-      zBack: -27.8, zFrontOpen: 42.3, // back (-Z) wall behind the apex; front (+Z) edge is open
-      wallHeightFt: 27, wallThicknessFt: 0.5,
-      fireLaneWidthFt: 4,
-      // Walls kept near-black so the lit volume dominates; floor a touch lighter for ground read.
-      floorColor: 0x202329, wallColor: 0x0d0f12, fireLaneColor: 0xd8b54a
+      xMin: -22.66, xMax: 57.34,      // east wall / west wall
+      zBack: -29, zFrontOpen: 42,      // south wall / north wall (name kept from when the front was open)
+      northWall: true, wallHeightFt: 27, wallThicknessFt: 0.5,
+      fireLaneWidthFt: 3.5,
+      floorColor: 0x202329, wallColor: 0x0d0f12, fireLaneColor: 0xd8b54a,
+      rooms: [
+        { name: "kitchen / washrooms", label: "Kitchen · WR · WR", x0: 17.84, x1: 40.76, z0: -29, z1: -19, heightFt: 10 },
+        { name: "green room", label: "Green room", x0: 40.76, x1: 50.93, z0: -29, z1: -16, heightFt: 10 }
+      ],
+      // From the west tip: 70" west, 10' south, 65" west (+0.55' splitting the 1' discrepancy), then a
+      // 90" doorway running south, and a short return to the kitchen block. Height assumed.
+      partition: { heightFt: 12, path: [[19, 0], [24.83, 0], [24.83, -10], [30.8, -10]], doorway: { x: 30.8, z0: -10, z1: -17.5 }, stub: [[30.8, -17.5], [30.8, -19]] },
+      // at = position along the wall (z on the east / west walls, x on the north / south walls).
+      doors: [
+        { wall: "east", at: 32.5, width: 12, heightFt: 14, type: "grade", label: "Grade loading door" },
+        { wall: "east", at: 21.5, width: 3, heightFt: 7, type: "fire", label: "Fire exit" },
+        { wall: "east", at: 10.5, width: 3, heightFt: 7, type: "fire", label: "Fire exit" },
+        { wall: "west", at: 16.5, width: 6, heightFt: 7, type: "fire", label: "Fire exit" },
+        { wall: "north", at: 52.9, width: 6, heightFt: 7, type: "door", label: "To storage" },
+        { wall: "south", at: 52.84, width: 3, heightFt: 7, type: "fire", label: "Fire exit" }
+      ],
+      crewOutline: [[-22.66, 42], [57.34, 42], [57.34, -29], [50.93, -29], [50.93, -16], [40.76, -16], [40.76, -19], [30.8, -19],
+                    [30.8, -10], [24.83, -10], [24.83, 0], [19, 0], "ARC", [-19, 0], [-22.66, 0]],
+      staffOutline: [[-22.66, 0], [-19, 0], "ARC", [19, 0], [24.83, 0], [24.83, -10], [30.8, -10], [30.8, -19], [17.84, -19], [17.84, -29], [-22.66, -29]]
     },
-    // Real structural column — a fixed obstacle, cannot be moved. Per the position markup it
-    // stands just off the front-right corner of the RIGHT rolling wall, in the open floor.
-    pillar: { x: 20, z: 16, sizeFt: 2, heightFt: 27 },
+    // Structural column: a ~1' I-beam (80' room - 42' - 37' measured either side).
+    pillar: { x: 19.84, z: 19.5, sizeFt: 1, heightFt: 27 },
     // Each rolling wall is ONE object: LED wall panels standing on their integral
     // 16'x4'x2' rolling deck base, flush to the inward (volume-facing) edge → L profile.
     // The pair don't come apart. Right wall is mirrored 180° so its flush face points in.
     // Flush faces sit at the mouth tips (x = ±18.8 = the wall radius) and run forward (+Z) to
     // extend the curve into a "U". Left at rot 0, right mirrored 180° so both flush faces point in.
     rollingWalls: [
-      { id: "rollWall_L", panelsHigh: 8, panelsWide: 10, track: "straight", defaultSide: "left",  facing: "in", maxTravelFt: null, deckLengthFt: 16, deckDepthFt: 4, deckHeightFt: 2, deployed: true, x: -18.8, z: 8, rotationDeg: 0 },
-      { id: "rollWall_R", panelsHigh: 8, panelsWide: 10, track: "straight", defaultSide: "right", facing: "in", maxTravelFt: null, deckLengthFt: 16, deckDepthFt: 4, deckHeightFt: 2, deployed: true, x: 18.8,  z: 8, rotationDeg: 180 }
+      { id: "rollWall_L", panelsHigh: 8, panelsWide: 10, track: "straight", defaultSide: "left",  facing: "in", maxTravelFt: null, deckLengthFt: 16, deckDepthFt: 4, deckHeightFt: 2, deployed: true, x: -19, z: 8, rotationDeg: 0 },
+      { id: "rollWall_R", panelsHigh: 8, panelsWide: 10, track: "straight", defaultSide: "right", facing: "in", maxTravelFt: null, deckLengthFt: 16, deckDepthFt: 4, deckHeightFt: 2, deployed: true, x: 19,  z: 8, rotationDeg: 180 }
     ],
     // Stage-deck presets: named size configurations (station/rooftop/etc.) that spawn a
     // stage deck at set dimensions so users pick a role instead of typing numbers.
@@ -864,7 +881,7 @@
     // User-imported .glb models (library records only; the file bytes live in IndexedDB).
     customModels: [],
     // One-time data fixes already applied to this layout (see migrateConfig).
-    migrations: { ceiling20: true, people2: true },
+    migrations: { ceiling20: true, people2: true, studio202610: true },
     // Live reflections on vehicles / imported models / the subway shell (Settings → Reflections).
     reflections: { live: true, quality: "balanced", floor: "satin" },
     // 360° environment on the LED surfaces (LED → 360° environment). libraryId points into
@@ -1227,7 +1244,7 @@
       const wallH = panelsToFt(wallCfg.panelsHigh);
       const arcLen = panelsToFt(wallCfg.panelsWideAtArc);
       const arcRad = degToRad(wallCfg.arcDegAchieved);
-      radius = arcLen / arcRad;                       // r = arcLength / theta
+      radius = wallCfg.diameterFt ? wallCfg.diameterFt / 2 : arcLen / arcRad;   // measured 38' (panel maths gives ~37.6')
       const footing = wallCfg.footingHeightFt || 0;
 
       // Open-ended half cylinder. thetaStart = +PI/2 sweeps the arc through the -Z half, so the
@@ -1291,6 +1308,92 @@
     if (typeof wallPlates !== "undefined") reapplyAllSurfacePlates();
   }
 
+  // ---- Studio geometry (2026-10 floor-plan revision) ------------------------------------
+  // Everything is in the volume frame: origin = curve centre (midpoint of the tips), +Z = north
+  // (the shooting floor), -X = east. From the studio's own measurements: east wall 3.66' past the
+  // east tip, room 80' E-W x 71' N-S, north wall 42' in front of the tip line, 38' volume.
+  // crewOutline walks the crew-accessible floor (north wall, west wall, round the green room and
+  // kitchen block, along the partition, INSIDE the volume's curve, back to the east wall); "ARC"
+  // stands for the LED wall from the west tip to the east tip. The fire lane is that outline inset
+  // by fireLaneWidthFt; behind the volume / partition is staff-only.
+  let _studioGeom = null, _studioGeomKey = "";
+  function volumeRadius() { return mainWallMesh && mainWallMesh.userData.dims ? mainWallMesh.userData.dims.radius : 19; }
+  function polyArea(p) { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; }
+  function pointInPoly(x, z, p) {
+    let ins = false;
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+      const xi = p[i][0], zi = p[i][1], xj = p[j][0], zj = p[j][1];
+      if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) ins = !ins;
+    }
+    return ins;
+  }
+  // Inset a simple polygon by d (mitred corners), e.g. the fire-lane line inside the crew area.
+  function insetPoly(p, d) {
+    const n = p.length, s = polyArea(p) > 0 ? 1 : -1, lines = [];
+    for (let i = 0; i < n; i++) {
+      const a = p[i], b = p[(i + 1) % n], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1;
+      const nx = -dz / L * s, nz = dx / L * s;               // left normal for a CCW outline = inward
+      lines.push({ px: a[0] + nx * d, pz: a[1] + nz * d, dx: dx / L, dz: dz / L });
+    }
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const l1 = lines[(i - 1 + n) % n], l2 = lines[i], den = l1.dx * l2.dz - l1.dz * l2.dx;
+      if (Math.abs(den) < 1e-6) { out.push([l2.px, l2.pz]); continue; }
+      const t = ((l2.px - l1.px) * l2.dz - (l2.pz - l1.pz) * l2.dx) / den;
+      out.push([l1.px + l1.dx * t, l1.pz + l1.dz * t]);
+    }
+    return out;
+  }
+  function arcPoints(R, fromWest, n) {                       // the LED wall, z <= 0 half
+    const pts = [];
+    for (let i = 1; i < n; i++) { const t = fromWest ? -Math.PI * i / n : -Math.PI + Math.PI * i / n; pts.push([R * Math.cos(t), R * Math.sin(t)]); }
+    return pts;                                              // interior points only (tips come from the outline)
+  }
+  function studioGeom() {
+    const s = config.studio; if (!s) return null;
+    const R = volumeRadius(), key = JSON.stringify(s) + "|" + R;
+    if (_studioGeom && _studioGeomKey === key) return _studioGeom;
+    const crew = [];
+    (s.crewOutline || []).forEach(v => { if (v === "ARC") arcPoints(R, true, 48).forEach(q => crew.push(q)); else crew.push(v); });
+    const staff = [];
+    (s.staffOutline || []).forEach(v => { if (v === "ARC") arcPoints(R, false, 48).forEach(q => staff.push(q)); else staff.push(v); });
+    const lane = crew.length > 2 ? insetPoly(crew, s.fireLaneWidthFt || 3.5) : [];
+    // Doors: resolve each to its two end points on the wall line.
+    const doors = (s.doors || []).map(d => {
+      const h = d.width / 2;
+      const ends = d.wall === "east" ? [[s.xMin, d.at - h], [s.xMin, d.at + h]] : d.wall === "west" ? [[s.xMax, d.at - h], [s.xMax, d.at + h]]
+                 : d.wall === "north" ? [[d.at - h, s.zFrontOpen], [d.at + h, s.zFrontOpen]] : [[d.at - h, s.zBack], [d.at + h, s.zBack]];
+      const inward = d.wall === "east" ? [1, 0] : d.wall === "west" ? [-1, 0] : d.wall === "north" ? [0, -1] : [0, 1];
+      return Object.assign({}, d, { ends: ends, inward: inward });
+    });
+    _studioGeomKey = key;
+    return (_studioGeom = { crew: crew, lane: lane, staff: staff, doors: doors, rooms: s.rooms || [], partition: s.partition || null });
+  }
+  // Where a floor point sits: "outside" the walls, inside a "room", "staff"-only, "lane", or "floor".
+  function floorZoneAt(x, z) {
+    const s = config.studio, G = studioGeom(); if (!s || !G) return { kind: "floor" };
+    if (x < s.xMin || x > s.xMax || z < s.zBack || z > s.zFrontOpen) return { kind: "outside" };
+    const room = G.rooms.find(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1);
+    if (room) return { kind: "room", name: room.name };
+    if (G.staff.length && pointInPoly(x, z, G.staff)) return { kind: "staff" };
+    if (G.lane.length && pointInPoly(x, z, G.crew) && !pointInPoly(x, z, G.lane)) return { kind: "lane" };
+    return { kind: "floor" };
+  }
+  function partitionSegments() {
+    const pt = config.studio && config.studio.partition; if (!pt) return [];
+    const segs = [];
+    [pt.path || [], pt.stub || []].forEach(path => { for (let i = 0; i + 1 < path.length; i++) segs.push([path[i], path[i + 1]]); });
+    return segs;
+  }
+  // A camera somewhere a real one can't stand gets flagged (viewfinder + inspector).
+  function cameraPlaceWarning(pa) {
+    const z = floorZoneAt(pa.x, pa.z);
+    if (z.kind === "outside") return "Camera is outside the studio walls — this shot isn't possible";
+    if (z.kind === "room") return "Camera is inside the " + z.name + " — this shot isn't possible";
+    if (z.kind === "staff") return "Camera is in the staff-only area behind the volume";
+    return "";
+  }
+
   // ==================================================================
   //  STUDIO SHELL  (floor, enclosing walls, fire-lane marking, pillar)
   // ==================================================================
@@ -1306,7 +1409,7 @@
 
     const xMin = s.xMin, xMax = s.xMax, zBack = s.zBack, zFront = s.zFrontOpen;
     const w = xMax - xMin, d = zFront - zBack, cx = (xMin + xMax) / 2, cz = (zBack + zFront) / 2;
-    const H = s.wallHeightFt || 27, t = s.wallThicknessFt || 0.5, fl = s.fireLaneWidthFt || 4;
+    const H = s.wallHeightFt || 27;
 
     // Floor (just below y=0 so the reference grid still reads on top of it).
     // Glossy finish: a planar mirror (THREE.Reflector) sits a hair under a semi-transparent floor
@@ -1332,29 +1435,73 @@
     floor.renderOrder = 1;                                           // drawn after the mirror it lets through
     studioGroup.add(floor);
 
-    // Walls: +X (north), -X (south), -Z (back/apex side). Front (+Z, into the curve) left OPEN.
-    const wallMat = new THREE.MeshStandardMaterial({ color: s.wallColor || 0x3b414c, roughness: 0.9, side: THREE.DoubleSide });
-    function wall(cxw, cyw, czw, wx, wy, wz) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(wx, wy, wz), wallMat);
-      m.position.set(cxw, cyw, czw); studioGroup.add(m);
+    // Walls, rooms and partition read as solid from the studio floor but are see-through from
+    // behind / outside (handy for moving round the stage). Each panel is two planes: an opaque face
+    // toward the crew side and a faint one toward the back.
+    const wallMat = new THREE.MeshStandardMaterial({ color: s.wallColor || 0x3b414c, roughness: 0.9, side: THREE.FrontSide });
+    const ghostMat = new THREE.MeshBasicMaterial({ color: 0x8a96a8, transparent: true, opacity: 0.07, side: THREE.BackSide, depthWrite: false });
+    const roomMat = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.9, side: THREE.FrontSide });
+    function panel(x0, z0, x1, z1, h, nx, nz, mat, y0) {        // (nx, nz) = the solid side's facing
+      const len = Math.hypot(x1 - x0, z1 - z0); if (len < 0.01) return;
+      const geo = new THREE.PlaneGeometry(len, h);
+      [mat, ghostMat].forEach(m => {
+        const pl = new THREE.Mesh(geo, m);
+        pl.position.set((x0 + x1) / 2, (y0 || 0) + h / 2, (z0 + z1) / 2);
+        pl.rotation.y = Math.atan2(nx, nz);
+        pl.raycast = function () {};
+        studioGroup.add(pl);
+      });
     }
-    wall(xMax + t / 2, H / 2, cz, t, H, d);   // +X wall
-    wall(xMin - t / 2, H / 2, cz, t, H, d);   // -X wall
-    wall(cx, H / 2, zBack - t / 2, w + 2 * t, H, t); // -Z (back) wall
-
-    // Fire-lane marking: a 4'-wide keep-clear band around the interior perimeter, drawn as two
-    // yellow boundary rectangles on the floor (outer = at the walls, inner = 4' in). The front
-    // edge is included even though that wall is open.
-    const flMat = new THREE.LineBasicMaterial({ color: s.fireLaneColor || 0xd8b54a, transparent: true, opacity: 0.8 });
-    function rect(x0, x1, z0, z1, y) {
-      const g = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x0, y, z0), new THREE.Vector3(x1, y, z0),
-        new THREE.Vector3(x1, y, z1), new THREE.Vector3(x0, y, z1), new THREE.Vector3(x0, y, z0)
-      ]);
-      const l = new THREE.Line(g, flMat); l.raycast = function () {}; studioGroup.add(l);
+    panel(xMin, zFront, xMax, zFront, H, 0, -1, wallMat);       // north
+    panel(xMin, zBack, xMax, zBack, H, 0, 1, wallMat);          // south
+    panel(xMin, zBack, xMin, zFront, H, 1, 0, wallMat);         // east
+    panel(xMax, zBack, xMax, zFront, H, -1, 0, wallMat);        // west
+    const G = studioGeom();
+    // Doors: leaf panels just inside the wall (grade door = a ribbed roll-up).
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: 0.7, metalness: 0.2 });
+    const fireMat = new THREE.MeshStandardMaterial({ color: 0x5e3a3a, roughness: 0.7 });
+    const gradeMat = new THREE.MeshStandardMaterial({ color: 0x6b7178, roughness: 0.6, metalness: 0.3 });
+    (G ? G.doors : []).forEach(d => {
+      const [a0, a1] = d.ends, ox = d.inward[0] * 0.06, oz = d.inward[1] * 0.06, h = d.heightFt || 7;
+      const len = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]), rot = Math.atan2(d.inward[0], d.inward[1]);
+      const leaf = new THREE.Mesh(new THREE.PlaneGeometry(len, h), d.type === "grade" ? gradeMat : d.type === "fire" ? fireMat : doorMat);
+      leaf.position.set((a0[0] + a1[0]) / 2 + ox, h / 2, (a0[1] + a1[1]) / 2 + oz); leaf.rotation.y = rot; leaf.raycast = function () {};
+      studioGroup.add(leaf);
+      if (d.type === "grade") for (let y = 0.5; y < h; y += 0.5) {            // roll-up slats
+        const sl = new THREE.Mesh(new THREE.BoxGeometry(len, 0.04, 0.04), doorMat);
+        sl.position.set(leaf.position.x + ox, y, leaf.position.z + oz); sl.rotation.y = rot; studioGroup.add(sl);
+      }
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(len + 0.3, 0.25, 0.08), new THREE.MeshBasicMaterial({ color: d.type === "fire" ? 0x2ecc71 : 0x9aa0a6 }));
+      bar.position.set(leaf.position.x, h + 0.35, leaf.position.z); bar.rotation.y = rot; studioGroup.add(bar);   // exit sign / header
+    });
+    // Rooms (kitchen / washrooms, green room): solid from the studio floor, see-through from inside.
+    (G ? G.rooms : []).forEach(r => {
+      const h = r.heightFt || 10;
+      panel(r.x0, r.z1, r.x1, r.z1, h, 0, 1, roomMat);
+      panel(r.x0, r.z0, r.x0, r.z1, h, -1, 0, roomMat);
+      panel(r.x1, r.z0, r.x1, r.z1, h, 1, 0, roomMat);
+      const roof = new THREE.Mesh(new THREE.PlaneGeometry(r.x1 - r.x0, r.z1 - r.z0), new THREE.MeshStandardMaterial({ color: 0x23272d, side: THREE.FrontSide }));
+      roof.rotation.x = -Math.PI / 2; roof.position.set((r.x0 + r.x1) / 2, h, (r.z0 + r.z1) / 2); roof.raycast = function () {}; studioGroup.add(roof);
+    });
+    // Partition: solid on the crew (west / north) side, see-through from the staff side.
+    partitionSegments().forEach(([a0, a1]) => {
+      const dx = a1[0] - a0[0], dz = a1[1] - a0[1];
+      const crewN = Math.abs(dx) > Math.abs(dz) ? [0, 1] : [1, 0];   // E-W runs face north, N-S runs face west
+      panel(a0[0], a0[1], a1[0], a1[1], (s.partition && s.partition.heightFt) || 12, crewN[0], crewN[1], roomMat);
+    });
+    // Staff-only floor behind the volume: a darker tint so the crew area reads at a glance.
+    if (G && G.staff.length > 2) {
+      const sh = new THREE.Shape(G.staff.map(v => new THREE.Vector2(v[0], -v[1])));
+      const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }));
+      m.position.y = 0.02; m.raycast = function () {}; studioGroup.add(m);
     }
-    rect(xMin, xMax, zBack, zFront, 0.03);                        // outer (at walls)
-    rect(xMin + fl, xMax - fl, zBack + fl, zFront - fl, 0.03);    // inner (4' in)
+    // Fire lane: dashed yellow line 3.5' inside the crew area (incl. inside the curve).
+    if (G && G.lane.length > 2) {
+      const geo = new THREE.BufferGeometry().setFromPoints(G.lane.concat([G.lane[0]]).map(v => new THREE.Vector3(v[0], 0.04, v[1])));
+      const line = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: s.fireLaneColor || 0xd8b54a, dashSize: 1.2, gapSize: 0.8, transparent: true, opacity: 0.9 }));
+      line.computeLineDistances(); line.raycast = function () {}; studioGroup.add(line);
+    }
 
     // Fixed structural pillar (real obstacle, not movable).
     const p = config.pillar;
@@ -3351,8 +3498,9 @@
     if (isCamera) {
       const o = camOptics(cur), fd = camVal(cur, "focusFt");
       name = "Camera";
-      dims = o.f + "mm · " + o.S.name + " → " + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V" +
+      dims = o.f + "mm · " + escapeHtml(formatLabel(o)) + " → " + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V" +
         "<br>Frames " + fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH) + " at " + fmtLen(fd) + " focus";
+      const cw = cameraPlaceWarning(cur); if (cw) dims += '<br><span class="warnTxt">' + escapeHtml(cw) + '</span>';
     } else if (selected.type === "human") {
       const seat = resolveSeat(cur);
       name = seat ? "Human — seated" : "Human — standing";
@@ -4164,6 +4312,7 @@
     set(".cam", "CAM " + (allCams.indexOf(pa) + 1));
     set(".trx", '<span class="bx fill">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx">' + o.sq + '× ANA</span>' : "") +
       '<span class="bx">' + o.f + 'mm</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
+    { const w = cameraPlaceWarning(pa), el = vf.querySelector(".vfWarn"); if (el.dataset.h !== w) { el.dataset.h = w; el.textContent = w; el.classList.toggle("hidden", !w); } }
     // Frame lines: the delivery frame (and protect) as a share of the image shown.
     const vp = vfPrefs(), full = vp.full, fl = vf.querySelector(".fl"), pl = vf.querySelector(".pl");
     const fx = full ? o.frameW / o.sensorW : 1, fy = full ? o.frameH / o.sensorH : 1;
@@ -4598,7 +4747,7 @@
       items.concat(cams).forEach(it => { const fp = footprintOf(it.g, 0); if (fp) fp.forEach(p => grow(p[0], p[1])); else grow(it.g.position.x, it.g.position.z); });
       people.forEach(p => grow(p.g.position.x, p.g.position.z));
       b.x0 -= 4; b.x1 += 4; b.z0 -= 4; b.z1 += 5;
-    } else b = { x0: st.xMin - 2, x1: st.xMax + 2, z0: st.zBack - 2, z1: st.zFrontOpen + 4 };
+    } else b = { x0: st.xMin - 3, x1: st.xMax + 3, z0: st.zBack - 3, z1: st.zFrontOpen + 4 };
     const bw = b.x1 - b.x0, bh = b.z1 - b.z0;
     let s, scaleTxt;
     const fixed = PLAN_SCALES.find(x => String(x[0]) === String(opt.scale));
@@ -4635,21 +4784,50 @@
         out.push('<line x1="' + f2(dx0) + '" y1="' + f2(q) + '" x2="' + f2(dx0 + dW) + '" y2="' + f2(q) + '" stroke="' + (mj ? "#ccd1d5" : "#eceef0") + '" stroke-width="' + (mj ? 0.6 : 0.35) + '"/>');
       }
     }
-    // ---- studio shell --------------------------------------------------------------------
-    const sp = [P(st.xMin, st.zBack), P(st.xMax, st.zBack), P(st.xMin, st.zFrontOpen), P(st.xMax, st.zFrontOpen)];
-    out.push('<polyline points="' + [sp[2], sp[0], sp[1], sp[3]].map(q => f2(q[0]) + "," + f2(q[1])).join(" ") + '" fill="none" stroke="' + INK + '" stroke-width="3"/>');
-    out.push('<line x1="' + f2(sp[2][0]) + '" y1="' + f2(sp[2][1]) + '" x2="' + f2(sp[3][0]) + '" y2="' + f2(sp[3][1]) + '" stroke="' + MUTE + '" stroke-width="0.8" stroke-dasharray="6 4"/>');
-    text((sp[2][0] + sp[3][0]) / 2, sp[2][1] + 10, "OPEN FRONT", { size: 6.5, weight: 700, fill: MUTE, anchor: "middle", halo: true });
-    if (opt.fireLane) {
-      const fl = st.fireLaneWidthFt || 4;
-      out.push('<polygon points="' + pts([[st.xMin + fl, st.zBack + fl], [st.xMax - fl, st.zBack + fl], [st.xMax - fl, st.zFrontOpen - fl], [st.xMin + fl, st.zFrontOpen - fl]]) + '" fill="none" stroke="#d8a21b" stroke-width="0.9" stroke-dasharray="5 3"/>');
-      const q = P(st.xMax - fl, st.zBack + fl); text(q[0] - 3, q[1] + 8, "4′ fire lane — keep clear", { size: 5.5, fill: "#a87a10", anchor: "end", halo: true });
+    // ---- studio shell ------------------------------------------------------------------
+    const G = studioGeom();
+    if (G && G.staff.length > 2) {                             // staff-only floor behind the volume
+      out.push('<polygon points="' + pts(G.staff) + '" fill="url(#hatchW)" stroke="none"/>');
+      const sc = G.staff.reduce((acc, v) => [acc[0] + v[0], acc[1] + v[1]], [0, 0]).map(v => v / G.staff.length);
+      const q = P(Math.min(sc[0], -6), Math.max(st.zBack + 4, -25)); text(q[0], q[1], "STAFF ONLY", { size: 6.5, weight: 700, fill: MUTE, anchor: "middle", halo: true });
+    }
+    (G ? G.rooms : []).forEach(r => {
+      out.push('<polygon points="' + pts([[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]]) + '" fill="#e3e6e9" stroke="' + INK + '" stroke-width="1.4"/>');
+      const q = P((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2); text(q[0], q[1] + 2, r.label || r.name, { size: 6, weight: 700, fill: MUTE, anchor: "middle" });
+    });
+    out.push('<polygon points="' + pts([[st.xMin, st.zBack], [st.xMax, st.zBack], [st.xMax, st.zFrontOpen], [st.xMin, st.zFrontOpen]]) + '" fill="none" stroke="' + INK + '" stroke-width="3.2"/>');
+    partitionSegments().forEach(([a0, a1]) => { const q0 = P(a0[0], a0[1]), q1 = P(a1[0], a1[1]); out.push('<line x1="' + f2(q0[0]) + '" y1="' + f2(q0[1]) + '" x2="' + f2(q1[0]) + '" y2="' + f2(q1[1]) + '" stroke="' + INK + '" stroke-width="2"/>'); });
+    if (st.partition && st.partition.doorway) { const dw = st.partition.doorway, q = P(dw.x, (dw.z0 + dw.z1) / 2); text(q[0] + 4, q[1] + 2, "doorway " + ftIn(Math.abs(dw.z1 - dw.z0)), { size: 5, fill: MUTE, halo: true }); }
+    (G ? G.doors : []).forEach(d => {
+      const [a0, a1] = d.ends, q0 = P(a0[0], a0[1]), q1 = P(a1[0], a1[1]);
+      out.push('<line x1="' + f2(q0[0]) + '" y1="' + f2(q0[1]) + '" x2="' + f2(q1[0]) + '" y2="' + f2(q1[1]) + '" stroke="#fff" stroke-width="4.2"/>');   // opening in the wall
+      const iw = [d.inward[0], d.inward[1]];
+      if (d.type === "grade") {
+        const dep = 3, poly = [a0, a1, [a1[0] + iw[0] * dep, a1[1] + iw[1] * dep], [a0[0] + iw[0] * dep, a0[1] + iw[1] * dep]];
+        out.push('<polygon points="' + pts(poly) + '" fill="none" stroke="' + INK + '" stroke-width="0.7" stroke-dasharray="3 2"/>');
+      } else {                                                 // swing arcs, one per leaf (double doors: two)
+        const leaves = d.width > 4 ? 2 : 1, lw = d.width / leaves;
+        for (let i = 0; i < leaves; i++) {
+          const hinge = i === 0 ? a0 : a1, dirx = (i === 0 ? a1[0] - a0[0] : a0[0] - a1[0]) / d.width, dirz = (i === 0 ? a1[1] - a0[1] : a0[1] - a1[1]) / d.width;
+          const tip = [hinge[0] + dirx * lw, hinge[1] + dirz * lw], open = [hinge[0] + iw[0] * lw, hinge[1] + iw[1] * lw];
+          const qh = P(hinge[0], hinge[1]), qt = P(tip[0], tip[1]), qo = P(open[0], open[1]), r = lw * k;
+          out.push('<path d="M' + f2(qh[0]) + " " + f2(qh[1]) + "L" + f2(qo[0]) + " " + f2(qo[1]) + "A" + f2(r) + " " + f2(r) + " 0 0 " + ((dirx * iw[1] - dirz * iw[0]) > 0 ? 1 : 0) + " " + f2(qt[0]) + " " + f2(qt[1]) + '" fill="none" stroke="' + INK + '" stroke-width="0.6"/>');
+        }
+      }
+      const mid = [(a0[0] + a1[0]) / 2 + iw[0] * (d.type === "grade" ? 4.5 : 3.6), (a0[1] + a1[1]) / 2 + iw[1] * (d.type === "grade" ? 4.5 : 3.6)], q = P(mid[0], mid[1]);
+      text(q[0], q[1] + 2, d.label, { size: 5.3, weight: 700, fill: d.type === "fire" ? "#1e8a4c" : MUTE, anchor: "middle", halo: true, rot: (d.wall === "east" || d.wall === "west") ? -90 : 0 });
+    });
+    if (opt.fireLane && G && G.lane.length > 2) {
+      out.push('<polygon points="' + pts(G.lane) + '" fill="none" stroke="#d8a21b" stroke-width="1" stroke-dasharray="5 3"/>');
+      const q = P(st.xMax - (st.fireLaneWidthFt || 3.5), st.zFrontOpen - (st.fireLaneWidthFt || 3.5));
+      text(q[0] - 3, q[1] + 8, ftIn(st.fireLaneWidthFt || 3.5) + " fire lane — keep a clear path to a fire exit", { size: 5.5, fill: "#a87a10", anchor: "end", halo: true });
     }
     if (config.pillar) {
-      const pl = config.pillar, h = (pl.sizeFt || 2) / 2;
-      out.push('<polygon points="' + pts([[pl.x - h, pl.z - h], [pl.x + h, pl.z - h], [pl.x + h, pl.z + h], [pl.x - h, pl.z + h]]) + '" fill="#5b6069" stroke="' + INK + '" stroke-width="0.8"/>');
+      const pl = config.pillar, h = (pl.sizeFt || 1) / 2;
+      out.push('<polygon points="' + pts([[pl.x - h, pl.z - h], [pl.x + h, pl.z - h], [pl.x + h, pl.z + h], [pl.x - h, pl.z + h]]) + '" fill="' + INK + '"/>');
       const q = P(pl.x + h, pl.z - h); text(q[0] + 3, q[1] - 2, "Column", { size: 5.5, fill: MUTE, halo: true });
     }
+    { const q = P(st.xMin + 1, st.zFrontOpen - 1); text(q[0] + 2, q[1] - 2, "N ↑ · north wall", { size: 5.5, weight: 700, fill: MUTE, halo: true }); }
     // ---- LED volume ------------------------------------------------------------------------
     if (opt.ceiling && ceilingMesh && ceilingGroup && ceilingGroup.visible) {
       const cb = new THREE.Box3().setFromObject(ceilingMesh);
@@ -4765,7 +4943,8 @@
         text((a[0] + c[0]) / 2, y - 2.5, label, { size: 6, fill: MUTE, anchor: "middle", halo: true }); }
     };
     dim(-R, 0, R, 0, 14, "Volume mouth " + ftIn(2 * R));
-    if (opt.area !== "set") { dim(st.xMin, st.zFrontOpen, st.xMax, st.zFrontOpen, 22, "Studio " + ftIn(st.xMax - st.xMin)); dim(st.xMax, st.zBack, st.xMax, st.zFrontOpen, 22, "Studio " + ftIn(st.zFrontOpen - st.zBack), true); }
+    if (opt.area !== "set") { dim(st.xMin, st.zFrontOpen, st.xMax, st.zFrontOpen, 18, "Studio " + ftIn(st.xMax - st.xMin) + " E–W"); dim(st.xMax, st.zBack, st.xMax, st.zFrontOpen, 18, "Studio " + ftIn(st.zFrontOpen - st.zBack) + " N–S", true);
+      dim(st.xMin, 0, -volumeRadius(), 0, -12, ftIn(-volumeRadius() - st.xMin)); dim(st.xMin, 0, st.xMin, st.zFrontOpen, 10, ftIn(st.zFrontOpen) + " tips to north wall", true); }
     out.push("</g>");
     // ---- frame, rulers ---------------------------------------------------------------------
     out.push('<rect x="' + f2(dx0) + '" y="' + f2(dy0) + '" width="' + f2(dW) + '" height="' + f2(dH) + '" fill="none" stroke="' + INK + '" stroke-width="1.2"/>');
@@ -5837,18 +6016,20 @@
   // Returns { hard: [names], fire: bool } for the selected group.
   function collisionsFor(g) {
     const fp = footprintOf(g, COLL_TOL), lb = localBoxOfGroup(g);
-    if (!fp || !lb) return { hard: [], fire: false };
+    if (!fp || !lb) return { hard: [], fire: false, staff: false };
     const hard = [], top = g.position.y + lb.max.y, meDeck = isDeckGroup(g);
     const s = config.studio, pl = config.pillar;
     if (pl) {
       const h = (pl.sizeFt || 2) / 2;
       if (rectsOverlap(fp, aabbRect(pl.x - h, pl.x + h, pl.z - h, pl.z + h))) hard.push("pillar");
     }
-    let fire = false;
+    let fire = false, staff = false;
     if (s) {
-      if (fp.some(v => v[0] < s.xMin || v[0] > s.xMax || v[1] < s.zBack)) hard.push("studio wall");
-      const fl = s.fireLaneWidthFt || 4;
-      fire = fp.some(v => v[0] < s.xMin + fl || v[0] > s.xMax - fl || v[1] < s.zBack + fl || v[1] > s.zFrontOpen - fl);
+      if (fp.some(v => v[0] < s.xMin || v[0] > s.xMax || v[1] < s.zBack || v[1] > s.zFrontOpen)) hard.push("studio wall");
+      (s.rooms || []).forEach(r => { if (rectsOverlap(fp, aabbRect(r.x0, r.x1, r.z0, r.z1))) hard.push(r.name); });
+      const per = perimeterPoints(fp).concat(fp);
+      if (partitionSegments().some(([a0, a1]) => { for (let k = 0; k <= 20; k++) { const q = [a0[0] + (a1[0] - a0[0]) * k / 20, a0[1] + (a1[1] - a0[1]) * k / 20]; if (pointInPoly(q[0], q[1], fp)) return true; } return false; })) hard.push("partition");
+      per.forEach(v => { const zn = floorZoneAt(v[0], v[1]).kind; if (zn === "lane") fire = true; if (zn === "staff") staff = true; });
     }
     if (mainWallMesh && mainWallMesh.userData.dims) {         // arc lives in the z<0 half, radius R
       const R = mainWallMesh.userData.dims.radius;
@@ -5877,7 +6058,7 @@
       const yOverlap = g.position.y + lb.min.y < o.position.y + ob.max.y - COLL_TOL && o.position.y + ob.min.y < top - COLL_TOL;
       if (yOverlap && rectsOverlap(fp, ofp)) hard.push(pieceName(o));
     });
-    return { hard: hard, fire: fire };
+    return { hard: hard, fire: fire, staff: staff };
   }
 
   function clearCollisionOutline() {
@@ -5897,7 +6078,7 @@
     const moved = sig !== collBase.sig;
     clearCollisionOutline();
     const r = collisionsFor(g), lb = localBoxOfGroup(g);
-    if ((!r.hard.length && !r.fire) || !lb) return;
+    if ((!r.hard.length && !r.fire && !r.staff) || !lb) return;
     const color = r.hard.length ? 0xff3b3b : 0xffb020;
     const size = lb.getSize(new THREE.Vector3()), ctr = lb.getCenter(new THREE.Vector3());
     const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size.x + 0.15, size.y + 0.15, size.z + 0.15));
@@ -5911,8 +6092,10 @@
     if (!collHud) collHud = document.getElementById("collHud");
     if (collHud && moved && !collDismissed[g.uuid]) {
       const uniq = r.hard.filter((n, i) => r.hard.indexOf(n) === i);
-      collHud.innerHTML = '<svg><use href="#i-warn"/></svg><span>' + escapeHtml(uniq.length ? "Overlaps " + uniq.join(", ") + (r.fire ? " · in the fire lane" : "")
-        : "In the 4′ fire lane — keep it clear") + '</span><button class="x" aria-label="Dismiss for this piece"><svg><use href="#i-x"/></svg></button>';
+      const lw = ftIn((config.studio && config.studio.fireLaneWidthFt) || 3.5);
+      collHud.innerHTML = '<svg><use href="#i-warn"/></svg><span>' + escapeHtml(uniq.length ? "Overlaps " + uniq.join(", ") + (r.fire ? " · in the fire lane" : "") + (r.staff ? " · in the staff-only area" : "")
+        : r.staff ? "In the staff-only area behind the volume" + (r.fire ? " · and the fire lane" : "")
+        : "In the " + lw + " fire lane — keep a clear path to a fire door") + '</span><button class="x" aria-label="Dismiss for this piece"><svg><use href="#i-x"/></svg></button>';
       collHud.className = uniq.length ? "" : "fire";
       collHud.querySelector("button").addEventListener("click", () => { collDismissed[g.uuid] = true; collHud.classList.add("hidden"); });
     }
@@ -6407,6 +6590,15 @@
     }
     // Station platform v1-v3 were stage-deck presets; they stay as plain decks (the set is its own piece now).
     (cfg.placedAssets || []).forEach(p => { if (p._setKey && /^station-v\d$/.test(p._setKey)) { delete p._setKey; delete p.preset; } });
+    // One-time: the 2026-10 floor-plan revision replaces the studio shell, the column and the volume
+    // diameter (38'). Pieces are stored relative to the volume, so they stay put.
+    if (!cfg.migrations.studio202610) {
+      cfg.studio = deepClone(DEFAULT_CONFIG.studio);
+      cfg.pillar = deepClone(DEFAULT_CONFIG.pillar);
+      const mw = (cfg.fixedElements || []).find(e => e.id === "mainVolumeWall"); if (mw) mw.diameterFt = 38;
+      (cfg.rollingWalls || []).forEach(rw => { if (Math.abs(Math.abs(rw.x) - 18.8) < 1e-6 && rw.z === 8 && (rw.rotationDeg === 0 || rw.rotationDeg === 180)) rw.x = Math.sign(rw.x) * 19; });
+      cfg.migrations.studio202610 = true;
+    }
     // placedAssets hygiene: drop any duplicate vehicle seat key.
     const seenKeys = {};
     (cfg.placedAssets || []).forEach(p => { if (p.key) { if (seenKeys[p.key]) delete p.key; else seenKeys[p.key] = 1; } });
