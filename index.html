@@ -1075,7 +1075,7 @@
       // Island platform with four I-beam pillars (see buildStationPlatform). 20x20 or 16x20 covers
       // ~95% of deployments; anything else = add stage deck alongside.
       { assetId: "stationPlatform", name: "Station Platform", category: "set", heightFt: 14, platform: true,
-        variants: [{ variant: "20x20", name: "20 × 20", lengthFt: 20, widthFt: 20 }, { variant: "16x20", name: "16 × 20", lengthFt: 16, widthFt: 20 }] },
+        variants: [{ variant: "20x20", name: "20 × 20", lengthFt: 20, widthFt: 20 }, { variant: "16x20", name: "16 × 20", lengthFt: 20, widthFt: 16 }] },
       { assetId: "rooftopSet", name: "Rooftop Set", category: "stage-deck-preset", status: "deferred",
         variants: [
           { variant: "v1", parapetHeightFt: 1.3125, model: "assets/rooftop_v1.glb" },
@@ -2446,7 +2446,7 @@
   //            faces 5' in from the edges of the 20x20 — a fixed 2x2 grid (8' 2 1/2" clear between
   //            faces), centred on the deck. Bottom 1.3' boxed in, then a sloped fill to the web —
   //            the flared foot the Unreal columns share. Timber bracing ties the tops together.
-  //   pa.variant: "20x20" (default) | "16x20" (16' along the track). pa.bracing (default on),
+  //   pa.variant: "20x20" (default) | "16x20" (16' across between the yellow edges, still 20' along the track). pa.bracing (default on),
   //   pa.signs (default off): black "Canal Street" plates on the pillars, as in the Unreal world.
   const PLATFORM = { deckH: 2, pillarH: 12, pw: 10.75 / 12, pd: 11.75 / 12, inset: 5, grid: 20, strip: 2 };
   function platformDims(entry, pa) {
