@@ -420,6 +420,14 @@
   body.touch.drawerOpen:not(.phone) #joy { left: calc(var(--rail) + 330px); }
   #rotatePrompt, #newSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
   #rotatePrompt.hidden, #newSheet.hidden { display: none; }
+  #camSetup { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.6); }
+  #camSetup.hidden { display: none; }
+  #camSetup .card { width: min(420px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); max-height: calc(100% - 32px); overflow: auto; }
+  #camSetup h3 { margin: 0 0 6px; font-size: 16px; }
+  #camSetup p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  #camSetup .btnRow button { flex: 1; }
+  select.wideSel { max-width: 200px; }
+  #camChoices select.wideSel { max-width: 170px; }
   #rotatePrompt .card, #newSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
   #rotatePrompt h3, #newSheet h3 { margin: 0 0 6px; font-size: 16px; }
   #rotatePrompt p, #newSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
@@ -566,7 +574,9 @@
       <section data-sec="camera">
         <div class="subhead">Film camera</div>
         <div class="field"><span>Camera</span><select id="camPick" title="The camera the Viewfinder, saved shots and prints act on"></select></div>
-        <div class="field"><span>Lens</span><button id="lensBtn" title="Choose a lens (L, or Select on a gamepad)">—</button></div>
+        <div id="camChoices"></div>
+        <div class="fmtReadout" id="camTabReadout"></div>
+        <button id="lensBtn" class="hidden" aria-hidden="true">—</button>
         <label class="setToggle editOnly"><input type="checkbox" id="frustChk"><span>Show its field of view on stage</span></label>
         <div class="btnRow"><button class="primary" id="lookBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-lens"/></svg>Open viewfinder</button></div>
 
@@ -775,6 +785,16 @@
     <div class="card"><h3>Turn your phone sideways</h3><p>Mock &amp; Roll is laid out for landscape on a phone — the viewfinder, panels and controls all fit.</p>
       <button class="primary" id="rotateOk">Continue in portrait</button></div>
   </div>
+  <!-- Camera setup: shown when a camera is added -->
+  <div id="camSetup" class="hidden" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+    <div class="card">
+      <h3 id="csTitle">Set up the camera</h3>
+      <p>Pick the lens, camera body and the frame you're delivering. You can change any of these later in the Camera tab.</p>
+      <div id="camSetupBody"></div>
+      <div class="fmtReadout" id="camSetupReadout"></div>
+      <div class="btnRow"><button id="csLook">Open viewfinder</button><button class="primary" id="csDone">Done</button></div>
+    </div>
+  </div>
   <!-- File → New layout -->
   <div id="newSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="newTitle">
     <div class="card">
@@ -922,23 +942,44 @@
       // The station platform is its own set (stationPlatform); rooftop presets deferred (per brief)
     ],
     // Phase 3 — camera/lens. Edit lensSetMm to match the primes actually on the truck.
-    lensSetMm: [18, 24, 35, 50, 85, 100],
+    lensSetMm: [12, 14, 16, 18, 21, 24, 25, 28, 32, 35, 40, 50, 65, 75, 85, 100, 135, 150, 200],
     // Camera bodies: the recording area in mm (open gate unless noted). The frame you deliver is
     // chosen separately per camera (format / anamorphic squeeze / protect) — see FRAME_FORMATS.
     sensors: [
-      { id: "s35",       name: "Super 35 (3-perf)",              short: "S35",       widthMm: 24.89, heightMm: 18.66 },
-      { id: "ff",        name: "Full Frame",                     short: "FF",        widthMm: 36,    heightMm: 24 },
-      { id: "alexa35",   name: "ARRI ALEXA 35 · 4.6K Open Gate", short: "ALEXA 35",  widthMm: 27.99, heightMm: 19.22 },
-      { id: "minilf",    name: "ARRI ALEXA Mini LF · Open Gate", short: "MINI LF",   widthMm: 36.70, heightMm: 25.54 },
-      { id: "alexamini", name: "ARRI ALEXA Mini · 3.4K Open Gate", short: "ALEXA MINI", widthMm: 28.25, heightMm: 18.17 },
-      { id: "venice2",   name: "Sony VENICE 2 · 8.6K FF 3:2",    short: "VENICE 2",  widthMm: 36.2,  heightMm: 24.1 },
-      { id: "fx3",       name: "Sony FX3 / FX6 · Full Frame",    short: "FX3",       widthMm: 35.6,  heightMm: 23.8 },
-      { id: "vraptor",   name: "RED V-RAPTOR · 8K VV",           short: "V-RAPTOR",  widthMm: 40.96, heightMm: 21.60 },
-      { id: "komodo",    name: "RED KOMODO · 6K S35",            short: "KOMODO",    widthMm: 27.03, heightMm: 14.26 },
-      { id: "ursa12k",   name: "Blackmagic URSA 12K · S35",      short: "URSA 12K",  widthMm: 27.03, heightMm: 14.25 },
-      { id: "bmpcc6k",   name: "Blackmagic Pocket 6K · S35",     short: "BMPCC 6K",  widthMm: 23.10, heightMm: 12.99 },
-      { id: "c70",       name: "Canon C70 / C300 III · S35",     short: "C70",       widthMm: 26.2,  heightMm: 13.8 },
-      { id: "mft",       name: "Micro Four Thirds",              short: "MFT",       widthMm: 17.3,  heightMm: 13.0 }
+      { id: "s35",       make: "Generic",          name: "Super 35 (3-perf)",               short: "S35",        widthMm: 24.89, heightMm: 18.66 },
+      { id: "ff",        make: "Generic",          name: "Full Frame",                      short: "FF",         widthMm: 36,    heightMm: 24 },
+      { id: "mft",       make: "Generic",          name: "Micro Four Thirds",               short: "MFT",        widthMm: 17.3,  heightMm: 13.0 },
+      { id: "alexa35",   make: "ARRI",             name: "ALEXA 35 · 4.6K Open Gate",        short: "ALEXA 35",   widthMm: 27.99, heightMm: 19.22 },
+      { id: "minilf",    make: "ARRI",             name: "ALEXA Mini LF / LF · Open Gate",   short: "MINI LF",    widthMm: 36.70, heightMm: 25.54 },
+      { id: "alexamini", make: "ARRI",             name: "ALEXA Mini / AMIRA · 3.4K Open Gate", short: "ALEXA MINI", widthMm: 28.25, heightMm: 18.17 },
+      { id: "alexa65",   make: "ARRI",             name: "ALEXA 65 · 6.5K Open Gate",        short: "ALEXA 65",   widthMm: 54.12, heightMm: 25.58 },
+      { id: "venice2",   make: "Sony",             name: "VENICE 2 · 8.6K Full Frame 3:2",   short: "VENICE 2",   widthMm: 36.2,  heightMm: 24.1 },
+      { id: "burano",    make: "Sony",             name: "BURANO / VENICE 6K · Full Frame",  short: "BURANO",     widthMm: 35.9,  heightMm: 24.0 },
+      { id: "fx9",       make: "Sony",             name: "FX9 · 6K Full Frame",              short: "FX9",        widthMm: 35.7,  heightMm: 18.8 },
+      { id: "fx3",       make: "Sony",             name: "FX3 / FX6 · Full Frame",           short: "FX3",        widthMm: 35.6,  heightMm: 23.8 },
+      { id: "fx30",      make: "Sony",             name: "FX30 · Super 35",                  short: "FX30",       widthMm: 23.3,  heightMm: 15.5 },
+      { id: "vraptor",   make: "RED",              name: "V-RAPTOR [X] · 8K VV",             short: "V-RAPTOR",   widthMm: 40.96, heightMm: 21.60 },
+      { id: "vraptors35",make: "RED",              name: "V-RAPTOR · 8K Super 35",           short: "V-RAP S35",  widthMm: 26.21, heightMm: 13.82 },
+      { id: "komodo",    make: "RED",              name: "KOMODO / KOMODO-X · 6K S35",       short: "KOMODO",     widthMm: 27.03, heightMm: 14.26 },
+      { id: "helium",    make: "RED",              name: "DSMC2 HELIUM · 8K S35",            short: "HELIUM",     widthMm: 29.90, heightMm: 15.77 },
+      { id: "ursacine",  make: "Blackmagic",       name: "URSA Cine 12K LF",                 short: "URSA CINE",  widthMm: 35.64, heightMm: 23.32 },
+      { id: "ursa12k",   make: "Blackmagic",       name: "URSA Mini Pro 12K · S35",          short: "URSA 12K",   widthMm: 27.03, heightMm: 14.25 },
+      { id: "bmcc6k",    make: "Blackmagic",       name: "Cinema Camera 6K · Full Frame",    short: "BMCC 6K",    widthMm: 36.0,  heightMm: 24.0 },
+      { id: "bmpcc6k",   make: "Blackmagic",       name: "Pocket 6K / 6K Pro · S35",         short: "BMPCC 6K",   widthMm: 23.10, heightMm: 12.99 },
+      { id: "bmpcc4k",   make: "Blackmagic",       name: "Pocket 4K · MFT",                  short: "BMPCC 4K",   widthMm: 18.96, heightMm: 10.0 },
+      { id: "c500",      make: "Canon",            name: "C500 Mk II / C700 FF",             short: "C500",       widthMm: 38.1,  heightMm: 20.1 },
+      { id: "c70",       make: "Canon",            name: "C70 / C300 Mk III · S35",          short: "C70",        widthMm: 26.2,  heightMm: 13.8 },
+      { id: "r5c",       make: "Canon",            name: "EOS R5 C / C80 · Full Frame",      short: "R5 C",       widthMm: 36.0,  heightMm: 24.0 },
+      { id: "varicam",   make: "Panasonic",        name: "VariCam LT / 35 · S35",            short: "VARICAM",    widthMm: 26.69, heightMm: 14.18 },
+      { id: "s1h",       make: "Panasonic",        name: "LUMIX S1H / S5 II · Full Frame",   short: "S1H",        widthMm: 35.6,  heightMm: 23.8 },
+      { id: "gh6",       make: "Panasonic",        name: "LUMIX GH6 / GH7 · MFT",            short: "GH6",        widthMm: 17.3,  heightMm: 13.0 },
+      { id: "ronin4d",   make: "DJI",              name: "Ronin 4D 6K / 8K · Full Frame",    short: "RONIN 4D",   widthMm: 36.0,  heightMm: 24.0 },
+      { id: "iphone",    make: "Phone",            name: "iPhone 15/16 Pro · main camera (≈6.9mm = 24mm equiv.)", short: "IPHONE", widthMm: 9.8, heightMm: 7.3 },
+      { id: "s16",       make: "Film",             name: "Super 16",                         short: "S16",        widthMm: 12.52, heightMm: 7.41 },
+      { id: "academy35", make: "Film",             name: "35mm 4-perf Academy",              short: "35 ACAD",    widthMm: 21.95, heightMm: 16.0 },
+      { id: "vista",     make: "Film",             name: "VistaVision 8-perf",               short: "VISTA",      widthMm: 37.72, heightMm: 24.92 },
+      { id: "65mm",      make: "Film",             name: "65mm 5-perf",                      short: "65MM",       widthMm: 52.48, heightMm: 23.01 },
+      { id: "imax",      make: "Film",             name: "IMAX 15/70",                       short: "IMAX",       widthMm: 70.41, heightMm: 52.63 }
     ],
     // Frustum/focus overlay lines are OFF by default (they clutter the view while blocking);
     // toggle on from the camera inspector when you want to see coverage.
@@ -1238,6 +1279,7 @@
     if (histAt < 0) historyReset();
     document.getElementById("undoBtn").addEventListener("click", () => stepHistory(-1));
     wirePlanSheet();
+    wireCamSetup();
     wireVfBar();
     wireNewLayout();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
@@ -3707,10 +3749,10 @@
     const lens = (config.lensSetMm || DEFAULT_CONFIG.lensSetMm).slice();
     const fl = camVal(cur, "focalMm");
     if (lens.indexOf(fl) === -1) { lens.push(fl); lens.sort((a, b) => a - b); }
-    const lensOpts = lens.map(v => '<option value="' + v + '"' + (v === fl ? " selected" : "") + '>' + v + ' mm</option>').join("");
+    const lensOpts = lensOptionsHTML(fl);
     const sens = (config.sensors && config.sensors.length) ? config.sensors : DEFAULT_CONFIG.sensors;
     const sid = sensorById(camVal(cur, "sensor")).id;
-    const sensOpts = sens.map(s => '<option value="' + escapeHtml(s.id) + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHtml(s.name) + '</option>').join("");
+    const sensOpts = bodyOptionsHTML(sid);
     const marks = cameraMarkList().map(m => '<option value="' + m.uid + "|" + m.mi + '">' + escapeHtml(m.label) + '</option>').join("");
     const o = camOptics(cur), fid = o.fmt.id, prot = camVal(cur, "protect") || "", sq = o.sq;
     const fmtOpts = FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === fid ? " selected" : "") + '>' + escapeHtml(f.name) + '</option>').join("");
@@ -3719,7 +3761,8 @@
     const fd = camVal(cur, "focusFt");
     return '<div class="btnRow" style="margin:2px 0 6px"><button id="camLook" class="primary">Open viewfinder</button></div>' +
       grpHTML("lens", "Lens", fl + "mm · " + o.hFov.toFixed(1) + "° H",
-        '<div class="field"><label for="camLens">Focal length</label><select id="camLens">' + lensOpts + '</select></div>' +
+        '<div class="field"><label for="camLens">Focal length</label><div class="inl"><select id="camLens">' + lensOpts + '</select>' +
+          '<input type="number" id="camLensMm" min="4" max="1200" step="0.5" value="' + fl + '" class="' + ((config.lensSetMm || DEFAULT_CONFIG.lensSetMm).indexOf(fl) === -1 ? "" : "hidden") + '" style="width:64px" aria-label="Custom focal length (mm)"></div></div>' +
         fieldHTML("camFocus", "Focus distance", toDisplay(fd)), true) +
       grpHTML("format", "Format", escapeHtml(formatLabel(o)),
         '<div class="field"><label for="camSensor">Camera</label><select id="camSensor" style="max-width:170px">' + sensOpts + '</select></div>' +
@@ -4181,7 +4224,9 @@
     const apply = () => {
       const cfg = cfgForSelected(); if (!cfg) return;
       const uid = selected.uid;
-      cfg.focalMm = numOr(lens.value, 35);
+      const lmm = document.getElementById("camLensMm");
+      if (lens.value === "custom") { if (lmm.classList.contains("hidden")) { lmm.classList.remove("hidden"); lmm.focus(); return; } cfg.focalMm = clamp(round2(numOr(lmm.value, 35)), 4, 1200); }
+      else cfg.focalMm = numOr(lens.value, 35);
       cfg.sensor = sensor.value;
       const sqEl = document.getElementById("camSqueeze"), fmEl = document.getElementById("camFormat"), prEl = document.getElementById("camProtect");
       if (sqEl) cfg.squeeze = parseFloat(sqEl.value) || 1;
@@ -4194,7 +4239,7 @@
       reselectUid(uid);
       scheduleAutosave();
     };
-    [lens, sensor, h, tilt, focus, document.getElementById("camSqueeze"), document.getElementById("camFormat"), document.getElementById("camProtect")].forEach(el => el && el.addEventListener("change", apply));
+    [lens, sensor, h, tilt, focus, document.getElementById("camSqueeze"), document.getElementById("camFormat"), document.getElementById("camProtect"), document.getElementById("camLensMm")].forEach(el => el && el.addEventListener("change", apply));
     if (mark) mark.addEventListener("change", () => {
       if (!mark.value) return;
       const parts = mark.value.split("|");
@@ -4247,6 +4292,8 @@
     if (fc) fc.checked = !!config.showFrustums;
     ["lensBtn", "lookBtn", "shotPrint", "shotSave", "shotSaveMark"].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !cams.length; });
     if (lb) lb.textContent = act ? camVal(act, "focalMm") + "mm · " + formatLabel(camOptics(act)) + "  ▾" : "—";
+    if (document.activeElement && document.activeElement.closest && document.activeElement.closest("#camChoices")) { const ro = document.getElementById("camTabReadout"); if (ro && act) ro.innerHTML = camReadout(act); }
+    else renderCamTab();
     if (!cams.length) {
       const o = document.createElement("option"); o.value = ""; o.textContent = "No camera placed"; sel.appendChild(o);
       sel.disabled = true; return;
@@ -4427,6 +4474,99 @@
       (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · Esc exit</span>"));
     const fr = Math.floor((performance.now() - vfStart) / 1000 * VF_FPS), p2 = n => String(n).padStart(2, "0");
     set(".tc", p2(Math.floor(fr / (VF_FPS * 3600))) + ":" + p2(Math.floor(fr / (VF_FPS * 60)) % 60) + ":" + p2(Math.floor(fr / VF_FPS) % 60) + ":" + p2(fr % VF_FPS));
+  }
+
+
+  // ---- Camera choice controls (Camera tab, setup pop-up, inspector share these builders) ----
+  function lensOptionsHTML(fl) {
+    const list = (config.lensSetMm || DEFAULT_CONFIG.lensSetMm), custom = list.indexOf(fl) === -1;
+    return list.map(v => '<option value="' + v + '"' + (v === fl ? " selected" : "") + '>' + v + ' mm</option>').join("") +
+      '<option value="custom"' + (custom ? " selected" : "") + '>' + (custom ? "Custom · " + fl + " mm" : "Custom…") + '</option>';
+  }
+  function bodyOptionsHTML(sid) {
+    const sens = (config.sensors && config.sensors.length) ? config.sensors : DEFAULT_CONFIG.sensors, makes = [];
+    sens.forEach(x => { if (makes.indexOf(x.make || "Other") === -1) makes.push(x.make || "Other"); });
+    return makes.map(m => '<optgroup label="' + escapeHtml(m === "Film" ? "Film formats" : m) + '">' + sens.filter(x => (x.make || "Other") === m)
+      .map(x => '<option value="' + escapeHtml(x.id) + '"' + (x.id === sid ? " selected" : "") + '>' + escapeHtml(x.name) + '</option>').join("") + '</optgroup>').join("");
+  }
+  function squeezeOptionsHTML(sq) { return SQUEEZES.map(v => '<option value="' + v + '"' + (v === sq ? " selected" : "") + '>' + (v === 1 ? "Spherical (1×)" : v + "× anamorphic") + '</option>').join(""); }
+  function frameOptionsHTML(fid) { return FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === fid ? " selected" : "") + '>' + escapeHtml(f.name) + '</option>').join(""); }
+  // The four camera choices for a prefix (ids: <p>Lens, <p>LensMm, <p>Body, <p>Squeeze, <p>Frame).
+  function camChoicesHTML(pfx, pa) {
+    const fl = camVal(pa, "focalMm"), o = camOptics(pa), list = (config.lensSetMm || DEFAULT_CONFIG.lensSetMm);
+    return '<div class="field"><label for="' + pfx + 'Lens">Lens</label><div class="inl"><select id="' + pfx + 'Lens">' + lensOptionsHTML(fl) + '</select>' +
+        '<input type="number" id="' + pfx + 'LensMm" min="4" max="1200" step="0.5" value="' + fl + '" class="' + (list.indexOf(fl) === -1 ? "" : "hidden") + '" style="width:64px" aria-label="Custom focal length (mm)"></div></div>' +
+      '<div class="field"><label for="' + pfx + 'Body">Body</label><select id="' + pfx + 'Body" class="wideSel">' + bodyOptionsHTML(o.S.id) + '</select></div>' +
+      '<div class="field"><label for="' + pfx + 'Squeeze">Lens type</label><select id="' + pfx + 'Squeeze">' + squeezeOptionsHTML(o.sq) + '</select></div>' +
+      '<div class="field"><label for="' + pfx + 'Frame">Frame</label><select id="' + pfx + 'Frame" class="wideSel">' + frameOptionsHTML(o.fmt.id) + '</select></div>';
+  }
+  function camReadout(pa) {
+    const o = camOptics(pa), fd = camVal(pa, "focusFt");
+    return o.f + "mm · " + escapeHtml(formatLabel(o)) + "<br>" + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V · frames " + fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH) + " at " + fmtLen(fd);
+  }
+  // Apply a change to a camera wherever it came from (tab, pop-up, viewfinder).
+  function applyCamChange(pa, patch) {
+    Object.assign(pa, patch);
+    if (viewCamUid != null) camDirty = true;                 // the viewfinder reads optics live
+    else { const uid = selected && selected.uid; rebuildPlaced(); if (uid != null && mode === "edit" && placedGroupByUid[uid]) reselectUid(uid); }
+    refreshCamPicker();
+    if (mode === "edit") scheduleAutosave();
+  }
+  function wireCamChoices(pfx, getPA, after) {
+    const $ = id => document.getElementById(pfx + id);
+    const lens = $("Lens"), mm = $("LensMm");
+    if (!lens) return;
+    const done = patch => { const pa = getPA(); if (!pa) return; applyCamChange(pa, patch); if (after) after(pa); };
+    lens.addEventListener("change", () => {
+      if (lens.value === "custom") { mm.classList.remove("hidden"); mm.focus(); mm.select && mm.select(); return; }
+      mm.classList.add("hidden"); done({ focalMm: parseFloat(lens.value) });
+    });
+    mm.addEventListener("change", () => { const v = clamp(round2(parseFloat(mm.value) || 35), 4, 1200); mm.value = v; done({ focalMm: v }); });
+    $("Body").addEventListener("change", e => done({ sensor: e.target.value }));
+    $("Squeeze").addEventListener("change", e => done({ squeeze: parseFloat(e.target.value) || 1 }));
+    $("Frame").addEventListener("change", e => done({ format: e.target.value }));
+  }
+  // Camera tab: the active camera's choices, laid out as plain dropdowns.
+  function renderCamTab() {
+    const box = document.getElementById("camChoices"), ro = document.getElementById("camTabReadout"); if (!box) return;
+    const pa = activeCameraPA();
+    if (!pa) { box.innerHTML = ""; ro.innerHTML = ""; return; }
+    box.innerHTML = camChoicesHTML("dc", pa);
+    ro.innerHTML = camReadout(pa);
+    wireCamChoices("dc", activeCameraPA);
+    addSteppers(box);
+  }
+  // Setup pop-up: shown when a camera is added (Add menu, or opening Camera with none on stage).
+  let camSetupUid = null;
+  function openCamSetup(pa) {
+    camSetupUid = pa._uid;
+    const sh = document.getElementById("camSetup"), body = document.getElementById("camSetupBody");
+    const refresh = () => { const p = getPlacedByUid(camSetupUid); if (!p) return; document.getElementById("camSetupReadout").innerHTML = camReadout(p); };
+    body.innerHTML = camChoicesHTML("cs", pa);
+    wireCamChoices("cs", () => getPlacedByUid(camSetupUid), refresh);
+    refresh(); addSteppers(body);
+    sh.classList.remove("hidden");
+    document.getElementById("csDone").focus();
+  }
+  function closeCamSetup() { document.getElementById("camSetup").classList.add("hidden"); camSetupUid = null; }
+  function addCameraWithSetup(fromTab) {
+    const cams = config.placedAssets.filter(p => p.assetId === "camera");
+    // The first camera goes to the classic spot on the shooting floor, facing the volume.
+    const s = cams.length || !fromTab ? freeSpawnSpot() : { x: 0, z: 28 };
+    const pa = { assetId: "camera", x: s.x, z: s.z, rotationDeg: 0 };
+    config.placedAssets.push(pa);
+    rebuildPlaced();
+    activeCamUid = pa._uid;
+    reselectUid(pa._uid);
+    scheduleAutosave();
+    refreshCamPicker();
+    openCamSetup(pa);
+  }
+  function wireCamSetup() {
+    const sh = document.getElementById("camSetup");
+    document.getElementById("csDone").addEventListener("click", closeCamSetup);
+    document.getElementById("csLook").addEventListener("click", () => { const p = getPlacedByUid(camSetupUid); closeCamSetup(); if (p) enterCameraView(p); });
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { closeCamSetup(); e.stopPropagation(); } });
   }
 
   // ---- Viewfinder guides + frame picker (bar under the viewfinder) ---------------------
@@ -5863,6 +6003,7 @@
   }
 
   function addToScene(assetId, variant) {
+    if (assetId === "camera" && mode === "edit") { addCameraWithSetup(false); return; }
     // Drop where the main view is looking so it lands in view.
     const s = freeSpawnSpot();
     const pa = { assetId: assetId, x: s.x, z: s.z, rotationDeg: 0 };
@@ -6913,7 +7054,10 @@
     if (key) {
       document.getElementById("drawerTitle").textContent = SECTIONS[key].title;
       document.getElementById("drawerSub").textContent = SECTIONS[key].sub;
-      if (key === "camera") refreshCamPicker();
+      if (key === "camera") {
+        refreshCamPicker();
+        if (mode === "edit" && !config.placedAssets.some(p => p.assetId === "camera")) addCameraWithSetup(true);
+      }
       dismissWelcome();
     }
   }
