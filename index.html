@@ -1156,7 +1156,7 @@
       { assetId: "p2_older_woman", name: "Older woman", category: "person", pose: "standing", heightFt: 5.15, widthFt: 1.34, depthFt: 1.07, model: "assets/people2/older-woman.glb" },
       { assetId: "p2_girl", name: "Girl (teen)", category: "person", pose: "standing", heightFt: 5.00, widthFt: 1.98, depthFt: 0.98, model: "assets/people2/girl.glb" },
       { assetId: "p2_boy", name: "Boy (about 6)", category: "person", pose: "standing", heightFt: 3.90, widthFt: 1.16, depthFt: 0.82, model: "assets/people2/boy.glb" },
-      { assetId: "p2_seated_scan_1", name: "Seated — legs out", category: "person", pose: "seated", noCar: true, heightFt: 3.90, widthFt: 1.68, depthFt: 4.35, model: "assets/people2/seated-scan-1.glb" },
+      { assetId: "p2_seated_scan_1", name: "Seated — legs out", category: "person", pose: "seated", noCar: true, seatDz: 1.0, heightFt: 3.90, widthFt: 1.68, depthFt: 4.35, model: "assets/people2/seated-scan-1.glb" },
       { assetId: "p2_seated_scan_2", name: "Seated — relaxed", category: "person", pose: "seated", heightFt: 4.30, widthFt: 1.60, depthFt: 2.75, model: "assets/people2/seated-scan-2.glb" },
       { assetId: "p2_seated_scan_3", name: "Seated — upright", category: "person", pose: "seated", heightFt: 4.40, widthFt: 1.22, depthFt: 2.56, model: "assets/people2/seated-scan-3.glb" },
       { assetId: "p2_seated_scan_4", name: "Seated — hands in lap", category: "person", pose: "seated", heightFt: 4.27, widthFt: 1.86, depthFt: 2.34, model: "assets/people2/seated-scan-4.glb" },
@@ -2070,7 +2070,9 @@
       m.scale.setScalar(h / (sz.y || 1));
       const holder = new THREE.Group(); holder.add(m); holder.updateMatrixWorld(true);
       const bb = new THREE.Box3().setFromObject(holder), c = bb.getCenter(new THREE.Vector3());
-      m.position.set(-c.x, -bb.min.y, -c.z);
+      // Centred on its box, except where outstretched legs push the box forward of the body:
+      // seatDz (ft at catalogue height, + = forward) slides the figure so its hips land on the seat.
+      m.position.set(-c.x, -bb.min.y, -c.z + (entry.seatDz || 0) * k);
       g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
       g.add(holder);
       addTag();
