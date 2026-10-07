@@ -253,6 +253,64 @@
   #welcome .btnRow { justify-content: flex-end; }
   #welcome .btnRow button { flex: 0 0 auto; }
 
+  /* Storyboard */
+  #board { position: absolute; top: var(--top); left: 0; right: 0; bottom: 0; z-index: 30; background: var(--bg, #121718); display: flex; flex-direction: column; }
+  #board.hidden { display: none; }
+  .bdHead { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .bdProj { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; background: transparent; border: 0; padding: 4px 8px; border-radius: 8px; text-align: left; color: var(--text); cursor: pointer; }
+  .bdProj:hover { background: var(--panel2); }
+  .bdProj b { font-size: 16px; font-weight: 650; }
+  .bdProj small { color: var(--muted); font-size: 12px; }
+  .bdStats { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-right: 6px; }
+  #bdExportWrap .menu { min-width: 320px; }
+  .bdBody { flex: 1; overflow: auto; padding: 18px 18px 60px; }
+  .bdEmpty { max-width: 520px; margin: 60px auto; text-align: center; color: var(--muted); line-height: 1.55; }
+  .bdEmpty b { color: var(--text); font-size: 17px; display: block; margin-bottom: 8px; }
+  .bdScene { margin-bottom: 26px; }
+  .bdScene > header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .bdScene .scNo { font-weight: 700; font-size: 13px; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .bdScene .scNum { width: 64px; font-weight: 700; font-size: 15px; }
+  .bdScene .scTitle { flex: 1; max-width: 520px; font-size: 14px; }
+  .bdScene header input { background: transparent; border: 1px solid transparent; color: var(--text); padding: 5px 7px; border-radius: 7px; font: inherit; }
+  .bdScene header input:hover, .bdScene header input:focus { border-color: var(--line); background: #0e1314; }
+  .bdScene header .count { color: var(--muted); font-size: 12px; margin-left: auto; white-space: nowrap; }
+  .bdScene header button { padding: 5px 9px; font-size: 12px; }
+  .bdFrames { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; min-height: 60px; border-radius: 10px; }
+  .bdFrames.over { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  .bdCard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .bdCard.editing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .bdCard.dragging { opacity: .4; }
+  .bdCard.dropBefore { box-shadow: -4px 0 0 0 var(--accent); }
+  .bdImg { position: relative; background: #000; aspect-ratio: 16 / 9; display: grid; place-items: center; cursor: pointer; }
+  .bdImg img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .bdImg .code { position: absolute; left: 8px; top: 8px; background: rgba(0,0,0,.72); color: #fff; font-weight: 700; font-size: 14px; padding: 3px 8px; border-radius: 6px; letter-spacing: .02em; }
+  .bdImg .st { position: absolute; right: 8px; top: 8px; color: #111; font-weight: 700; font-size: 11px; padding: 3px 7px; border-radius: 6px; background: var(--c); }
+  .bdImg .go { position: absolute; inset: auto 8px 8px auto; background: rgba(0,0,0,.72); color: #fff; font-size: 11.5px; padding: 4px 8px; border-radius: 6px; opacity: 0; transition: opacity .15s; }
+  .bdImg:hover .go, .bdImg:focus-visible .go { opacity: 1; }
+  .bdMeta { padding: 8px 10px 0; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bdCard textarea, .bdCard input { margin: 6px 10px 0; background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 6px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
+  .bdCard input.bdLine { font-style: italic; }
+  .bdBtns { display: flex; gap: 6px; padding: 8px 10px 10px; }
+  .bdBtns button { padding: 5px 9px; font-size: 12px; }
+  .bdBtns .sp { flex: 1; }
+  #projSheet, #addBoardSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #projSheet.hidden, #addBoardSheet.hidden { display: none; }
+  #projSheet .card, #addBoardSheet .card { width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #projSheet h3, #addBoardSheet h3 { margin: 0 0 6px; }
+  #projSheet p { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; }
+  .pjGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .pjGrid label, .abRow label, label.abFull { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  .pjGrid label.wide { grid-column: 1 / -1; }
+  .pjGrid input, .abRow input, .abRow select, label.abFull textarea, label.abFull input { background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 13px; }
+  #pjExample { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
+  #abImg { width: 100%; border-radius: 8px; background: #000; display: block; margin: 6px 0 12px; max-height: 240px; object-fit: contain; }
+  .abRow { display: flex; gap: 10px; margin-bottom: 10px; }
+  .abRow label { flex: 1; }
+  label.abFull { margin-bottom: 10px; }
+  #projSheet .btnRow, #addBoardSheet .btnRow { justify-content: flex-end; }
+  #projSheet .btnRow button, #addBoardSheet .btnRow button { flex: 0 0 auto; }
+  body.phone .pjGrid { grid-template-columns: 1fr; }
+
   /* Stage plan sheet */
   #planSheet { position: absolute; inset: 0; z-index: 46; background: rgba(10,11,13,.72); display: grid; place-items: center; }
   #planSheet .planWrap { width: calc(100% - 32px); height: calc(100% - 32px); display: flex; gap: 12px; }
@@ -524,6 +582,7 @@
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
       <symbol id="i-new" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v6M9 13h6"/></g></symbol>
       <symbol id="i-bulb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></g></symbol>
+      <symbol id="i-board" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="8" height="6" rx="1"/><rect x="13" y="4" width="8" height="6" rx="1"/><rect x="3" y="14" width="8" height="6" rx="1"/><rect x="13" y="14" width="8" height="6" rx="1"/></g></symbol>
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5H9.5a5 5 0 0 0 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
@@ -544,6 +603,7 @@
       <button id="camOrbit" class="active" title="Walk around the stage — drag to look, W A S D to move"><svg><use href="#i-walk"/></svg>Walk</button>
       <button id="camTop" title="Plan view, straight down — drag to pan, scroll to zoom"><svg><use href="#i-plan"/></svg>Plan</button>
       <button id="camViewBtn" title="Viewfinder — see exactly what the film camera sees"><svg><use href="#i-lens"/></svg>Viewfinder</button>
+      <button id="boardBtn" title="Storyboard — every frame you've added, by scene"><svg><use href="#i-board"/></svg>Board</button>
     </div>
     <span class="spacer"></span>
     <button class="ghost" id="houseBtn" aria-pressed="true" title="House lights (H) — switch off to see only the light coming from the LED volume"><svg><use href="#i-bulb"/></svg>House lights <b>ON</b></button>
@@ -555,6 +615,7 @@
     <div class="menuWrap" id="fileWrap">
       <button class="ghost" id="fileMenuBtn" aria-haspopup="true" aria-expanded="false"><svg><use href="#i-file"/></svg>File</button>
       <div class="menu hidden" id="fileMenu" role="menu">
+        <button class="item" id="projBtn" role="menuitem"><svg><use href="#i-board"/></svg><span>Project details…<small>Production, episode, director — names every file you export</small></span></button>
         <button class="item editOnly" id="newBtn" role="menuitem"><svg><use href="#i-new"/></svg><span>New layout…<small>Clear the stage and plan another setup</small></span></button>
         <button class="item editOnly" id="saveBtn" role="menuitem"><svg><use href="#i-save"/></svg><span>Save layout<small>Download this stage as a .json file</small></span></button>
         <button class="item editOnly" id="loadBtn" role="menuitem"><svg><use href="#i-open"/></svg><span>Open layout…<small>Load a saved .json file</small></span></button>
@@ -619,6 +680,9 @@
         <button id="lensBtn" class="hidden" aria-hidden="true">—</button>
         <label class="setToggle editOnly"><input type="checkbox" id="frustChk"><span>Show its field of view on stage</span></label>
         <div class="btnRow"><button class="primary" id="lookBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-lens"/></svg>Open viewfinder</button></div>
+
+        <div class="subhead">Storyboard</div>
+        <div class="btnRow"><button class="primary editOnly" id="boardAddBtn" title="Capture this camera's frame onto the board (B in the viewfinder)">Add to board</button><button id="boardOpenBtn">Open board</button></div>
 
         <div class="subhead">Saved shots</div>
         <select id="shotSel" style="width:100%" title="Saved shots and marks, grouped by sequence"></select>
@@ -690,7 +754,9 @@
     <button id="lbLens" title="Lens menu (L)">Lens</button>
     <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
     <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
-    <button class="primary editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
+    <button class="primary editOnly" id="lbBoard" title="Capture this frame onto the storyboard (B)">Add to board</button>
+    <button class="editOnly hidden" id="lbReplace" title="Re-capture the board frame you came from with what you see now">Replace</button>
+    <button class="editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
     <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
     <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
     <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit viewfinder</button>
@@ -751,6 +817,7 @@
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
           <dt><kbd>L</kbd></dt><dd>Lens menu</dd>
           <dt><kbd>F</kbd> / <kbd>Shift</kbd> <kbd>F</kbd></dt><dd>Next / previous frame (2.39, 16:9, 9:16…)</dd>
+          <dt><kbd>B</kbd></dt><dd>Add this frame to the storyboard</dd>
           <dt><kbd>Esc</kbd></dt><dd>Exit</dd></dl></div>
         <div><h3>Gamepad</h3><dl>
           <dt>Left stick</dt><dd>Move</dd>
@@ -864,11 +931,67 @@
   <div id="newSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="newTitle">
     <div class="card">
       <h3 id="newTitle">Start a new layout?</h3>
-      <p>This clears the stage: sets, decks, vehicles, people, cameras and saved shots. The studio, LED / 360° setup, settings and your imported 3D models stay. You can undo it straight after.</p>
+      <p>This clears the stage and starts a new project: sets, decks, vehicles, people, cameras, saved shots, the storyboard and project details. The studio, LED / 360° setup, settings and your imported 3D models stay. You can undo it straight after.</p>
       <div class="btnRow"><button id="newCancel">Cancel</button><button id="newSaveGo">Save, then clear</button><button class="primary" id="newGo">Clear the stage</button></div>
     </div>
   </div>
   <div id="joy" class="hidden"><div class="knob"></div></div>
+
+  <!-- Storyboard: scenes of captured frames; each frame silently keeps the stage + camera it came from -->
+  <div id="board" class="hidden" role="region" aria-label="Storyboard">
+    <div class="bdHead">
+      <button class="bdProj" id="bdProj" title="Project details"><b id="bdProjTitle">Untitled project</b><small id="bdProjSub">Set the production, episode and code</small></button>
+      <span class="spacer"></span>
+      <span class="bdStats" id="bdStats"></span>
+      <button class="editOnly" id="bdAddScene">+ Scene</button>
+      <div class="menuWrap" id="bdExportWrap">
+        <button class="primary" id="bdExportBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+        <div class="menu hidden" id="bdExportMenu" role="menu">
+          <button class="item" data-exp="boards" role="menuitem"><svg><use href="#i-print"/></svg><span>Storyboard (print / PDF)<small>Frames by scene with shot codes, action and lines</small></span></button>
+          <button class="item" data-exp="sheets" role="menuitem"><svg><use href="#i-plan"/></svg><span>Setup sheets (print / PDF)<small>Per stage state: the stage plan without cameras + its frames</small></span></button>
+          <button class="item" data-exp="sheetsCams" role="menuitem"><svg><use href="#i-camera"/></svg><span>Setup sheets with camera positions<small>The same, with every setup's camera drawn on the plan</small></span></button>
+          <button class="item" data-exp="list" role="menuitem"><svg><use href="#i-file"/></svg><span>Shot list (print / PDF)<small>One row per shot: setup, lens, frame, stage state, action</small></span></button>
+          <button class="item" data-exp="csv" role="menuitem"><svg><use href="#i-save"/></svg><span>Shot list (.csv)<small>For a spreadsheet or scheduling software</small></span></button>
+          <button class="item" data-exp="zip" role="menuitem"><svg><use href="#i-open"/></svg><span>All frames (.zip)<small>Every frame as a JPEG, named in shooting-code order, plus the shot list</small></span></button>
+        </div>
+      </div>
+      <button class="ghost" id="bdClose" title="Back to the stage (Esc)" aria-label="Close board"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="bdBody" id="bdBody"></div>
+  </div>
+
+  <div id="projSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="projTitleH">
+    <div class="card">
+      <h3 id="projTitleH">Project details</h3>
+      <p>Shown on every board, sheet and print, and used to name exported files.</p>
+      <div class="pjGrid">
+        <label>Production<input type="text" data-pj="title" placeholder="e.g. Northern Line"></label>
+        <label>File code<input type="text" data-pj="code" placeholder="auto" maxlength="12"></label>
+        <label>Client<input type="text" data-pj="client" placeholder="optional"></label>
+        <label>Episode<input type="text" data-pj="episode" placeholder="optional, e.g. 104" maxlength="8"></label>
+        <label>Director<input type="text" data-pj="director" placeholder="optional"></label>
+        <label>DP<input type="text" data-pj="dp" placeholder="optional"></label>
+        <label class="wide">Shoot date(s)<input type="text" data-pj="dates" placeholder="optional, e.g. 14–15 Nov 2026"></label>
+      </div>
+      <div class="hint" id="pjExample"></div>
+      <div class="btnRow"><button class="primary" id="projDone">Done</button></div>
+    </div>
+  </div>
+
+  <div id="addBoardSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="abTitle">
+    <div class="card">
+      <h3 id="abTitle">Add to board</h3>
+      <img id="abImg" alt="The frame being added">
+      <div class="abRow">
+        <label>Scene<select id="abScene"></select></label>
+        <label id="abNewWrap">New scene number<input type="text" id="abNewNo" placeholder="e.g. 12" maxlength="10"></label>
+      </div>
+      <label class="abFull">Action / description<textarea id="abAction" rows="2" placeholder="e.g. Hero boards the train, doors close behind her"></textarea></label>
+      <label class="abFull">Line (optional)<input type="text" id="abLine" placeholder="e.g. “Mind the gap.”"></label>
+      <div class="hint" id="abHint"></div>
+      <div class="btnRow"><button id="abCancel">Cancel</button><button class="primary" id="abGo">Add frame</button></div>
+    </div>
+  </div>
 
   <!-- Three.js r128 (pinned UMD) + addons, bundled in vendor/ so the app needs no third-party CDN. -->
   <script src="vendor/three/three.min.js"></script>
@@ -4494,6 +4617,7 @@
   }
 
   function enterCameraView(pa) {
+    closeBoard();
     pa = pa || activeCameraPA();
     if (!pa || !pa._uid) { toast("Place a camera first (Piece Library → Camera)."); return; }
     viewCamUid = pa._uid; activeCamUid = pa._uid; refreshCamPicker();
@@ -4508,7 +4632,7 @@
     ["camOrbit", "camTop"].forEach(id => document.getElementById(id).classList.remove("active"));
     document.getElementById("camViewBtn").classList.add("active");
     document.getElementById("lensBar").classList.remove("hidden");
-    refreshVfBar();
+    refreshVfBar(); refreshBoardBar();
     updatePlanStyleUI();
     if (isTouch) updateTouchBar();
     openDrawer(null);                                   // the lens image gets the whole window
@@ -5031,10 +5155,11 @@
         c.drawImage(brandLogo, cv.width - P - lw, 8, lw, lh);
       }
       const shotName = (document.getElementById("shotName").value || "").trim(), seq = (document.getElementById("shotSeq").value || "").trim();
-      const title = (seq ? seq + " · " : "") + (shotName || "Shot");
+      const bf = boardEditId && boardCfg().frames.find(x => x.id === boardEditId), bix = bf && boardIndex();
+      const title = bf ? bix[bf.id].code + (bf.action ? " · " + bf.action : "") : (seq ? seq + " · " : "") + (shotName || "Shot");
       c.fillStyle = "#e6e8ec"; c.font = "600 38px Segoe UI, sans-serif"; c.fillText(title, P, 56);
       c.fillStyle = "#9aa0ac"; c.font = "20px Segoe UI, sans-serif";
-      c.fillText("Mock & Roll · Lumostage · CAM " + camNo + " · " + o.f + "mm · " + formatLabel(o) + " · " + new Date().toLocaleString(), P, 84);
+      c.fillText(projectLine() + " · CAM " + camNo + " · " + o.f + "mm · " + formatLabel(o) + " · " + new Date().toLocaleString(), P, 84);
       c.drawImage(shotImg, P, HEAD);
       c.strokeStyle = "#3a3f4b"; c.lineWidth = 2; c.strokeRect(P, HEAD, SHOT_W, SHOT_H);
       c.drawImage(planImg, COLX, HEAD);
@@ -5060,7 +5185,8 @@
         });
       }
 
-      const fname = ("mock-and-roll_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm_" + o.fmt.short).replace(/[^\w\-]+/g, "_") + ".png";
+      const fname = bf ? frameFileName(bf, bix, "png").replace(/\.png$/, "_print.png")
+        : (projectBase() + "_" + (seq ? seq + "_" : "") + (shotName || "shot") + "_" + o.f + "mm_" + o.fmt.short).replace(/[^\w\-]+/g, "_") + ".png";
       cv.toBlob(blob => {
         if (!blob) { toast("Print failed: couldn't encode the image"); return; }
         const url = URL.createObjectURL(blob), a = document.createElement("a");
@@ -5354,7 +5480,7 @@
       const body = [[-0.9, 0.7], [0.9, 0.7], [0.9, -0.7], [-0.9, -0.7]].map(v => [pa.x + v[0] * Math.cos(th) + v[1] * Math.sin(th), pa.z - v[0] * Math.sin(th) + v[1] * Math.cos(th)]);
       out.push('<polygon points="' + pts(body) + '" fill="' + INK + '"/>');
       const q = P(pa.x, pa.z), no = allCams.indexOf(pa) + 1;
-      text(q[0] + 7, q[1] + 11, "CAM " + no + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : ""), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
+      text(q[0] + 7, q[1] + 11, (typeof pa._planLabel === "string" ? pa._planLabel + " · " + o.f + "mm" : "CAM " + no + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : "")), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
     });
     // ---- origin + dimensions -----------------------------------------------------------
     { const q = P(0, 0); out.push('<path d="M' + f2(q[0] - 5) + " " + f2(q[1]) + "h10M" + f2(q[0]) + " " + f2(q[1] - 5) + 'v10" stroke="' + INK + '" stroke-width="0.7"/>');
@@ -5390,7 +5516,8 @@
     let y = ty + pad;
     if (planLogoData) { out.push('<image href="' + planLogoData + '" x="' + f2(tx + pad) + '" y="' + f2(y) + '" width="' + f2(Math.min(110, tw - 2 * pad)) + '" height="28" preserveAspectRatio="xMinYMin meet"/>'); y += 34; }
     text(tx + pad, y + 8, "MOCK & ROLL · STAGE PLAN", { size: 6, weight: 700, fill: MUTE }); y += 22;
-    text(tx + pad, y, meta.production || "Production", { size: 12, weight: 700, fill: meta.production ? INK : "#b4b9be" }); y += 14;
+    const prodName = meta.production || projectCfg().title;
+    text(tx + pad, y, prodName || "Production", { size: 12, weight: 700, fill: prodName ? INK : "#b4b9be" }); y += 14;
     text(tx + pad, y, meta.scene || "Set / scene", { size: 8, fill: meta.scene ? INK : "#b4b9be" }); y += 10;
     const rule = () => { out.push('<line x1="' + f2(tx) + '" y1="' + f2(y) + '" x2="' + f2(tx + tw) + '" y2="' + f2(y) + '" stroke="' + INK + '" stroke-width="0.6"/>'); y += 11; };
     const head = t => { text(tx + pad, y, t, { size: 6, weight: 700, fill: MUTE }); y += 9; };
@@ -5464,7 +5591,7 @@
   // ---- the Stage plan sheet (dialog) -------------------------------------------------
   function planFileBase() {
     const m = planOpts().meta;
-    return ("stage-plan_" + (m.production || "mock-and-roll") + (m.scene ? "_" + m.scene : "") + "_rev" + (m.rev || "A")).replace(/[^\w\-]+/g, "_");
+    return (projectBase() + "_stage-plan" + (m.scene ? "_" + m.scene : "") + "_rev" + (m.rev || "A")).replace(/[^\w\-]+/g, "_");
   }
   function renderPlanSheet() {
     const opt = planOpts(), el = document.getElementById("planPreview");
@@ -5521,6 +5648,564 @@
       f.srcdoc = '<!doctype html><html><head><title>' + xmlEsc(planFileBase()) + '</title><style>@page{size:' + pp.w + 'in ' + pp.h + 'in;margin:0}html,body{margin:0}svg{display:block;width:' + pp.w + 'in;height:' + pp.h + 'in}</style></head><body>' + buildPlanSVG(opt) + '</body></html>';
       f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (err) { toast("Printing was blocked — use Download SVG"); } setTimeout(() => f.remove(), 60000); };
       document.body.appendChild(f);
+    });
+  }
+
+  // ==================================================================
+  //  PROJECT + STORYBOARD
+  // ==================================================================
+  // config.project names the work (every printed header and exported file). config.board holds
+  // scenes and frames. A frame = a captured viewfinder image (IndexedDB this session, embedded in
+  // saved project files) + everything needed to rebuild it: the stage state (pieces, rolling walls,
+  // ceiling, LED content, house lights) and the camera. Shot letters, setup numbers and stage-state
+  // letters are derived from board order, never stored, so reordering keeps them consistent.
+  //   Setup = one camera position within one stage state (a lens change alone is the same setup).
+  //   Stage state = the stage as dressed: move a piece or change the LEDs and it's a new state.
+  const PROJECT_DEFAULT = { title: "", code: "", client: "", episode: "", director: "", dp: "", dates: "" };
+  function projectCfg() { config.project = Object.assign({}, PROJECT_DEFAULT, config.project || {}); return config.project; }
+  function boardCfg() { const b = config.board = config.board || {}; b.scenes = b.scenes || []; b.frames = b.frames || []; return b; }
+  const slugPart = v => String(v == null ? "" : v).trim().replace(/[^\w\-]+/g, "-").replace(/^-+|-+$/g, "");
+  function projectCode() {
+    const pj = projectCfg();
+    if (pj.code.trim()) return slugPart(pj.code).toUpperCase();
+    const w = pj.title.trim().split(/\s+/).filter(Boolean);
+    if (w.length > 1) return slugPart(w.map(x => x[0]).join("")).toUpperCase();
+    if (w.length === 1) return slugPart(w[0].slice(0, 8)).toUpperCase();
+    return "MOCKROLL";
+  }
+  function projectBase() { const pj = projectCfg(); return projectCode() + (pj.episode.trim() ? "_E" + slugPart(pj.episode).toUpperCase() : ""); }
+  function projectLine() {
+    const pj = projectCfg();
+    return [pj.title.trim() || "Untitled project", pj.episode.trim() ? "Ep " + pj.episode.trim() : "", pj.client.trim()].filter(Boolean).join(" · ");
+  }
+  const todayStamp = () => new Date().toISOString().slice(0, 10);
+  const SHOT_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";          // no I or O: they read as 1 and 0 on a slate
+  function letterFor(i) { let out = ""; i += 1; while (i > 0) { i -= 1; out = SHOT_LETTERS[i % 24] + out; i = Math.floor(i / 24); } return out; }
+  function scenePad(n) { const m = String(n).trim().match(/^(\d+)(.*)$/); return m ? m[1].padStart(3, "0") + slugPart(m[2]).toUpperCase() : slugPart(n).toUpperCase(); }
+  const STATE_COLORS = ["#00efea", "#f2bf1b", "#ff6169", "#9b8cff", "#7ddc6a", "#ff9f43", "#5fb4ff", "#ff7ad9"];
+  const newId = pfx => pfx + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function hashStr(t) { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+
+  // ---- stage + camera snapshots -----------------------------------------------------------
+  function stageSnapshot() {
+    const leds = {};
+    ledSurfaces().forEach(sf => { const pl = surfacePlateOf(sf.key); leds[sf.key] = pl && pl.tex ? { name: pl.name, kind: pl.kind || "", envId: pl.envId || null } : null; });
+    const ceil = (config.fixedElements || []).find(e => e.id === "ceiling");
+    const env = config.environment;
+    return {
+      placedAssets: config.placedAssets.filter(q => q.assetId !== "camera").map(q => { const c = deepClone(q); delete c._uid; return c; }),
+      rollingWalls: deepClone(config.rollingWalls || []),
+      ceiling: ceil ? { heightFt: ceil.heightFt, visible: ceil.visible !== false } : null,
+      leds: leds,
+      environment: env ? { yaw: env.yaw || 0, pitch: env.pitch || 0, brightness: env.brightness != null ? env.brightness : 1, follow: env.follow, fixed: deepClone(env.fixed || null) } : null,
+      houseLights: houseLightsOn()
+    };
+  }
+  function stateKeyOf(st) { return hashStr(JSON.stringify([st.placedAssets, st.rollingWalls, st.ceiling, st.leds, st.environment, st.houseLights])); }
+  function camSnapshot(pa) { const c = deepClone(pa); delete c._uid; return c; }
+  function setupKeyOf(f) {
+    const c = f.camera || {}, r = (v, k) => Math.round((+v || 0) / k);
+    return f.stateKey + "|" + [r(c.x, 0.25), r(c.z, 0.25), r(camVal(c, "heightFt"), 0.25), r(c.rotationDeg, 1), r(camVal(c, "tiltDeg"), 1)].join(",");
+  }
+  function frameOptics(pa) {
+    const o = camOptics(pa);
+    return { f: o.f, fmt: o.fmt.short, label: formatLabel(o), body: o.S.name, aspect: o.aspect, heightFt: camVal(pa, "heightFt"), tiltDeg: camVal(pa, "tiltDeg") };
+  }
+  function captureFrameImage(pa) {
+    const g = placedGroupByUid[pa._uid]; if (!g || !g.userData.rig) return null;
+    const o = camOptics(pa), W = 960, H = Math.round(W / o.aspect);
+    g.updateMatrixWorld(true);
+    const pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
+    g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion); pc.updateMatrixWorld(true);
+    return renderOffscreen(pc, W, H, [yawRing, collOutline, g]).toDataURL("image/jpeg", 0.84);
+  }
+  function frameDataFrom(pa) {
+    const st = stageSnapshot();
+    return { stage: st, stateKey: stateKeyOf(st), camera: camSnapshot(pa), optics: frameOptics(pa), updated: Date.now() };
+  }
+
+  // ---- frame images: IndexedDB (too big for the localStorage autosave) ------------------------
+  const BOARD_DB = "lumostage-board", BOARD_STORE = "frames";
+  const boardImgs = {};                                      // frame id -> data URL (this session)
+  function boardDbOp(dbMode, fn) {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(BOARD_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(BOARD_STORE);
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result, tx = db.transaction(BOARD_STORE, dbMode), r = fn(tx.objectStore(BOARD_STORE));
+        tx.oncomplete = () => { db.close(); resolve(r && r.result); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      };
+    });
+  }
+  function putFrameImg(id, url) { boardImgs[id] = url; return boardDbOp("readwrite", st => st.put(url, id)).catch(() => {}); }
+  function getFrameImg(id) {
+    if (boardImgs[id]) return Promise.resolve(boardImgs[id]);
+    return boardDbOp("readonly", st => st.get(id)).then(u => { if (u) boardImgs[id] = u; return u || null; }).catch(() => null);
+  }
+  // A loaded project file carries its frames' images inline: move them into IndexedDB.
+  function ingestBoardImages() {
+    boardCfg().frames.forEach(f => { if (f.img) { putFrameImg(f.id, f.img); delete f.img; } });
+  }
+
+  // ---- numbering ------------------------------------------------------------------------------
+  function boardIndex() {
+    const b = boardCfg(), states = {}, setups = {}, out = {}; let ns = 0, nu = 0;
+    b.scenes.forEach(sc => {
+      b.frames.filter(f => f.sceneId === sc.id).forEach((f, i) => {
+        if (!(f.stateKey in states)) states[f.stateKey] = ns++;
+        const sk = setupKeyOf(f); if (!(sk in setups)) setups[sk] = ++nu;
+        const L = letterFor(i);
+        out[f.id] = { letter: L, code: String(sc.number).trim() + L, stateNo: states[f.stateKey], state: letterFor(states[f.stateKey]), setup: setups[sk], scene: sc };
+      });
+    });
+    out._counts = { states: ns, setups: nu };
+    return out;
+  }
+  function frameFileName(f, ix, ext) {
+    const i = ix[f.id], o = f.optics || {};
+    return [projectBase(), "SC" + scenePad(i.scene.number) + i.letter, "SU" + String(i.setup).padStart(2, "0"), (o.f || "") + "mm", "v" + (f.version || 1)].join("_") + "." + ext;
+  }
+  function frameCode(id) { const ix = boardIndex(); return ix[id] ? ix[id].code : ""; }
+
+  // ---- add / replace / revisit -----------------------------------------------------------------
+  let boardEditId = null, pendingFrame = null, lastSceneId = null;
+  function openAddToBoard() {
+    if (mode !== "edit") return;
+    const pa = activeCameraPA();
+    if (!pa || !placedGroupByUid[pa._uid]) { toast("Place a camera first, then add its frame to the board."); return; }
+    const img = captureFrameImage(pa); if (!img) { toast("Couldn't capture the frame"); return; }
+    pendingFrame = Object.assign({ img: img }, frameDataFrom(pa));
+    const b = boardCfg(), sel = document.getElementById("abScene");
+    sel.innerHTML = b.scenes.map(sc => '<option value="' + sc.id + '">Scene ' + escapeHtml(sc.number) + (sc.title ? " · " + escapeHtml(sc.title) : "") + '</option>').join("") + '<option value="__new">+ New scene…</option>';
+    sel.value = b.scenes.some(sc => sc.id === lastSceneId) ? lastSceneId : (b.scenes.length ? b.scenes[b.scenes.length - 1].id : "__new");
+    const nextNo = b.scenes.length ? (parseInt(b.scenes[b.scenes.length - 1].number, 10) + 1 || "") : 1;
+    document.getElementById("abNewNo").value = String(nextNo);
+    document.getElementById("abImg").src = img;
+    document.getElementById("abAction").value = ""; document.getElementById("abLine").value = "";
+    syncAddSheet();
+    document.getElementById("addBoardSheet").classList.remove("hidden");
+    (sel.value === "__new" ? document.getElementById("abNewNo") : document.getElementById("abAction")).focus();
+  }
+  function syncAddSheet() {
+    const isNew = document.getElementById("abScene").value === "__new";
+    document.getElementById("abNewWrap").style.display = isNew ? "" : "none";
+    const b = boardCfg(), ix = boardIndex(), st = pendingFrame;
+    let hint = "";
+    if (st) {
+      const known = b.frames.find(f => f.stateKey === st.stateKey);
+      hint = known ? "Same stage state as " + ix[known.id].code + " (stage " + ix[known.id].state + ")." : (b.frames.length ? "New stage state — the stage has changed since the other frames." : "");
+      const sameSetup = b.frames.find(f => setupKeyOf(f) === setupKeyOf(st));
+      if (sameSetup) hint += " Same camera setup as " + ix[sameSetup.id].code + ".";
+    }
+    document.getElementById("abHint").textContent = hint.trim();
+  }
+  function commitAddToBoard() {
+    if (!pendingFrame) return;
+    const b = boardCfg(), sel = document.getElementById("abScene");
+    let sceneId = sel.value;
+    if (sceneId === "__new") {
+      const no = document.getElementById("abNewNo").value.trim() || String(b.scenes.length + 1);
+      let sc = b.scenes.find(x => String(x.number).trim().toLowerCase() === no.toLowerCase());
+      if (!sc) { sc = { id: newId("s"), number: no, title: "" }; b.scenes.push(sc); }
+      sceneId = sc.id;
+    }
+    const f = Object.assign({ id: newId("f"), sceneId: sceneId, action: document.getElementById("abAction").value.trim(), line: document.getElementById("abLine").value.trim(), notes: "", version: 1 }, pendingFrame);
+    const img = f.img; delete f.img;
+    // Insert after the scene's last frame so board order = shooting-code order.
+    let at = -1; b.frames.forEach((x, i) => { if (x.sceneId === sceneId) at = i; });
+    b.frames.splice(at < 0 ? b.frames.length : at + 1, 0, f);
+    putFrameImg(f.id, img);
+    lastSceneId = sceneId; pendingFrame = null; boardEditId = f.id;
+    document.getElementById("addBoardSheet").classList.add("hidden");
+    scheduleAutosave(); refreshBoardBar();
+    if (boardOpen) renderBoard();
+    toast("Added " + frameCode(f.id) + " to the board", { label: "Open board", fn: openBoard });
+  }
+  function replaceFrame() {
+    const b = boardCfg(), f = b.frames.find(x => x.id === boardEditId), pa = activeCameraPA();
+    if (!f || !pa) return;
+    const img = captureFrameImage(pa); if (!img) return;
+    const prev = deepClone(f), prevImg = boardImgs[f.id];
+    Object.assign(f, frameDataFrom(pa), { version: (f.version || 1) + 1 });
+    putFrameImg(f.id, img);
+    scheduleAutosave(); if (boardOpen) renderBoard();
+    toast("Replaced " + frameCode(f.id) + " (v" + f.version + ")", { label: "Undo", fn: () => {
+      const i = b.frames.findIndex(x => x.id === prev.id); if (i < 0) return;
+      b.frames[i] = prev; if (prevImg) putFrameImg(prev.id, prevImg);
+      scheduleAutosave(); if (boardOpen) renderBoard(); toast("Kept the earlier " + frameCode(prev.id));
+    } });
+  }
+  // Rebuild a stored stage: pieces, rolling walls, ceiling, LED content, house lights. Cameras stay.
+  function applyStage(st, quiet) {
+    const missing = [];
+    const cams = config.placedAssets.filter(q => q.assetId === "camera");
+    config.placedAssets = cams.concat(deepClone(st.placedAssets || []));
+    config.rollingWalls = deepClone(st.rollingWalls || config.rollingWalls);
+    const ceil = (config.fixedElements || []).find(e => e.id === "ceiling");
+    if (ceil && st.ceiling) {
+      ceil.heightFt = st.ceiling.heightFt; ceil.visible = st.ceiling.visible;
+      if (ceilingGroup) { ceilingGroup.position.y = ceil.heightFt; ceilingGroup.visible = ceil.visible !== false; }
+    }
+    if (st.environment && config.environment) Object.assign(config.environment, deepClone(st.environment));
+    config.houseLights = st.houseLights !== false; applyHouseLights();
+    rebuildPlaced();
+    Object.keys(st.leds || {}).forEach(k => {
+      const want = st.leds[k];
+      if (!want) { setSurfacePlate(k, 0); return; }
+      const i = wallPlates.findIndex(pl => pl.name === want.name);
+      if (i < 0) { if (missing.indexOf(want.name) < 0) missing.push(want.name); return; }
+      setSurfacePlate(k, i);
+    });
+    refreshCamPicker();
+    if (!quiet && missing.length) toast("LED content not loaded this session: " + missing.join(", "));
+    return missing;
+  }
+  function goToFrame(id) {
+    const f = boardCfg().frames.find(x => x.id === id); if (!f) return;
+    if (mode !== "edit") { toast("Switch off view-only mode to revisit a frame."); return; }
+    closeBoard(); clearMulti(); deselect();
+    if (stateKeyOf(stageSnapshot()) !== f.stateKey) applyStage(f.stage);
+    let pa = activeCameraPA();
+    if (!pa) { pa = { assetId: "camera" }; config.placedAssets.push(pa); }
+    const keepUid = pa._uid, keepKey = pa.key;
+    Object.keys(pa).forEach(k => { if (k !== "_uid") delete pa[k]; });
+    Object.assign(pa, deepClone(f.camera));
+    if (keepUid != null) pa._uid = keepUid;
+    if (keepKey != null) pa.key = keepKey;
+    rebuildPlaced(); refreshCamPicker();
+    scheduleHistory(); scheduleAutosave();
+    boardEditId = id;
+    const cam = activeCameraPA();
+    if (cam && cam._uid != null) enterCameraView(cam);
+    refreshBoardBar();
+    toast("Back at " + frameCode(id) + " — adjust anything, then Replace to update it");
+  }
+  function refreshBoardBar() {
+    const b = document.getElementById("lbReplace"); if (!b) return;
+    const f = boardEditId && boardCfg().frames.find(x => x.id === boardEditId);
+    b.classList.toggle("hidden", !f || mode !== "edit");
+    if (f) b.textContent = "Replace " + frameCode(f.id);
+  }
+
+  // ---- board view ------------------------------------------------------------------------------
+  let boardOpen = false;
+  function openBoard() {
+    exitCameraView(); closeMenus();
+    boardOpen = true;
+    document.getElementById("board").classList.remove("hidden");
+    ["camOrbit", "camTop", "camViewBtn"].forEach(id => document.getElementById(id).classList.remove("active"));
+    document.getElementById("boardBtn").classList.add("active");
+    document.getElementById("planBar").classList.add("hidden");
+    openDrawer(null); deselect();
+    renderBoard();
+  }
+  function closeBoard() {
+    if (!boardOpen) return;
+    boardOpen = false;
+    document.getElementById("board").classList.add("hidden");
+    document.getElementById("boardBtn").classList.remove("active");
+    setNavButtons();
+  }
+  function renderBoardHead() {
+    const pj = projectCfg(), b = boardCfg(), ix = boardIndex();
+    document.getElementById("bdProjTitle").textContent = pj.title.trim() || "Untitled project";
+    document.getElementById("bdProjSub").textContent = pj.title.trim() ? [projectCode(), pj.episode.trim() ? "Episode " + pj.episode.trim() : "", pj.client.trim(), pj.director.trim() ? "Dir. " + pj.director.trim() : ""].filter(Boolean).join(" · ") : "Set the production, episode and file code";
+    const n = b.frames.length;
+    document.getElementById("bdStats").textContent = n ? [b.scenes.length + " scene" + (b.scenes.length === 1 ? "" : "s"), n + " frame" + (n === 1 ? "" : "s"), ix._counts.setups + " setup" + (ix._counts.setups === 1 ? "" : "s"), ix._counts.states + " stage state" + (ix._counts.states === 1 ? "" : "s")].join(" · ") : "";
+  }
+  function renderBoard() {
+    renderBoardHead();
+    const body = document.getElementById("bdBody"), b = boardCfg(), ix = boardIndex(), edit = mode === "edit";
+    if (!b.frames.length && !b.scenes.length) {
+      body.innerHTML = '<div class="bdEmpty"><b>No frames yet</b>Line up a shot in the <b style="display:inline;font-size:inherit">Viewfinder</b> and press <kbd>B</kbd> (or <i>Add to board</i>). Each frame keeps the stage and camera it came from, so you can click it later to go straight back, adjust, and replace it.</div>';
+      return;
+    }
+    body.innerHTML = b.scenes.map((sc, si) => {
+      const frames = b.frames.filter(f => f.sceneId === sc.id);
+      const cards = frames.map(f => {
+        const i = ix[f.id], o = f.optics || {};
+        return '<article class="bdCard' + (f.id === boardEditId ? " editing" : "") + '" data-id="' + f.id + '"' + (edit ? ' draggable="true"' : "") + '>' +
+          '<div class="bdImg" tabindex="0" role="button" title="' + (edit ? "Go back to this frame" : "") + '" data-go="' + f.id + '"><img alt="Frame ' + escapeHtml(i.code) + '" data-img="' + f.id + '">' +
+          '<span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span>' + (edit ? '<span class="go">Go to frame ↗</span>' : "") + '</div>' +
+          '<div class="bdMeta">SU' + String(i.setup).padStart(2, "0") + ' · ' + escapeHtml(o.f + "mm · " + (o.label || "")) + ' · v' + (f.version || 1) + '</div>' +
+          '<textarea class="bdAction" rows="2" placeholder="Action / description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
+          '<input class="bdLine" type="text" placeholder="Line / dialogue"' + (edit ? "" : " readonly") + ' data-f="line" value="' + escapeHtml(f.line || "") + '">' +
+          (edit ? '<div class="bdBtns"><button data-act="left" title="Move earlier" aria-label="Move earlier">←</button><button data-act="right" title="Move later" aria-label="Move later">→</button><span class="sp"></span><button class="ghost danger" data-act="del">Delete</button></div>' : '<div style="height:10px"></div>') +
+          '</article>';
+      }).join("");
+      return '<section class="bdScene" data-scene="' + sc.id + '"><header>' +
+        '<span class="scNo">SCENE <input class="scNum" value="' + escapeHtml(sc.number) + '"' + (edit ? "" : " readonly") + ' aria-label="Scene number"></span>' +
+        '<input class="scTitle" value="' + escapeHtml(sc.title || "") + '" placeholder="Scene title or slugline (e.g. INT. SUBWAY CAR – NIGHT)"' + (edit ? "" : " readonly") + ' aria-label="Scene title">' +
+        '<span class="count">' + frames.length + ' frame' + (frames.length === 1 ? "" : "s") + '</span>' +
+        (edit ? '<button data-sact="up" title="Move scene up"' + (si === 0 ? " disabled" : "") + '>↑</button><button data-sact="down" title="Move scene down"' + (si === b.scenes.length - 1 ? " disabled" : "") + '>↓</button><button class="ghost danger" data-sact="del">Delete scene</button>' : "") +
+        '</header><div class="bdFrames" data-drop="' + sc.id + '">' + (cards || '<div class="bdEmpty" style="margin:10px 0;text-align:left">No frames in this scene yet — add one from the viewfinder, or drag a frame here.</div>') + '</div></section>';
+    }).join("");
+    body.querySelectorAll("img[data-img]").forEach(im => getFrameImg(im.dataset.img).then(u => { if (u) im.src = u; }));
+  }
+  function moveFrame(id, beforeId, sceneId) {
+    const b = boardCfg(), i = b.frames.findIndex(f => f.id === id); if (i < 0) return;
+    const f = b.frames.splice(i, 1)[0];
+    f.sceneId = sceneId;
+    let at = beforeId ? b.frames.findIndex(x => x.id === beforeId) : -1;
+    if (at < 0) { at = -1; b.frames.forEach((x, k) => { if (x.sceneId === sceneId) at = k; }); at = at < 0 ? b.frames.length : at + 1; }
+    b.frames.splice(at, 0, f);
+    scheduleAutosave(); renderBoard(); refreshBoardBar();
+  }
+  function wireBoard() {
+    document.getElementById("boardBtn").addEventListener("click", () => boardOpen ? closeBoard() : openBoard());
+    document.getElementById("boardOpenBtn").addEventListener("click", openBoard);
+    document.getElementById("boardAddBtn").addEventListener("click", openAddToBoard);
+    document.getElementById("lbBoard").addEventListener("click", openAddToBoard);
+    document.getElementById("lbReplace").addEventListener("click", replaceFrame);
+    document.getElementById("bdClose").addEventListener("click", closeBoard);
+    document.getElementById("bdProj").addEventListener("click", openProjectSheet);
+    document.getElementById("projBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
+    document.getElementById("bdAddScene").addEventListener("click", () => {
+      const b = boardCfg(), last = b.scenes[b.scenes.length - 1];
+      b.scenes.push({ id: newId("s"), number: String(last ? (parseInt(last.number, 10) + 1 || b.scenes.length + 1) : 1), title: "" });
+      scheduleAutosave(); renderBoard();
+      const inp = document.querySelectorAll("#bdBody .scTitle"); if (inp.length) inp[inp.length - 1].focus();
+    });
+    // Add-to-board sheet
+    const ab = document.getElementById("addBoardSheet");
+    document.getElementById("abScene").addEventListener("change", syncAddSheet);
+    document.getElementById("abGo").addEventListener("click", commitAddToBoard);
+    document.getElementById("abCancel").addEventListener("click", () => { ab.classList.add("hidden"); pendingFrame = null; });
+    ab.addEventListener("keydown", e => {
+      if (e.key === "Escape") { ab.classList.add("hidden"); pendingFrame = null; }
+      else if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") commitAddToBoard();
+      else if (e.key === "Enter" && e.target.tagName === "TEXTAREA" && (e.ctrlKey || e.metaKey)) commitAddToBoard();
+      else return;
+      e.preventDefault(); e.stopPropagation();
+    });
+    ab.addEventListener("keyup", e => e.stopPropagation());
+    // Export menu
+    const eb = document.getElementById("bdExportBtn"), em = document.getElementById("bdExportMenu");
+    eb.addEventListener("click", e => { e.stopPropagation(); const open = em.classList.contains("hidden"); closeMenus(); em.classList.toggle("hidden", !open); eb.setAttribute("aria-expanded", String(open)); });
+    em.addEventListener("click", e => { const it = e.target.closest("[data-exp]"); if (!it) return; em.classList.add("hidden"); eb.setAttribute("aria-expanded", "false"); exportBoard(it.dataset.exp); });
+    document.addEventListener("click", e => { if (!e.target.closest("#bdExportWrap")) em.classList.add("hidden"); });
+    // Board body: edits, buttons, revisit, drag + drop
+    const body = document.getElementById("bdBody");
+    body.addEventListener("input", e => {
+      const card = e.target.closest(".bdCard"), scEl = e.target.closest(".bdScene"), b = boardCfg();
+      if (card && e.target.dataset.f) { const f = b.frames.find(x => x.id === card.dataset.id); if (f) { f[e.target.dataset.f] = e.target.value; scheduleAutosave(); } return; }
+      if (scEl && (e.target.classList.contains("scNum") || e.target.classList.contains("scTitle"))) {
+        const sc = b.scenes.find(x => x.id === scEl.dataset.scene); if (!sc) return;
+        if (e.target.classList.contains("scNum")) sc.number = e.target.value.trim() || sc.number; else sc.title = e.target.value;
+        scheduleAutosave();
+      }
+    });
+    body.addEventListener("change", e => { if (e.target.classList.contains("scNum")) renderBoard(); });   // codes follow the scene number
+    body.addEventListener("click", e => {
+      const b = boardCfg(), go = e.target.closest("[data-go]");
+      if (go && mode === "edit") { goToFrame(go.dataset.go); return; }
+      const btn = e.target.closest("button"); if (!btn) return;
+      const card = e.target.closest(".bdCard"), scEl = e.target.closest(".bdScene");
+      if (card && btn.dataset.act) {
+        const id = card.dataset.id, i = b.frames.findIndex(x => x.id === id), f = b.frames[i];
+        if (btn.dataset.act === "del") {
+          const code = frameCode(id); b.frames.splice(i, 1); if (boardEditId === id) boardEditId = null;
+          scheduleAutosave(); renderBoard(); refreshBoardBar();
+          toast("Deleted " + code, { label: "Undo", fn: () => { b.frames.splice(Math.min(i, b.frames.length), 0, f); scheduleAutosave(); if (boardOpen) renderBoard(); } });
+        } else {
+          const same = b.frames.map((x, k) => [x, k]).filter(([x]) => x.sceneId === f.sceneId), pos = same.findIndex(([x]) => x.id === id);
+          const other = same[pos + (btn.dataset.act === "left" ? -1 : 1)];
+          if (other) { b.frames[i] = other[0]; b.frames[other[1]] = f; scheduleAutosave(); renderBoard(); refreshBoardBar(); }
+        }
+        return;
+      }
+      if (scEl && btn.dataset.sact) {
+        const si = b.scenes.findIndex(x => x.id === scEl.dataset.scene), sc = b.scenes[si];
+        if (btn.dataset.sact === "del") {
+          const gone = b.frames.filter(x => x.sceneId === sc.id), keep = b.frames.slice();
+          b.scenes.splice(si, 1); b.frames = b.frames.filter(x => x.sceneId !== sc.id);
+          scheduleAutosave(); renderBoard();
+          toast("Deleted scene " + sc.number + (gone.length ? " and its " + gone.length + " frame" + (gone.length === 1 ? "" : "s") : ""), { label: "Undo", fn: () => { b.scenes.splice(si, 0, sc); b.frames = keep; scheduleAutosave(); if (boardOpen) renderBoard(); } });
+        } else {
+          const to = si + (btn.dataset.sact === "up" ? -1 : 1); if (to < 0 || to >= b.scenes.length) return;
+          b.scenes.splice(si, 1); b.scenes.splice(to, 0, sc); scheduleAutosave(); renderBoard();
+        }
+      }
+    });
+    body.addEventListener("keydown", e => { const go = e.target.closest("[data-go]"); if (go && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); goToFrame(go.dataset.go); } });
+    let dragId = null;
+    body.addEventListener("dragstart", e => { const c = e.target.closest(".bdCard"); if (!c) return; dragId = c.dataset.id; c.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId); });
+    body.addEventListener("dragend", () => { dragId = null; body.querySelectorAll(".dragging,.dropBefore,.over").forEach(x => x.classList.remove("dragging", "dropBefore", "over")); });
+    body.addEventListener("dragover", e => {
+      if (!dragId) return; const zone = e.target.closest(".bdFrames"); if (!zone) return;
+      e.preventDefault();
+      body.querySelectorAll(".dropBefore,.over").forEach(x => x.classList.remove("dropBefore", "over"));
+      const c = e.target.closest(".bdCard"); if (c && c.dataset.id !== dragId) c.classList.add("dropBefore"); else zone.classList.add("over");
+    });
+    body.addEventListener("drop", e => {
+      if (!dragId) return; const zone = e.target.closest(".bdFrames"); if (!zone) return;
+      e.preventDefault();
+      const c = e.target.closest(".bdCard"), id = dragId; dragId = null;
+      moveFrame(id, c && c.dataset.id !== id ? c.dataset.id : null, zone.dataset.drop);
+    });
+    // Project sheet
+    const ps = document.getElementById("projSheet");
+    ps.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); scheduleAutosave(); if (boardOpen) renderBoardHead(); }));
+    document.getElementById("projDone").addEventListener("click", () => ps.classList.add("hidden"));
+    ps.addEventListener("keydown", e => { if (e.key === "Escape" || (e.key === "Enter" && e.target.tagName === "INPUT")) { ps.classList.add("hidden"); e.preventDefault(); } e.stopPropagation(); });
+    ps.addEventListener("keyup", e => e.stopPropagation());
+  }
+  function openProjectSheet() {
+    const pj = projectCfg(), ps = document.getElementById("projSheet");
+    ps.querySelectorAll("[data-pj]").forEach(inp => { inp.value = pj[inp.dataset.pj] || ""; inp.readOnly = mode !== "edit"; });
+    syncProjectExample();
+    ps.classList.remove("hidden");
+    ps.querySelector("[data-pj=title]").focus();
+  }
+  function syncProjectExample() {
+    document.querySelector('#projSheet [data-pj=code]').placeholder = "auto: " + (projectCfg().code.trim() ? projectCode() : (function () { const c = projectCode(); return c; })());
+    document.getElementById("pjExample").textContent = "Files: " + projectBase() + "_SC012A_SU03_35mm_v1.jpg · " + projectBase() + "_stage-plan_revA.pdf";
+  }
+
+  // ---- exports ---------------------------------------------------------------------------------
+  function boardRows() {
+    const b = boardCfg(), ix = boardIndex(), pj = projectCfg();
+    return b.scenes.flatMap(sc => b.frames.filter(f => f.sceneId === sc.id).map(f => ({ f: f, i: ix[f.id], sc: sc, ix: ix, pj: pj })));
+  }
+  function printDoc(title, css, html) {
+    const fr = document.createElement("iframe");
+    fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    fr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><title>' + xmlEsc(title) + '</title><style>' +
+      '@page{size:11in 8.5in;margin:0.4in}html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1d2124;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      '.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1d2124;padding-bottom:6px;margin-bottom:12px}.hd b{font-size:18px}.hd small{color:#6b7278;font-size:11px}' + css +
+      '</style></head><body>' + html + '</body></html>';
+    fr.onload = () => {
+      const imgs = [].slice.call(fr.contentDocument.images);
+      Promise.all(imgs.map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }))).then(() => {
+        try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (err) { toast("Printing was blocked by the browser"); }
+        setTimeout(() => fr.remove(), 60000);
+      });
+    };
+    document.body.appendChild(fr);
+  }
+  function docHeader(what) {
+    const pj = projectCfg();
+    return '<div class="hd"><div><b>' + xmlEsc(pj.title.trim() || "Untitled project") + '</b>' + (pj.episode.trim() ? ' &nbsp;·&nbsp; Episode ' + xmlEsc(pj.episode) : "") + '<br><small>' +
+      xmlEsc([what, pj.client, pj.director && "Dir. " + pj.director, pj.dp && "DP " + pj.dp, pj.dates].filter(Boolean).join("  ·  ")) + '</small></div><small>Mock &amp; Roll · Lumostage · ' + todayStamp() + '</small></div>';
+  }
+  function exportBoard(kind) {
+    const rows = boardRows();
+    if (!rows.length) { toast("The board is empty — add frames from the viewfinder first."); return; }
+    if (kind === "csv") { downloadBlob(new Blob([shotListCSV(rows)], { type: "text/csv" }), projectBase() + "_shot-list_" + todayStamp() + ".csv"); toast("Saved the shot list"); return; }
+    if (kind === "zip") { exportZip(rows); return; }
+    Promise.all(rows.map(r => getFrameImg(r.f.id))).then(urls => {
+      rows.forEach((r, k) => { r.img = urls[k] || ""; });
+      if (kind === "boards") exportStoryboard(rows);
+      else if (kind === "list") exportShotList(rows);
+      else exportSetupSheets(rows, kind === "sheetsCams");
+    });
+  }
+  function exportStoryboard(rows) {
+    let html = "", cur = null;
+    rows.forEach(r => {
+      if (r.sc !== cur) {
+        if (cur) html += "</div>";
+        cur = r.sc;
+        html += (html ? '<div class="pb"></div>' : "") + docHeader("Storyboard") + '<h2>Scene ' + xmlEsc(r.sc.number) + (r.sc.title ? ' — ' + xmlEsc(r.sc.title) : "") + '</h2><div class="grid">';
+      }
+      const o = r.f.optics || {};
+      html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div>' +
+        '<div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + ' · Stage ' + r.i.state + '</div>' +
+        (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + (r.f.line ? '<div class="ln">“' + xmlEsc(r.f.line.replace(/^["“]|["”]$/g, "")) + '”</div>' : "") + '</div>';
+    });
+    html += "</div>";
+    printDoc(projectBase() + "_storyboard_" + todayStamp(),
+      'h2{font-size:14px;margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 16px}.fr{break-inside:avoid}.im{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1d2124}' +
+      '.im img{max-width:100%;max-height:100%;display:block}.cd{position:absolute;left:5px;top:5px;background:#1d2124;color:#fff;font-weight:700;font-size:11px;padding:2px 6px;border-radius:3px}' +
+      '.mt{font-size:8.5px;color:#6b7278;margin:4px 0 2px}.ac{font-size:10px;line-height:1.35}.ln{font-size:10px;font-style:italic;color:#3b4247;margin-top:2px}.pb{break-after:page}', html);
+  }
+  function exportShotList(rows) {
+    const tr = rows.map(r => { const o = r.f.optics || {};
+      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<br><i>“' + xmlEsc(r.f.line) + '”</i>' : "") + '</td></tr>'; }).join("");
+    printDoc(projectBase() + "_shot-list_" + todayStamp(),
+      'table{width:100%;border-collapse:collapse;font-size:9.5px}th{text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#6b7278;border-bottom:1.5px solid #1d2124;padding:4px}' +
+      'td{border-bottom:1px solid #d5d9dc;padding:4px;vertical-align:top}tr{break-inside:avoid}td img{width:96px;display:block}',
+      docHeader("Shot list") + '<table><thead><tr><th>Shot</th><th>Frame</th><th>Setup</th><th>Stage</th><th>Lens</th><th>Camera · frame</th><th>Lens height</th><th>Action / line</th></tr></thead><tbody>' + tr + '</tbody></table>');
+  }
+  function shotListCSV(rows) {
+    const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const head = ["Project", "Episode", "Scene", "Scene title", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Action", "Line", "Version", "File"];
+    return [head.map(q).join(",")].concat(rows.map(r => { const o = r.f.optics || {};
+      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title, r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
+  }
+  // One page per stage state: the plan of that state (cameras off, or every setup's camera on), then its frames.
+  function exportSetupSheets(rows, withCams) {
+    const states = [];
+    rows.forEach(r => { let s = states.find(x => x.key === r.f.stateKey); if (!s) states.push(s = { key: r.f.stateKey, letter: r.i.state, no: r.i.stateNo, stage: r.f.stage, rows: [] }); s.rows.push(r); });
+    const before = stageSnapshot(), keepPlaced = config.placedAssets, keepRW = config.rollingWalls, keepHouse = config.houseLights;
+    deselect(); clearMulti();
+    let html = "";
+    try {
+      states.forEach((st, k) => {
+        applyStage(st.stage, true);
+        if (withCams) {
+          const seen = {};
+          st.rows.forEach(r => { const sk = setupKeyOf(r.f); if (seen[sk]) { seen[sk].codes.push(r.i.code); return; }
+            const c = deepClone(r.f.camera); delete c.key; c._planLabel = true; seen[sk] = { pa: c, setup: r.i.setup, codes: [r.i.code] }; config.placedAssets.push(c); });
+          Object.values(seen).forEach(v => { v.pa._planLabel = "SU" + String(v.setup).padStart(2, "0") + " · " + v.codes.join(", "); });
+          config.placedAssets = config.placedAssets.filter(q => q.assetId !== "camera" || q._planLabel);
+          rebuildPlaced();
+        }
+        const pj = projectCfg(), opt = Object.assign({}, planOpts(), { paper: "letter", scale: "auto", cameras: !!withCams });
+        opt.meta = Object.assign({}, planOpts().meta, { production: pj.title, scene: "Stage state " + st.letter + " · " + st.rows.map(r => r.i.code).join(", ") });
+        const svg = buildPlanSVG(opt);
+        const scenes = [...new Set(st.rows.map(r => r.sc.number))];
+        html += (k ? '<div class="pb"></div>' : "") + docHeader("Setup sheet · Stage state " + st.letter) +
+          '<div class="sub">Scene' + (scenes.length > 1 ? "s " : " ") + xmlEsc(scenes.join(", ")) + ' · ' + st.rows.length + ' frame' + (st.rows.length === 1 ? "" : "s") + ' · setups ' + [...new Set(st.rows.map(r => "SU" + String(r.i.setup).padStart(2, "0")))].join(", ") + '</div>' +
+          '<div class="plan">' + svg + '</div><div class="pb"></div>' + docHeader("Setup sheet · Stage state " + st.letter + " · frames") + '<div class="grid">' +
+          st.rows.map(r => { const o = r.f.optics || {}; return '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div><div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + '</div>' + (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + '</div>'; }).join("") + '</div>';
+      });
+    } finally {
+      config.placedAssets = keepPlaced; config.rollingWalls = keepRW;
+      applyStage(before, true);
+      config.placedAssets = keepPlaced; config.houseLights = keepHouse; applyHouseLights();
+      rebuildPlaced(); refreshCamPicker();
+    }
+    printDoc(projectBase() + "_setup-sheets" + (withCams ? "-cameras" : "") + "_" + todayStamp(),
+      '.sub{font-size:11px;color:#3b4247;margin:-6px 0 8px}.plan svg{width:100%;height:auto;max-height:6.6in;display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}.fr{break-inside:avoid}' +
+      '.im{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1d2124}.im img{max-width:100%;max-height:100%;display:block}' +
+      '.cd{position:absolute;left:4px;top:4px;background:#1d2124;color:#fff;font-weight:700;font-size:10px;padding:2px 5px;border-radius:3px}.mt{font-size:8px;color:#6b7278;margin:3px 0 1px}.ac{font-size:9px;line-height:1.3}.pb{break-after:page}', html);
+  }
+  // Stored (uncompressed) ZIP: JPEGs don't shrink further, so no compressor is needed.
+  const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], central = [], d = new Date();
+    const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let off = 0;
+    files.forEach(f => {
+      const nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true);
+      h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+      parts.push(h, nm, f.data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true);
+      c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+      central.push(c, nm);
+      off += 30 + nm.length + sz;
+    });
+    const csize = central.reduce((a, q) => a + q.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+    return new Blob(parts.concat(central, [e]), { type: "application/zip" });
+  }
+  function dataUrlBytes(u) { const b = atob(u.slice(u.indexOf(",") + 1)), out = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i); return out; }
+  function exportZip(rows) {
+    Promise.all(rows.map(r => getFrameImg(r.f.id))).then(urls => {
+      const files = [], enc = new TextEncoder();
+      rows.forEach((r, k) => { if (urls[k]) files.push({ name: frameFileName(r.f, r.ix, "jpg"), data: dataUrlBytes(urls[k]) }); });
+      files.push({ name: projectBase() + "_shot-list.csv", data: enc.encode("\ufeff" + shotListCSV(rows)) });
+      downloadBlob(makeZip(files), projectBase() + "_frames_" + todayStamp() + ".zip");
+      toast("Saved " + (files.length - 1) + " frames + the shot list");
     });
   }
 
@@ -6424,6 +7109,7 @@
     updatePlanStyleUI();
   }
   function setCamOrbit() {
+    closeBoard();
     exitCameraView();
     nav.mode = "fly";
     // Start at the markup's red-star POV: standing height on the volume centreline, looking into
@@ -6435,6 +7121,7 @@
     applyNavPose(); setNavButtons();
   }
   function setCamTop() {
+    closeBoard();
     exitCameraView();
     nav.mode = "top";
     camera.position.set(0, 90, 8);
@@ -7554,14 +8241,14 @@
     return out;
   }
 
+  // The saved file is the whole project: layout, board, and the board's frame images inline.
   function saveJSON() {
-    const blob = new Blob([JSON.stringify(exportConfig(), null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "mock-and-roll-layout.json";
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    toast("Saved mock-and-roll-layout.json");
+    const out = exportConfig(), frames = (out.board && out.board.frames) || [];
+    Promise.all(frames.map(f => getFrameImg(f.id).then(u => { if (u) f.img = u; }))).then(() => {
+      const name = projectBase() + "_layout_" + todayStamp() + ".json";
+      downloadBlob(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }), name);
+      toast("Saved " + name + (frames.length ? " (with " + frames.length + " board frame" + (frames.length === 1 ? "" : "s") + ")" : ""));
+    });
   }
 
   function loadJSONFile(file) {
@@ -7639,6 +8326,8 @@
     exitCameraView(); // a camera from the old layout can't be looked through any more
     config = deepClone(data);
     migrateConfig(config);
+    ingestBoardImages();                                      // frame images from a project file → IndexedDB
+    boardEditId = null;
     // Tear down fixed geometry (dimensions may differ); mobile elements
     // (rolling walls + deck) are disposed via selectableObjects in rebuildPlaced().
     [mainWallGroup, ceilingGroup].forEach(m => { if (m) { scene.remove(m); disposeObject3D(m); } });
@@ -7650,6 +8339,8 @@
     refreshShotUI();
     syncSettingsUI();
     applyHouseLights();
+    refreshBoardBar();
+    if (boardOpen) renderBoard();
     anchorPeopleOnFloors();                                  // people standing on decks/sets ride with them
     historyReset();                                          // a loaded layout starts a fresh history
     // Bring back the layout's 360° environment when it came from the library.
@@ -7801,6 +8492,7 @@
     // Help + welcome
     document.getElementById("helpBtn").addEventListener("click", () => setHelp(true));
     document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
+    wireBoard();
     applyHouseLights();
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));
     document.getElementById("help").addEventListener("click", e => { if (e.target.id === "help") setHelp(false); });
@@ -7856,6 +8548,11 @@
       if (!typing && e.key === "?") { setHelp(true); e.preventDefault(); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); return; }
       if (!document.getElementById("planSheet").classList.contains("hidden")) return;    // the plan sheet keeps its own keys
+      if (boardOpen) {
+        if (!typing && e.key === "Escape") { closeBoard(); e.preventDefault(); }
+        if (!typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); }
+        return;
+      }
       if (!typing && (e.ctrlKey || e.metaKey) && !e.altKey) {
         const k = e.key.toLowerCase();
         if (k === "z") { stepHistory(e.shiftKey ? 1 : -1); e.preventDefault(); return; }
@@ -7884,6 +8581,7 @@
           refreshCamPicker(); refreshVfBar(); toast("Frame · " + frameFormat(pa.format).name); if (mode === "edit") scheduleAutosave();
           e.preventDefault(); return;
         }
+        if ((e.key === "b" || e.key === "B") && !e.ctrlKey && !e.metaKey && mode === "edit") { openAddToBoard(); e.preventDefault(); return; }
         if (CAM_KEYS.indexOf(e.code) !== -1) { camKeys[e.code] = true; e.preventDefault(); }
         return;
       }
@@ -7924,6 +8622,7 @@
   function animate(t) {
     requestAnimationFrame(animate);
     const dt = Math.min(0.1, _lastT ? (t - _lastT) / 1000 : 0.016); _lastT = t;
+    if (boardOpen) return;                                   // the board covers the stage: don't render behind it
     pollGamepad(dt);
     updatePhone(dt);
     updateCollisionWarning();
