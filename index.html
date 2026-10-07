@@ -253,72 +253,179 @@
   #welcome .btnRow { justify-content: flex-end; }
   #welcome .btnRow button { flex: 0 0 auto; }
 
-  /* Storyboard */
-  #board { position: absolute; top: var(--top); left: 0; right: 0; bottom: 0; z-index: 30; background: var(--bg, #121718); display: flex; flex-direction: column; }
-  #board.hidden { display: none; }
-  .bdHead { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }
-  .bdProj { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; background: transparent; border: 0; padding: 4px 8px; border-radius: 8px; text-align: left; color: var(--text); cursor: pointer; }
-  .bdProj:hover { background: var(--panel2); }
-  .bdProj b { font-size: 16px; font-weight: 650; }
-  .bdProj small { color: var(--muted); font-size: 12px; }
-  .bdStats { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-right: 6px; }
-  #bdExportWrap .menu { min-width: 320px; }
-  .bdBody { flex: 1; overflow: auto; padding: 18px 18px 60px; }
-  .bdEmpty { max-width: 520px; margin: 60px auto; text-align: center; color: var(--muted); line-height: 1.55; }
-  .bdEmpty b { color: var(--text); font-size: 17px; display: block; margin-bottom: 8px; }
-  .bdScene { margin-bottom: 26px; }
-  .bdScene > header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .bdScene .scNo { font-weight: 700; font-size: 13px; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-  .bdScene .scNum { width: 64px; font-weight: 700; font-size: 15px; }
-  .bdScene .scTitle { flex: 1; max-width: 520px; font-size: 14px; }
-  .bdScene header input { background: transparent; border: 1px solid transparent; color: var(--text); padding: 5px 7px; border-radius: 7px; font: inherit; }
-  .bdScene header input:hover, .bdScene header input:focus { border-color: var(--line); background: #0e1314; }
-  .bdScene header .count { color: var(--muted); font-size: 12px; margin-left: auto; white-space: nowrap; }
-  .bdScene header button { padding: 5px 9px; font-size: 12px; }
-  .bdFrames { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; min-height: 60px; border-radius: 10px; }
-  .bdFrames.over { outline: 2px dashed var(--accent); outline-offset: 4px; }
-  .bdCard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
-  .bdCard.editing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-  .bdCard.dragging { opacity: .4; }
-  .bdCard.dropBefore { box-shadow: -4px 0 0 0 var(--accent); }
-  .bdImg { position: relative; background: #000; aspect-ratio: 16 / 9; display: grid; place-items: center; cursor: pointer; }
-  .bdImg img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  .bdImg .code { position: absolute; left: 8px; top: 8px; background: rgba(0,0,0,.72); color: #fff; font-weight: 700; font-size: 14px; padding: 3px 8px; border-radius: 6px; letter-spacing: .02em; }
-  .bdImg .st { position: absolute; right: 8px; top: 8px; color: #111; font-weight: 700; font-size: 11px; padding: 3px 7px; border-radius: 6px; background: var(--c); }
-  .bdImg .go { position: absolute; inset: auto 8px 8px auto; background: rgba(0,0,0,.72); color: #fff; font-size: 11.5px; padding: 4px 8px; border-radius: 6px; opacity: 0; transition: opacity .15s; }
-  .bdImg:hover .go, .bdImg:focus-visible .go { opacity: 1; }
-  .bdMeta { padding: 8px 10px 0; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .bdCard textarea, .bdCard input { margin: 6px 10px 0; background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 6px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
-  .bdCard textarea.bdLine { font-style: italic; border-left: 3px solid var(--accent); }
-  label.abFull .opt { color: var(--muted); font-size: 11px; opacity: .8; }
-  .bdBtns { display: flex; gap: 6px; padding: 8px 10px 10px; }
-  .bdBtns button { padding: 5px 9px; font-size: 12px; }
-  .bdBtns .sp { flex: 1; }
-  #projSheet, #addBoardSheet { position: fixed; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
-  #projSheet.hidden, #addBoardSheet.hidden { display: none; }
-  #projSheet .card, #addBoardSheet .card { width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
-  #projSheet h3, #addBoardSheet h3 { margin: 0 0 6px; }
-  #projSheet p { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; }
-  .pjGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .pjGrid label, .abRow label, label.abFull { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  /* Project chip (top bar) + project panel */
+  .projChip { display: flex; align-items: center; gap: 10px; background: transparent; border: 1px solid transparent; padding: 4px 10px 4px 9px; border-radius: 9px; max-width: 320px; text-align: left; min-width: 0; }
+  .projChip:hover, .projChip[aria-expanded="true"] { background: var(--panel2); border-color: var(--line); }
+  .pcText { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+  .pcName { font-weight: 650; font-size: 14.5px; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pcName.untitled { color: var(--muted); }
+  .pcSub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pcChev { width: 14px; height: 14px; transform: rotate(90deg); color: var(--muted); flex-shrink: 0; transition: transform .2s var(--ease); }
+  .projChip[aria-expanded="true"] .pcChev { transform: rotate(-90deg); }
+  body.phone .projChip { max-width: 140px; padding: 4px 6px; } body.phone .pcSub { display: none; }
+  #projPanel { position: fixed; top: var(--top); left: 0; bottom: 0; width: min(440px, 100vw); z-index: 36; display: flex; flex-direction: column;
+    background: var(--panel); border-right: 1px solid var(--line); box-shadow: 18px 0 40px -18px rgba(0,0,0,.6); transition: transform .22s var(--ease), opacity .22s var(--ease); }
+  #projPanel:not(.open) { transform: translateX(-104%); opacity: 0; pointer-events: none; visibility: hidden; transition: transform .22s var(--ease), opacity .22s var(--ease), visibility 0s .22s; }
+  .ppHead { display: flex; align-items: center; gap: 8px; padding: 16px 14px 12px 18px; border-bottom: 1px solid var(--line); }
+  .ppTitle { flex: 1; min-width: 0; font-size: 20px; font-weight: 650; letter-spacing: -.015em; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 5px 8px; margin-left: -8px; }
+  .ppTitle:hover { border-color: var(--line); } .ppTitle:focus { background: #0e1314; border-color: var(--line); }
+  .ppTitle::placeholder { color: #7d8a8a; }
+  .iconBtn { width: 32px; height: 32px; padding: 0; justify-content: center; }
+  .ppScroll { flex: 1; overflow-y: auto; padding: 6px 18px 18px; }
+  .ppSec { padding: 16px 0 6px; border-bottom: 1px solid #2a3433; }
+  .ppSec:last-child { border-bottom: 0; }
+  .ppSec h4 { margin: 0 0 12px; font-size: 13px; font-weight: 650; color: var(--text); }
+  #projPanel .pjGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-bottom: 8px; }
+  .pjGrid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
   .pjGrid label.wide { grid-column: 1 / -1; }
-  .pjGrid input, .abRow input, .abRow select, label.abFull textarea, label.abFull input { background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 13px; }
-  #pjExample { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
+  .pjGrid input { background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 13px; min-width: 0; }
+  #pjExample { font-size: 11.5px; color: var(--muted); }
+  #pjExample code { font-family: ui-monospace, Consolas, monospace; color: var(--text); font-size: 11px; }
+  .ppScriptCard { display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; align-items: start; }
+  .ppScriptCard > svg { width: 30px; height: 30px; color: var(--accent); grid-row: span 2; }
+  .ppScriptCard b { font-size: 13.5px; font-weight: 650; overflow-wrap: anywhere; }
+  .ppScriptCard small { color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .ppScriptCard .btnRow { grid-column: 2; margin: 6px 0 4px; }
+  .ppEmpty { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 10px; }
+  .ppPlan { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; margin: 0 0 12px; font-size: 13px; }
+  .ppPlan dt { color: var(--muted); }
+  .ppPlan dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .ppPlan dd small { color: var(--muted); font-size: 12px; }
+  .ppList { display: flex; flex-direction: column; gap: 2px; margin: 0 -8px 8px; }
+  .ppList button.item { display: flex; width: 100%; align-items: flex-start; gap: 12px; text-align: left; border: 0; background: transparent; padding: 9px 8px; border-radius: 8px; }
+  .ppList button.item:hover { background: var(--panel2); }
+  .ppList button.item svg { width: 17px; height: 17px; color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+  .ppList button.item small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .ppList button.item small a { color: var(--accent); }
+  .ppFoot { padding: 10px 18px; border-top: 1px solid var(--line); color: #7d8a8a; font-size: 11px; }
+  #projPanel .btnRow { justify-content: flex-start; }
+  #projPanel .btnRow button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; }
+  #projPanel .btnRow button svg { width: 16px; height: 16px; }
+
+  /* Storyboard */
+  #board { position: absolute; top: var(--top); left: 0; right: 0; bottom: 0; z-index: 30; background: #111718; display: flex; flex-direction: column; }
+  #board.hidden { display: none; }
+  .bdBar { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); background: #161d1f; }
+  .bdBar .seg button { padding: 5px 11px; font-size: 12.5px; }
+  .bdBar .spacer { flex: 1; }
+  #board[data-group="state"] .bdImg .st { display: none; }
+  .bdBar .seg button[aria-pressed="true"] { background: var(--panel2); color: var(--text); }
+  .sizeSeg button { min-width: 30px; justify-content: center; }
+  .bdBar > button, #bdExportBtn { display: inline-flex; align-items: center; gap: 6px; }
+  .bdBar > button svg { width: 15px; height: 15px; }
+  #bdScriptBtn[aria-pressed="true"] { color: var(--text); background: var(--panel2); }
+  .bdStats { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-right: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #bdExportWrap .menu { min-width: 320px; }
+  .bdBody { flex: 1; overflow: auto; padding: 8px 24px 80px; scroll-padding-top: 12px; --card: 280px; }
+  #board[data-size="s"] .bdBody { --card: 200px; }
+  #board[data-size="l"] .bdBody { --card: 400px; }
+  .bdEmpty { max-width: 520px; margin: 80px auto; text-align: center; color: var(--muted); line-height: 1.6; font-size: 13.5px; }
+  .bdEmpty h3 { color: var(--text); font-size: 17px; margin: 0 0 8px; }
+  .bdEmpty .btnRow { justify-content: center; margin-top: 16px; }
+  .bdEmpty .btnRow button { flex: 0 0 auto; }
+  .bdScene { padding: 18px 0 8px; }
+  .bdScene + .bdScene { border-top: 1px solid #253030; }
+  .bdScene.flash > header .scNum { box-shadow: 0 0 0 2px var(--accent); }
+  .bdScene > header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; min-height: 44px; }
+  .scNum { width: 52px; height: 44px; flex-shrink: 0; text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 0; }
+  .scNum:hover { border-color: #5b6475; } .scNum:focus { border-color: var(--accent); }
+  .stBadge { flex-shrink: 0; height: 44px; min-width: 52px; padding: 0 12px; display: grid; place-items: center; border-radius: 9px; font-weight: 700; font-size: 13px; letter-spacing: .02em; color: #111; background: var(--c); }
+  .scTitles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .scTitle { width: 100%; max-width: 720px; font-size: 15px; font-weight: 650; letter-spacing: -.005em; background: transparent; border: 1px solid transparent; color: var(--text); padding: 2px 6px; margin-left: -6px; border-radius: 6px; font-family: inherit; }
+  .scTitle:hover { border-color: var(--line); } .scTitle:focus { background: #0e1314; border-color: var(--line); }
+  .scTitle::placeholder { color: var(--text); opacity: .92; }
+  .scTitles b { font-size: 15px; font-weight: 650; }
+  .scMeta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-height: 18px; }
+  .scMeta .dot { opacity: .5; }
+  .bdScene > header .count { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .shootBtn { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .shootBtn svg { width: 16px; height: 16px; }
+  .bdFrames { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card), 1fr)); gap: 18px 16px; border-radius: 12px; }
+  .bdFrames.over { outline: 2px dashed var(--accent); outline-offset: 6px; }
+  .suLabel { grid-column: 1 / -1; font-size: 12px; color: var(--muted); margin: 6px 0 -6px; font-variant-numeric: tabular-nums; }
+  .suLabel b { color: var(--text); font-weight: 650; margin-right: 6px; }
+  .bdCard { display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .bdCard.dragging { opacity: .35; }
+  .bdCard.dropBefore::before { content: ""; position: absolute; left: -9px; top: 0; bottom: 0; width: 2px; border-radius: 2px; background: var(--accent); }
+  .bdImg { position: relative; aspect-ratio: 16 / 9; background: #050708; border-radius: 10px; overflow: hidden; cursor: pointer; box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 16px -10px rgba(0,0,0,.7); }
+  .bdCard.editing .bdImg { box-shadow: 0 0 0 2px var(--accent), 0 6px 16px -10px rgba(0,0,0,.7); }
+  .bdImg img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .bdImg .ov { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 6px; padding: 8px 9px; pointer-events: none; }
+  .bdImg .ov.top { top: 0; }
+  .bdImg .ov.bot { bottom: 0; background: linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,0)); padding-top: 18px; font-size: 11.5px; color: #e6e8ea; font-variant-numeric: tabular-nums; }
+  .bdImg .code { background: rgba(8,10,11,.82); color: #fff; font-weight: 700; font-size: 14px; padding: 3px 8px; border-radius: 6px; letter-spacing: .01em; }
+  .bdImg .st { margin-left: auto; color: #111; font-weight: 700; font-size: 10.5px; letter-spacing: .03em; padding: 3px 7px; border-radius: 5px; background: var(--c); }
+  .bdImg .ver { margin-left: auto; opacity: .75; }
+  .bdImg .go { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.96); background: rgba(8,10,11,.86); color: #fff; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; opacity: 0; transition: opacity .15s, transform .15s var(--ease); pointer-events: none; white-space: nowrap; }
+  .bdImg:hover .go, .bdImg:focus-visible .go { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .bdImg:focus-visible { outline: none; box-shadow: var(--focus); }
+  .bdText { display: flex; flex-direction: column; gap: 2px; padding: 8px 0 0; position: relative; }
+  .bdText textarea { width: 100%; resize: none; overflow: hidden; background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--text); font: inherit; font-size: 13px; line-height: 1.45; padding: 4px 34px 4px 7px; margin-left: -7px; width: calc(100% + 7px); min-height: 0; }
+  .bdText textarea:hover { border-color: #2f3a3a; }
+  .bdText textarea:focus { background: #0e1314; border-color: var(--line); outline: none; }
+  .bdText textarea::placeholder { color: #75807f; }
+  .bdText textarea.bdLine { font-family: "Courier Prime", "Courier New", Courier, monospace; font-size: 12px; line-height: 1.4; color: #d9d4c7; padding-right: 7px; }
+  .bdText textarea.bdLine:placeholder-shown { font-family: inherit; font-size: 12.5px; }
+  .bdText .cardMenu { position: absolute; right: -4px; top: 6px; opacity: 0; transition: opacity .15s; }
+  .bdCard:hover .cardMenu, .bdCard:focus-within .cardMenu, body.touch .cardMenu { opacity: 1; }
+  .bdAddTile { aspect-ratio: 16 / 9; border: 1px dashed #3d4a49; border-radius: 10px; background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; padding: 12px; }
+  .bdAddTile svg { width: 22px; height: 22px; }
+  .bdAddTile:hover { border-color: var(--accent); color: var(--text); background: rgba(0,239,234,.04); }
+  .bdAddTile kbd { font-size: 10.5px; }
+  #bdMenu { position: fixed; right: auto; min-width: 210px; width: max-content; max-width: 300px; z-index: 60; }
+  #bdMenu button.item { align-items: center; padding: 8px 10px; font-size: 13px; }
+  #bdMenu button.item.danger { color: var(--salmon); }
+  #bdMenu .sep { height: 1px; background: var(--line); margin: 4px 2px; }
+  #addBoardSheet { position: fixed; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #addBoardSheet.hidden { display: none; }
+  #addBoardSheet .card { width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #addBoardSheet h3 { margin: 0 0 6px; }
+  .abRow label, label.abFull { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  .abRow input, .abRow select, label.abFull textarea, label.abFull input { background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 13px; }
+  label.abFull .opt { color: var(--muted); font-size: 11px; opacity: .8; }
   #abImg { width: 100%; border-radius: 8px; background: #000; display: block; margin: 6px 0 12px; max-height: 240px; object-fit: contain; }
   .abRow { display: flex; gap: 10px; margin-bottom: 10px; }
   .abRow label { flex: 1; }
   label.abFull { margin-bottom: 10px; }
-  #projSheet .btnRow, #addBoardSheet .btnRow { justify-content: flex-end; }
-  #projSheet .btnRow button, #addBoardSheet .btnRow button { flex: 0 0 auto; }
-  body.phone .pjGrid { grid-template-columns: 1fr; }
+  #addBoardSheet .btnRow { justify-content: flex-end; }
+  #addBoardSheet .btnRow button { flex: 0 0 auto; }
+  body.phone #projPanel .pjGrid { grid-template-columns: 1fr; }
+  body.phone .bdStats { display: none; }
+  body.phone .bdBody { padding: 6px 12px 60px; }
+
+  /* Shot strip (viewfinder) */
+  #shotStrip { position: absolute; left: 50%; transform: translateX(-50%); bottom: 76px; z-index: 18; max-width: calc(100% - var(--rail) - 48px); min-width: 320px;
+    background: rgba(20,22,26,.94); border: 1px solid var(--line); border-radius: 12px; padding: 7px 8px 8px; display: flex; flex-direction: column; gap: 7px; box-shadow: var(--panelShadow); }
+  #shotStrip.hidden { display: none; }
+  .ssHead { display: flex; align-items: center; gap: 8px; }
+  .ssHead > svg { width: 16px; height: 16px; color: var(--muted); margin-left: 3px; }
+  .ssHead select { max-width: 340px; font-size: 12.5px; padding: 4px 8px; }
+  .ssMeta { font-size: 11.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ssHead .iconBtn { width: 26px; height: 26px; }
+  .ssHead .iconBtn svg { transform: rotate(90deg); transition: transform .2s var(--ease); width: 14px; height: 14px; }
+  #shotStrip.folded .ssRow { display: none; }
+  #shotStrip.folded .ssHead .iconBtn svg { transform: rotate(-90deg); }
+  .ssRow { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; align-items: stretch; }
+  .ssThumb { position: relative; height: 58px; aspect-ratio: 16 / 9; padding: 0; border-radius: 6px; overflow: hidden; background: #050708; border: 1px solid #2f3a3a; flex-shrink: 0; }
+  .ssThumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .ssThumb span { position: absolute; left: 4px; top: 4px; background: rgba(8,10,11,.85); color: #fff; font-size: 10.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+  .ssThumb.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .ssThumb:hover { border-color: #5b6475; }
+  .ssAct { flex-shrink: 0; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 58px; min-width: 96px; padding: 4px 10px; font-size: 12px; line-height: 1.2; }
+  .ssAct svg { width: 16px; height: 16px; }
+  .ssAct kbd { font-size: 10px; opacity: .8; }
+  body.phone #shotStrip { bottom: 64px; min-width: 0; }
 
   /* Script (board sidebar, line picker) */
   .bdMain { flex: 1; min-height: 0; display: flex; }
   .bdMain .bdBody { flex: 1; min-width: 0; }
-  #bdScript { width: 360px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #bdScript { width: 340px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
   #bdScript.hidden { display: none; }
-  .bdScriptBtn { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 10px; font-size: 12px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bdScriptBtn:hover { color: var(--text); border-color: var(--accent); }
+  #bdScript.reading { width: min(560px, 44vw); }
+  #bdScript.reading .scDetail .scriptText { font-size: 13px; max-height: none; }
+  .scRow.current { background: rgba(0,239,234,.07); }
+  .scRow.current .no { color: var(--accent); }
   .scHead { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
   .scHead b { font-size: 13.5px; }
   .scHead small { color: var(--muted); font-size: 11.5px; }
@@ -360,7 +467,6 @@
   #linePick .btnRow { justify-content: flex-end; }
   #linePick .btnRow button { flex: 0 0 auto; }
   button.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-size: 11.5px; cursor: pointer; margin-left: 6px; }
-  .bdScene .scInfo { font-size: 11.5px; color: var(--muted); margin: -4px 0 10px 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   body.phone #bdScript { width: 260px; }
 
   /* Stage plan sheet */
@@ -635,6 +741,9 @@
       <symbol id="i-new" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v6M9 13h6"/></g></symbol>
       <symbol id="i-bulb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></g></symbol>
       <symbol id="i-board" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="8" height="6" rx="1"/><rect x="13" y="4" width="8" height="6" rx="1"/><rect x="3" y="14" width="8" height="6" rx="1"/><rect x="13" y="14" width="8" height="6" rx="1"/></g></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></g></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-script" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3.5h9l3.5 3.5v13.5H6z"/><path d="M14.5 3.5V7.5h4"/><path d="M9 11h6M10.5 14h4.5M9 17h6"/></g></symbol>
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5H9.5a5 5 0 0 0 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
@@ -650,7 +759,10 @@
 
   <header id="topbar">
     <div class="brand"><img src="brand/emblem.svg" alt="Lumostage" width="30" height="32"></div>
-    <div class="title">Mock &amp; Roll <span>by Lumostage</span></div>
+    <button class="projChip" id="projChip" aria-haspopup="dialog" aria-expanded="false" aria-controls="projPanel" title="Project — details, script, plan and exports">
+      <span class="pcText"><span class="pcName untitled" id="pcName">Untitled project</span><span class="pcSub" id="pcSub">Mock &amp; Roll by Lumostage</span></span>
+      <svg class="pcChev" aria-hidden="true"><use href="#i-chev"/></svg>
+    </button>
     <div class="seg" role="group" aria-label="View">
       <button id="camOrbit" class="active" title="Walk around the stage — drag to look, W A S D to move"><svg><use href="#i-walk"/></svg>Walk</button>
       <button id="camTop" title="Plan view, straight down — drag to pan, scroll to zoom"><svg><use href="#i-plan"/></svg>Plan</button>
@@ -810,12 +922,22 @@
     <button id="lbLens" title="Lens menu (L)">Lens</button>
     <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
     <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
-    <button class="primary editOnly" id="lbBoard" title="Capture this frame onto the storyboard (B)">Add to board</button>
-    <button class="editOnly hidden" id="lbReplace" title="Re-capture the board frame you came from with what you see now">Replace</button>
     <button class="editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
     <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
     <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
     <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit viewfinder</button>
+  </div>
+
+  <!-- Shot strip: the scene being boarded, above the lens bar while looking through the camera -->
+  <div id="shotStrip" class="hidden" aria-label="Storyboard for this scene">
+    <div class="ssHead">
+      <svg aria-hidden="true"><use href="#i-board"/></svg>
+      <select id="ssScene" aria-label="Scene to board"></select>
+      <span class="ssMeta" id="ssMeta"></span>
+      <span class="spacer"></span>
+      <button class="ghost iconBtn" id="ssFold" aria-label="Hide the frames" aria-expanded="true"><svg><use href="#i-chev"/></svg></button>
+    </div>
+    <div class="ssRow" id="ssRow"></div>
   </div>
 
   <div id="vfGuides" class="hidden" role="group" aria-label="Viewfinder guides">
@@ -995,14 +1117,19 @@
 
   <!-- Storyboard: scenes of captured frames; each frame silently keeps the stage + camera it came from -->
   <div id="board" class="hidden" role="region" aria-label="Storyboard">
-    <div class="bdHead">
-      <button class="bdProj" id="bdProj" title="Project details"><b id="bdProjTitle">Untitled project</b><small id="bdProjSub">Set the production, episode and code</small></button>
-      <button class="bdScriptBtn" id="bdScriptBtn" title="The script this board is built from"></button>
+    <div class="bdBar">
+      <div class="seg" role="group" aria-label="Group frames by">
+        <button data-grp="scene" aria-pressed="true">Scenes</button><button data-grp="state" aria-pressed="false" title="What shoots while the stage stays dressed">Stage states</button>
+      </div>
+      <div class="seg sizeSeg" role="group" aria-label="Frame size">
+        <button data-sz="s" aria-label="Small frames" title="Small frames">S</button><button data-sz="m" aria-label="Medium frames" title="Medium frames">M</button><button data-sz="l" aria-label="Large frames" title="Large frames">L</button>
+      </div>
+      <button class="ghost" id="bdScriptBtn" aria-pressed="true"><svg><use href="#i-script"/></svg><span>Script</span></button>
       <span class="spacer"></span>
       <span class="bdStats" id="bdStats"></span>
-      <button class="editOnly" id="bdAddScene">+ Scene</button>
+      <button class="editOnly" id="bdAddScene"><svg aria-hidden="true"><use href="#i-plus"/></svg>Scene</button>
       <div class="menuWrap" id="bdExportWrap">
-        <button class="primary" id="bdExportBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+        <button class="primary" id="bdExportBtn" aria-haspopup="true" aria-expanded="false">Export</button>
         <div class="menu hidden" id="bdExportMenu" role="menu">
           <button class="item" data-exp="boards" role="menuitem"><svg><use href="#i-print"/></svg><span>Storyboard (print / PDF)<small>Frames by scene with shot codes, action and lines</small></span></button>
           <button class="item" data-exp="sheets" role="menuitem"><svg><use href="#i-plan"/></svg><span>Setup sheets (print / PDF)<small>Per stage state: the stage plan without cameras + its frames</small></span></button>
@@ -1012,13 +1139,13 @@
           <button class="item" data-exp="zip" role="menuitem"><svg><use href="#i-open"/></svg><span>All frames (.zip)<small>Every frame as a JPEG, named in shooting-code order, plus the shot list</small></span></button>
         </div>
       </div>
-      <button class="ghost" id="bdClose" title="Back to the stage (Esc)" aria-label="Close board"><svg><use href="#i-x"/></svg></button>
     </div>
     <div class="bdMain">
       <aside id="bdScript" class="hidden" aria-label="Script"></aside>
       <div class="bdBody" id="bdBody"></div>
     </div>
   </div>
+  <div id="bdMenu" class="menu hidden" role="menu"></div>
 
   <div id="linePick" class="hidden" role="dialog" aria-modal="true" aria-labelledby="lpTitle">
     <div class="card">
@@ -1029,28 +1156,53 @@
     </div>
   </div>
 
-  <div id="projSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="projTitleH">
-    <div class="card">
-      <h3 id="projTitleH">Project details</h3>
-      <p>Shown on every board, sheet and print, and used to name exported files.</p>
-      <div class="pjGrid">
-        <label>Production<input type="text" data-pj="title" placeholder="e.g. Northern Line"></label>
-        <label>File code<input type="text" data-pj="code" placeholder="auto" maxlength="12"></label>
-        <label>Client<input type="text" data-pj="client" placeholder="optional"></label>
-        <label>Episode<input type="text" data-pj="episode" placeholder="optional, e.g. 104" maxlength="8"></label>
-        <label>Director<input type="text" data-pj="director" placeholder="optional"></label>
-        <label>DP<input type="text" data-pj="dp" placeholder="optional"></label>
-        <label class="wide">Shoot date(s)<input type="text" data-pj="dates" placeholder="optional, e.g. 14–15 Nov 2026"></label>
-      </div>
-      <div class="hint" id="pjExample"></div>
-      <div class="btnRow"><button class="primary" id="projDone">Done</button></div>
+  <!-- Project panel: who and what the plan is for, its script, the plan at a glance, and delivery -->
+  <aside id="projPanel" role="dialog" aria-label="Project" aria-hidden="true">
+    <div class="ppHead">
+      <input id="ppTitle" class="ppTitle" data-pj="title" placeholder="Name this project" aria-label="Production title" autocomplete="off">
+      <button class="ghost iconBtn" id="ppClose" aria-label="Close the project panel"><svg><use href="#i-x"/></svg></button>
     </div>
-  </div>
+    <div class="ppScroll">
+      <section class="ppSec">
+        <h4>Details</h4>
+        <div class="pjGrid">
+          <label>Client<input type="text" data-pj="client" placeholder="Who it's for"></label>
+          <label>Episode<input type="text" data-pj="episode" placeholder="e.g. 104" maxlength="8"></label>
+          <label>Director<input type="text" data-pj="director" placeholder="Name"></label>
+          <label>DP<input type="text" data-pj="dp" placeholder="Name"></label>
+          <label>1st AD<input type="text" data-pj="ad" placeholder="Name"></label>
+          <label>Shoot date(s)<input type="text" data-pj="dates" placeholder="e.g. 14–15 Nov 2026"></label>
+          <label class="wide">File code<input type="text" data-pj="code" placeholder="auto" maxlength="12"></label>
+        </div>
+        <div class="hint" id="pjExample"></div>
+      </section>
+      <section class="ppSec"><h4>Script</h4><div id="ppScript"></div></section>
+      <section class="ppSec"><h4>The plan</h4><dl class="ppPlan" id="ppPlan"></dl>
+        <div class="btnRow"><button class="primary" id="ppBoard"><svg aria-hidden="true"><use href="#i-board"/></svg>Open the board</button></div></section>
+      <section class="ppSec"><h4>Deliver</h4>
+        <div class="ppList">
+          <button class="item" data-exp="boards"><svg><use href="#i-print"/></svg><span>Storyboard<small>Print or PDF, frames by scene</small></span></button>
+          <button class="item" data-exp="sheets"><svg><use href="#i-plan"/></svg><span>Setup sheets<small>Per stage state, stage plan + frames</small></span></button>
+          <button class="item" data-exp="list"><svg><use href="#i-file"/></svg><span>Shot list<small>Print or PDF · <a href="#" data-exp-csv>.csv for scheduling</a></small></span></button>
+          <button class="item" data-exp="zip"><svg><use href="#i-open"/></svg><span>All frames (.zip)<small>JPEGs named in shooting-code order</small></span></button>
+          <button class="item" id="ppPlanSheet"><svg><use href="#i-plan"/></svg><span>Stage plan<small>To-scale floor plan to print or PDF</small></span></button>
+        </div>
+      </section>
+      <section class="ppSec editOnly"><h4>Project file</h4>
+        <div class="ppList">
+          <button class="item" id="ppSave"><svg><use href="#i-save"/></svg><span>Save project<small>One file: stage, board, frames and script</small></span></button>
+          <button class="item" id="ppOpen"><svg><use href="#i-open"/></svg><span>Open project…<small>A saved .json project file</small></span></button>
+          <button class="item" id="ppNew"><svg><use href="#i-new"/></svg><span>New project…<small>Clear the stage and board</small></span></button>
+        </div>
+      </section>
+    </div>
+    <div class="ppFoot">Mock &amp; Roll · Lumostage</div>
+  </aside>
 
   <div id="addBoardSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="abTitle">
     <div class="card">
       <h3 id="abTitle">Add to board</h3>
-      <img id="abImg" alt="The frame being added">
+      <img id="abImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="The frame being added">
       <div class="abRow">
         <label>Scene<select id="abScene"></select></label>
         <label id="abNewWrap">New scene number<input type="text" id="abNewNo" placeholder="e.g. 12" maxlength="10"></label>
@@ -4719,6 +4871,7 @@
     document.body.classList.remove("camview");
     document.getElementById("camViewBtn").classList.remove("active");
     document.getElementById("lensBar").classList.add("hidden");
+    document.getElementById("shotStrip").classList.add("hidden");
     document.getElementById("vfGuides").classList.add("hidden");
     closeLensMenu();
     if (isTouch) setTimeout(updateTouchBar, 0);
@@ -5840,8 +5993,9 @@
 
   // ---- add / replace / revisit -----------------------------------------------------------------
   let boardEditId = null, pendingFrame = null, lastSceneId = null;
-  function openAddToBoard() {
+  function openAddToBoard(presetScene) {
     if (mode !== "edit") return;
+    if (typeof presetScene !== "string") presetScene = null;
     const pa = activeCameraPA();
     if (!pa || !placedGroupByUid[pa._uid]) { toast("Place a camera first, then add its frame to the board."); return; }
     const img = captureFrameImage(pa); if (!img) { toast("Couldn't capture the frame"); return; }
@@ -5852,7 +6006,8 @@
     sel.innerHTML = (b.scenes.length ? '<optgroup label="On the board">' + b.scenes.map(sc => '<option value="' + sc.id + '">Scene ' + escapeHtml(sc.number) + (sc.title ? " · " + escapeHtml(sc.title) : "") + '</option>').join("") + '</optgroup>' : "") +
       (fromScript.length ? '<optgroup label="From the script' + (scriptUI.filter === "vol" && scr.scenes.some(y => y.onVolume === true) ? " (on the volume)" : "") + '">' + fromScript.map(x => '<option value="script:' + escapeHtml(x.n) + '">Scene ' + escapeHtml(x.n) + " · " + escapeHtml(x.slug) + " · " + escapeHtml(x.eighthsStr || "") + '</option>').join("") + '</optgroup>' : "") +
       '<option value="__new">+ New scene…</option>';
-    sel.value = b.scenes.some(sc => sc.id === lastSceneId) ? lastSceneId : (b.scenes.length ? b.scenes[b.scenes.length - 1].id : "__new");
+    const want = presetScene || stripSceneValue();
+    sel.value = want && [...sel.options].some(o => o.value === want) ? want : (b.scenes.length ? b.scenes[b.scenes.length - 1].id : "__new");
     const nextNo = b.scenes.length ? (parseInt(b.scenes[b.scenes.length - 1].number, 10) + 1 || "") : 1;
     document.getElementById("abNewNo").value = String(nextNo);
     document.getElementById("abImg").src = img;
@@ -5892,7 +6047,7 @@
     let at = -1; b.frames.forEach((x, i) => { if (x.sceneId === sceneId) at = i; });
     b.frames.splice(at < 0 ? b.frames.length : at + 1, 0, f);
     putFrameImg(f.id, img);
-    lastSceneId = sceneId; pendingFrame = null; boardEditId = f.id;
+    lastSceneId = sceneId; stripScene = sceneId; pendingFrame = null; boardEditId = f.id;
     document.getElementById("addBoardSheet").classList.add("hidden");
     scheduleAutosave(); refreshBoardBar();
     if (boardOpen) renderBoard();
@@ -5905,7 +6060,7 @@
     const prev = deepClone(f), prevImg = boardImgs[f.id];
     Object.assign(f, frameDataFrom(pa), { version: (f.version || 1) + 1 });
     putFrameImg(f.id, img);
-    scheduleAutosave(); if (boardOpen) renderBoard();
+    scheduleAutosave(); if (boardOpen) renderBoard(); refreshShotStrip();
     toast("Replaced " + frameCode(f.id) + " (v" + f.version + ")", { label: "Undo", fn: () => {
       const i = b.frames.findIndex(x => x.id === prev.id); if (i < 0) return;
       b.frames[i] = prev; if (prevImg) putFrameImg(prev.id, prevImg);
@@ -5951,23 +6106,22 @@
     if (keepKey != null) pa.key = keepKey;
     rebuildPlaced(); refreshCamPicker();
     scheduleHistory(); scheduleAutosave();
-    boardEditId = id;
+    boardEditId = id; stripScene = f.sceneId;
     const cam = activeCameraPA();
     if (cam && cam._uid != null) enterCameraView(cam);
     refreshBoardBar();
     toast("Back at " + frameCode(id) + " — adjust anything, then Replace to update it");
   }
-  function refreshBoardBar() {
-    const b = document.getElementById("lbReplace"); if (!b) return;
-    const f = boardEditId && boardCfg().frames.find(x => x.id === boardEditId);
-    b.classList.toggle("hidden", !f || mode !== "edit");
-    if (f) b.textContent = "Replace " + frameCode(f.id);
-  }
-
   // ---- board view ------------------------------------------------------------------------------
+  // The board is the plan; the stage is where frames are made. Group by scene (the script's order) or
+  // by stage state (what shoots while the stage stays dressed — the AD's view). The shot strip carries
+  // the current scene into the viewfinder so frames can be made without leaving the camera.
   let boardOpen = false;
+  const boardUI = { group: "scene", size: "m", script: true, current: null };
+  try { const v = JSON.parse(localStorage.getItem("lumostage.boardUI") || "{}"); if (v.size) boardUI.size = v.size; if (v.script === false) boardUI.script = false; if (v.group) boardUI.group = v.group; } catch (e) {}
+  function saveBoardUI() { try { localStorage.setItem("lumostage.boardUI", JSON.stringify({ size: boardUI.size, script: boardUI.script, group: boardUI.group })); } catch (e) {} }
   function openBoard() {
-    exitCameraView(); closeMenus();
+    exitCameraView(); closeMenus(); closeProjectPanel();
     boardOpen = true;
     document.getElementById("board").classList.remove("hidden");
     ["camOrbit", "camTop", "camViewBtn"].forEach(id => document.getElementById(id).classList.remove("active"));
@@ -5978,50 +6132,109 @@
   }
   function closeBoard() {
     if (!boardOpen) return;
-    boardOpen = false;
+    boardOpen = false; closeBdMenu();
     document.getElementById("board").classList.add("hidden");
     document.getElementById("boardBtn").classList.remove("active");
     setNavButtons();
   }
+  const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
   function renderBoardHead() {
-    const pj = projectCfg(), b = boardCfg(), ix = boardIndex();
-    document.getElementById("bdProjTitle").textContent = pj.title.trim() || "Untitled project";
-    document.getElementById("bdProjSub").textContent = pj.title.trim() ? [projectCode(), pj.episode.trim() ? "Episode " + pj.episode.trim() : "", pj.client.trim(), pj.director.trim() ? "Dir. " + pj.director.trim() : ""].filter(Boolean).join(" · ") : "Set the production, episode and file code";
-    const n = b.frames.length;
-    document.getElementById("bdStats").textContent = n ? [b.scenes.length + " scene" + (b.scenes.length === 1 ? "" : "s"), n + " frame" + (n === 1 ? "" : "s"), ix._counts.setups + " setup" + (ix._counts.setups === 1 ? "" : "s"), ix._counts.states + " stage state" + (ix._counts.states === 1 ? "" : "s")].join(" · ") : "";
+    const b = boardCfg(), ix = boardIndex(), n = b.frames.length, bd = document.getElementById("board");
+    bd.dataset.size = boardUI.size; bd.dataset.group = boardUI.group;
+    bd.querySelectorAll("[data-grp]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.grp === boardUI.group)));
+    bd.querySelectorAll("[data-sz]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.sz === boardUI.size)));
+    document.getElementById("bdStats").textContent = n ? [plural(b.scenes.length, "scene"), plural(n, "frame"), plural(ix._counts.setups, "setup"), plural(ix._counts.states, "stage state")].join(" · ") : "";
   }
+  const pad2 = n => String(n).padStart(2, "0");
+  const BLANK_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const imgSrc = id => boardImgs[id] || BLANK_IMG;
+  function frameCardHTML(f, i, edit, draggable) {
+    const o = f.optics || {}, hasScript = !!scriptScene(i.scene.number);
+    return '<article class="bdCard' + (f.id === boardEditId ? " editing" : "") + '" data-id="' + f.id + '"' + (edit && draggable ? ' draggable="true"' : "") + '>' +
+      '<div class="bdImg" tabindex="0" role="button" aria-label="Frame ' + escapeHtml(i.code) + (edit ? " — go back to it" : "") + '" data-go="' + f.id + '"><img alt="" src="' + imgSrc(f.id) + '" data-img="' + f.id + '">' +
+        '<div class="ov top"><span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span></div>' +
+        '<div class="ov bot"><span>SU' + pad2(i.setup) + ' · ' + escapeHtml(o.f + "mm · " + (o.fmt || "")) + '</span><span class="ver">v' + (f.version || 1) + '</span></div>' +
+        (edit ? '<span class="go">Go to frame</span>' : "") + '</div>' +
+      '<div class="bdText">' +
+        '<textarea class="bdAction" rows="1" placeholder="' + (edit ? "Describe the shot" : "") + '" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
+        '<textarea class="bdLine" rows="1" placeholder="' + (edit ? (hasScript ? "Line / action — paste, or pick from the script" : "Line / action — paste from the script") : "") + '" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
+        (edit ? '<button class="ghost iconBtn cardMenu" data-act="menu" aria-label="Options for frame ' + escapeHtml(i.code) + '" aria-haspopup="true"><svg><use href="#i-more"/></svg></button>' : "") +
+      '</div></article>';
+  }
+  function sceneMetaHTML(n) {
+    const ss = scriptScene(n); if (!ss) return "";
+    const bits = ['p' + (ss.page || "–"), escapeHtml((ss.eighthsStr || "") + " pp")];
+    return bits.join(' <span class="dot">·</span> ') + (ss.approach ? ' <span class="apChip" style="--c:' + approachColour(ss.approach) + '">' + escapeHtml(ss.approach) + '</span>' : "") +
+      ((ss.chars || []).length ? ' <span>' + escapeHtml(ss.chars.slice(0, 5).join(", ")) + (ss.chars.length > 5 ? " +" + (ss.chars.length - 5) : "") + '</span>' : "");
+  }
+  function autosizeIn(root) { root.querySelectorAll(".bdText textarea").forEach(t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }); }
   function renderBoard() {
     renderBoardHead();
     renderScriptSide();
-    const body = document.getElementById("bdBody"), b = boardCfg(), ix = boardIndex(), edit = mode === "edit";
+    const body = document.getElementById("bdBody"), b = boardCfg(), ix = boardIndex(), edit = mode === "edit", scr = scriptCfg();
     if (!b.frames.length && !b.scenes.length) {
-      body.innerHTML = '<div class="bdEmpty"><b>No frames yet</b>Line up a shot in the <b style="display:inline;font-size:inherit">Viewfinder</b> and press <kbd>B</kbd> (or <i>Add to board</i>). Each frame keeps the stage and camera it came from, so you can click it later to go straight back, adjust, and replace it.</div>';
+      body.innerHTML = '<div class="bdEmpty"><h3>Start the board</h3>' +
+        (scr ? 'Pick a scene from the script on the left, or line up a shot in the <b>Viewfinder</b> and press <kbd>B</kbd>.'
+             : 'Line up a shot in the <b>Viewfinder</b> and press <kbd>B</kbd>. Each frame keeps the stage and camera it came from, so one click takes you back to adjust or replace it.') +
+        (edit ? '<div class="btnRow">' + (scr ? "" : '<button id="bdImpEmpty"><svg aria-hidden="true" style="width:15px;height:15px;vertical-align:-3px;margin-right:6px"><use href="#i-script"/></svg>Import the script</button>') + '<button class="primary" data-shoot-any>Open the viewfinder</button></div>' : "") + '</div>';
       return;
     }
-    body.innerHTML = b.scenes.map((sc, si) => {
+    if (boardUI.group === "state") { renderBoardByState(body, b, ix, edit); return; }
+    body.innerHTML = b.scenes.map(sc => {
       const frames = b.frames.filter(f => f.sceneId === sc.id);
-      const cards = frames.map(f => {
-        const i = ix[f.id], o = f.optics || {};
-        return '<article class="bdCard' + (f.id === boardEditId ? " editing" : "") + '" data-id="' + f.id + '"' + (edit ? ' draggable="true"' : "") + '>' +
-          '<div class="bdImg" tabindex="0" role="button" title="' + (edit ? "Go back to this frame" : "") + '" data-go="' + f.id + '"><img alt="Frame ' + escapeHtml(i.code) + '" data-img="' + f.id + '">' +
-          '<span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span>' + (edit ? '<span class="go">Go to frame ↗</span>' : "") + '</div>' +
-          '<div class="bdMeta">SU' + String(i.setup).padStart(2, "0") + ' · ' + escapeHtml(o.f + "mm · " + (o.label || "")) + ' · v' + (f.version || 1) + '</div>' +
-          '<textarea class="bdAction" rows="2" placeholder="Shot description" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
-          '<textarea class="bdLine" rows="' + Math.min(6, Math.max(2, String(f.line || "").split("\n").length)) + '" placeholder="LINE / ACTION — paste dialogue or script action" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
-          (edit ? '<div class="bdBtns"><button data-act="left" title="Move earlier" aria-label="Move earlier">←</button><button data-act="right" title="Move later" aria-label="Move later">→</button>' + (scriptScene(i.scene.number) ? '<button data-act="pick" title="Pick this frame\'s LINE / ACTION from the script">Script…</button>' : "") + '<span class="sp"></span><button class="ghost danger" data-act="del">Delete</button></div>' : '<div style="height:10px"></div>') +
-          '</article>';
-      }).join("");
-      return '<section class="bdScene" data-scene="' + sc.id + '"><header>' +
-        '<span class="scNo">SCENE <input class="scNum" value="' + escapeHtml(sc.number) + '"' + (edit ? "" : " readonly") + ' aria-label="Scene number"></span>' +
-        '<input class="scTitle" value="' + escapeHtml(sc.title || "") + '" placeholder="' + escapeHtml((scriptScene(sc.number) || {}).slug || "Scene title or slugline (e.g. INT. SUBWAY CAR – NIGHT)") + '"' + (edit ? "" : " readonly") + ' aria-label="Scene title">' +
-        '<span class="count">' + frames.length + ' frame' + (frames.length === 1 ? "" : "s") + '</span>' +
-        (edit ? '<button data-sact="up" title="Move scene up"' + (si === 0 ? " disabled" : "") + '>↑</button><button data-sact="down" title="Move scene down"' + (si === b.scenes.length - 1 ? " disabled" : "") + '>↓</button><button class="ghost danger" data-sact="del">Delete scene</button>' : "") +
-        '</header>' + (function () { const ss = scriptScene(sc.number); if (!ss) return "";
-          return '<div class="scInfo"><span>p' + (ss.page || "–") + ' · ' + escapeHtml(ss.eighthsStr || "") + ' pages</span>' + (ss.approach ? '<span class="apChip" style="--c:' + approachColour(ss.approach) + '">' + escapeHtml(ss.approach) + '</span>' : "") +
-            ((ss.chars || []).length ? '<span>' + escapeHtml(ss.chars.slice(0, 6).join(", ")) + (ss.chars.length > 6 ? "…" : "") + '</span>' : "") + '</div>'; })() +
-        '<div class="bdFrames" data-drop="' + sc.id + '">' + (cards || '<div class="bdEmpty" style="margin:10px 0;text-align:left">No frames in this scene yet — add one from the viewfinder, or drag a frame here.</div>') + '</div></section>';
+      return '<section class="bdScene" data-scene="' + sc.id + '" data-n="' + escapeHtml(sc.number) + '"><header>' +
+        '<input class="scNum" value="' + escapeHtml(sc.number) + '"' + (edit ? "" : " readonly") + ' aria-label="Scene number" size="3">' +
+        '<div class="scTitles"><input class="scTitle" value="' + escapeHtml(sc.title || "") + '" placeholder="' + escapeHtml((scriptScene(sc.number) || {}).slug || "Scene title or slugline") + '"' + (edit ? "" : " readonly") + ' aria-label="Scene title">' +
+          '<div class="scMeta">' + sceneMetaHTML(sc.number) + '</div></div>' +
+        '<span class="count">' + plural(frames.length, "frame") + '</span>' +
+        (edit ? '<button class="shootBtn" data-sact="shoot" title="Open the viewfinder with this scene ready to board"><svg aria-hidden="true"><use href="#i-camera"/></svg>Shoot this scene</button>' +
+                '<button class="ghost iconBtn" data-sact="menu" aria-label="Options for scene ' + escapeHtml(sc.number) + '" aria-haspopup="true"><svg><use href="#i-more"/></svg></button>' : "") +
+        '</header><div class="bdFrames" data-drop="' + sc.id + '">' + frames.map(f => frameCardHTML(f, ix[f.id], edit, true)).join("") +
+        (edit ? '<button class="bdAddTile" data-sact="shoot"><svg aria-hidden="true"><use href="#i-plus"/></svg><span>Frame from the viewfinder</span><kbd>B</kbd></button>' : "") +
+        '</div></section>';
     }).join("");
+    finishBoardRender(body);
+  }
+  // Stage-state view: everything that shoots while the stage stays as dressed, by setup.
+  function renderBoardByState(body, b, ix, edit) {
+    const rows = boardRows(), states = [];
+    rows.forEach(r => { let st = states.find(x => x.key === r.f.stateKey); if (!st) states.push(st = { key: r.f.stateKey, i: r.i, rows: [] }); st.rows.push(r); });
+    body.innerHTML = states.map(st => {
+      const setups = []; st.rows.forEach(r => { let su = setups.find(x => x.n === r.i.setup); if (!su) setups.push(su = { n: r.i.setup, rows: [] }); su.rows.push(r); });
+      const scenes = [...new Set(st.rows.map(r => r.sc.number))];
+      return '<section class="bdScene" data-state="' + st.key + '"><header>' +
+        '<span class="stBadge" style="--c:' + STATE_COLORS[st.i.stateNo % STATE_COLORS.length] + '">STAGE ' + st.i.state + '</span>' +
+        '<div class="scTitles"><b>' + plural(st.rows.length, "frame") + ' · ' + plural(setups.length, "setup") + '</b><div class="scMeta">Scene' + (scenes.length > 1 ? "s " : " ") + escapeHtml(scenes.join(", ")) + ' <span class="dot">·</span> shoot these without re-dressing the stage</div></div>' +
+        (edit ? '<button class="shootBtn" data-stact="set" title="Rebuild the stage as dressed for these frames"><svg aria-hidden="true"><use href="#i-stage"/></svg>Set the stage</button>' : "") +
+        '</header><div class="bdFrames">' + setups.map(su => {
+          const o = su.rows[0].f.optics || {};
+          return '<div class="suLabel"><b>SU' + pad2(su.n) + '</b>' + escapeHtml(o.f + "mm · " + (o.body || "") + (o.heightFt != null ? " · lens height " + fmtLen(o.heightFt) : "")) + '</div>' + su.rows.map(r => frameCardHTML(r.f, r.i, edit, false)).join("");
+        }).join("") + '</div></section>';
+    }).join("");
+    finishBoardRender(body);
+  }
+  function finishBoardRender(body) {
     body.querySelectorAll("img[data-img]").forEach(im => getFrameImg(im.dataset.img).then(u => { if (u) im.src = u; }));
+    requestAnimationFrame(() => autosizeIn(body));
+    syncCurrentScene();
+  }
+  function scrollBoardTo(n) {
+    const sc = boardSceneFor(n); if (!sc) return false;
+    if (boardUI.group !== "scene") { boardUI.group = "scene"; saveBoardUI(); renderBoard(); }
+    const el = document.querySelector('#bdBody .bdScene[data-scene="' + sc.id + '"]'); if (!el) return false;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1400);
+    return true;
+  }
+  // Which scene is at the top of the board — marked in the script list as you scroll.
+  function syncCurrentScene() {
+    if (boardUI.group !== "scene") return;
+    const body = document.getElementById("bdBody"), top = body.getBoundingClientRect().top + 60;
+    let cur = null;
+    for (const el of body.querySelectorAll(".bdScene[data-n]")) { if (el.getBoundingClientRect().bottom > top) { cur = el.dataset.n; break; } }
+    if (cur === boardUI.current) return;
+    boardUI.current = cur;
+    document.querySelectorAll("#bdScript .scRow").forEach(r => r.classList.toggle("current", r.dataset.sn === cur));
   }
   function moveFrame(id, beforeId, sceneId) {
     const b = boardCfg(), i = b.frames.findIndex(f => f.id === id); if (i < 0) return;
@@ -6030,29 +6243,188 @@
     let at = beforeId ? b.frames.findIndex(x => x.id === beforeId) : -1;
     if (at < 0) { at = -1; b.frames.forEach((x, k) => { if (x.sceneId === sceneId) at = k; }); at = at < 0 ? b.frames.length : at + 1; }
     b.frames.splice(at, 0, f);
-    scheduleAutosave(); renderBoard(); refreshBoardBar();
+    scheduleAutosave(); renderBoard(); refreshShotStrip();
   }
+  // "Shoot this scene": into the viewfinder with the scene ready on the shot strip.
+  let stripScene = null;                                     // a board scene id, or "script:<n>"
+  function shootScene(val) {
+    if (mode !== "edit") return;
+    const pa = activeCameraPA();
+    if (!pa || !placedGroupByUid[pa._uid]) { toast("Add a camera first (Camera on the left)"); return; }
+    if (val) stripScene = val;
+    closeBoard(); enterCameraView(pa);
+  }
+  // ---- shared ⋯ menu for cards and scene headers -------------------------------------------
+  let bdMenuFor = null;
+  function closeBdMenu() { const m = document.getElementById("bdMenu"); if (m) m.classList.add("hidden"); bdMenuFor = null; }
+  function openBdMenu(btn, items) {
+    const m = document.getElementById("bdMenu");
+    m.innerHTML = items.map(it => it === "-" ? '<div class="sep"></div>' : '<button class="item' + (it.danger ? " danger" : "") + '" role="menuitem" data-mi="' + it.id + '"' + (it.disabled ? " disabled" : "") + '>' + escapeHtml(it.label) + '</button>').join("");
+    m.classList.remove("hidden");
+    const r = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + "px";
+    m.style.top = (r.bottom + h + 8 > window.innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + "px";
+    bdMenuFor = { btn: btn, items: items };
+    const first = m.querySelector("button:not([disabled])"); if (first) first.focus({ preventScroll: true });
+  }
+  function frameMenu(btn, f) {
+    const b = boardCfg(), same = b.frames.filter(x => x.sceneId === f.sceneId), pos = same.indexOf(f), sc = b.scenes.find(x => x.id === f.sceneId);
+    openBdMenu(btn, [
+      { id: "go", label: "Go to this frame", run: () => goToFrame(f.id) },
+      { id: "pick", label: "Pick lines from the script…", disabled: !scriptScene(sc.number), run: () => openLinePicker(sc.number, txt => { f.line = (f.line && f.line.trim() ? f.line.trim() + "\n\n" : "") + txt; scheduleAutosave(); renderBoard(); }) },
+      "-",
+      { id: "left", label: "Move earlier", disabled: pos <= 0, run: () => { const i = b.frames.indexOf(f), j = b.frames.indexOf(same[pos - 1]); b.frames[i] = same[pos - 1]; b.frames[j] = f; scheduleAutosave(); renderBoard(); refreshShotStrip(); } },
+      { id: "right", label: "Move later", disabled: pos >= same.length - 1, run: () => { const i = b.frames.indexOf(f), j = b.frames.indexOf(same[pos + 1]); b.frames[i] = same[pos + 1]; b.frames[j] = f; scheduleAutosave(); renderBoard(); refreshShotStrip(); } },
+      "-",
+      { id: "del", label: "Delete frame", danger: true, run: () => {
+        const i = b.frames.indexOf(f), code = frameCode(f.id); b.frames.splice(i, 1); if (boardEditId === f.id) boardEditId = null;
+        scheduleAutosave(); renderBoard(); refreshShotStrip();
+        toast("Deleted " + code, { label: "Undo", fn: () => { b.frames.splice(Math.min(i, b.frames.length), 0, f); scheduleAutosave(); if (boardOpen) renderBoard(); refreshShotStrip(); } });
+      } }
+    ]);
+  }
+  function sceneMenu(btn, sc) {
+    const b = boardCfg(), si = b.scenes.indexOf(sc);
+    openBdMenu(btn, [
+      { id: "read", label: "Read the scene in the script", disabled: !scriptScene(sc.number), run: () => { boardUI.script = true; saveBoardUI(); scriptUI.open = scriptScene(sc.number).n; renderScriptSide(); const row = document.querySelector('#bdScript .scRow[data-sn="' + CSS.escape(scriptUI.open) + '"]'); if (row) row.scrollIntoView({ block: "start", behavior: "smooth" }); } },
+      { id: "up", label: "Move scene up", disabled: si <= 0, run: () => { b.scenes.splice(si, 1); b.scenes.splice(si - 1, 0, sc); scheduleAutosave(); renderBoard(); } },
+      { id: "down", label: "Move scene down", disabled: si >= b.scenes.length - 1, run: () => { b.scenes.splice(si, 1); b.scenes.splice(si + 1, 0, sc); scheduleAutosave(); renderBoard(); } },
+      "-",
+      { id: "del", label: "Delete scene", danger: true, run: () => {
+        const gone = b.frames.filter(x => x.sceneId === sc.id), keep = b.frames.slice();
+        b.scenes.splice(si, 1); b.frames = b.frames.filter(x => x.sceneId !== sc.id);
+        scheduleAutosave(); renderBoard(); refreshShotStrip();
+        toast("Deleted scene " + sc.number + (gone.length ? " and its " + plural(gone.length, "frame") : ""), { label: "Undo", fn: () => { b.scenes.splice(si, 0, sc); b.frames = keep; scheduleAutosave(); if (boardOpen) renderBoard(); refreshShotStrip(); } });
+      } }
+    ]);
+  }
+
+  // ---- shot strip (viewfinder) ------------------------------------------------------------------
+  function stripSceneValue() {
+    const b = boardCfg(), ed = boardEditId && b.frames.find(x => x.id === boardEditId);
+    if (stripScene && (stripScene.indexOf("script:") === 0 ? scriptScene(stripScene.slice(7)) : b.scenes.some(x => x.id === stripScene))) return stripScene;
+    if (ed) return ed.sceneId;
+    if (lastSceneId && b.scenes.some(x => x.id === lastSceneId)) return lastSceneId;
+    return b.scenes.length ? b.scenes[b.scenes.length - 1].id : null;
+  }
+  function refreshShotStrip() {
+    const el = document.getElementById("shotStrip"); if (!el) return;
+    const show = viewCamUid != null && mode === "edit" && !isPhone;
+    el.classList.toggle("hidden", !show);
+    if (!show) return;
+    try { el.classList.toggle("folded", localStorage.getItem("lumostage.stripFolded") === "1"); } catch (e) {}
+    document.getElementById("ssFold").setAttribute("aria-expanded", String(!el.classList.contains("folded")));
+    const b = boardCfg(), ix = boardIndex(), scr = scriptCfg(), val = stripSceneValue();
+    const onBoard = new Set(b.scenes.map(x => String(x.number).trim().toLowerCase()));
+    const fromScript = scr ? scr.scenes.filter(x => !onBoard.has(String(x.n).trim().toLowerCase()) && (x.onVolume === true || !scr.scenes.some(y => y.onVolume === true))) : [];
+    const sel = document.getElementById("ssScene");
+    sel.innerHTML = (b.scenes.length ? '<optgroup label="On the board">' + b.scenes.map(sc => '<option value="' + sc.id + '">Scene ' + escapeHtml(sc.number) + (sc.title || (scriptScene(sc.number) || {}).slug ? " · " + escapeHtml(sc.title || scriptScene(sc.number).slug) : "") + '</option>').join("") + '</optgroup>' : "") +
+      (fromScript.length ? '<optgroup label="From the script">' + fromScript.map(x => '<option value="script:' + escapeHtml(x.n) + '">Scene ' + escapeHtml(x.n) + " · " + escapeHtml(x.slug) + '</option>').join("") + '</optgroup>' : "") +
+      '<option value="__new">New scene…</option>';
+    sel.value = val || "__new";
+    const sceneId = sel.value.indexOf("script:") === 0 || sel.value === "__new" ? null : sel.value;
+    const frames = sceneId ? b.frames.filter(f => f.sceneId === sceneId) : [];
+    const sn = sceneId ? b.scenes.find(x => x.id === sceneId).number : sel.value.indexOf("script:") === 0 ? sel.value.slice(7) : null, ss = sn && scriptScene(sn);
+    document.getElementById("ssMeta").textContent = (frames.length ? plural(frames.length, "frame") : "No frames yet") + (ss ? " · p" + ss.page + " · " + ss.eighthsStr + " pp" + (ss.approach ? " · " + ss.approach : "") : "");
+    const ed = boardEditId && frames.find(f => f.id === boardEditId);
+    document.getElementById("ssRow").innerHTML = frames.map(f => '<button class="ssThumb' + (f.id === boardEditId ? " cur" : "") + '" data-go="' + f.id + '" title="' + escapeHtml(ix[f.id].code + (f.action ? " — " + f.action : "")) + '"><img alt="" src="' + imgSrc(f.id) + '" data-img="' + f.id + '"><span>' + escapeHtml(ix[f.id].code) + '</span></button>').join("") +
+      (ed ? '<button class="ssAct" data-ss="replace" title="Re-capture ' + escapeHtml(ix[ed.id].code) + ' with what you see now">Replace ' + escapeHtml(ix[ed.id].code) + '<small>v' + ((ed.version || 1) + 1) + '</small></button>' : "") +
+      '<button class="ssAct primary" data-ss="add" title="Add this frame to the board (B)"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add frame <kbd>B</kbd></button>';
+    document.querySelectorAll("#ssRow img[data-img]").forEach(im => getFrameImg(im.dataset.img).then(u => { if (u) im.src = u; }));
+  }
+  const refreshBoardBar = refreshShotStrip;                 // older call sites
+
+  // ---- project panel ------------------------------------------------------------------------------
+  function projectPanelOpen() { return document.getElementById("projPanel").classList.contains("open"); }
+  function openProjectPanel(focusTitle) {
+    closeMenus(); closeBdMenu();
+    const pj = projectCfg(), pp = document.getElementById("projPanel");
+    pp.querySelectorAll("[data-pj]").forEach(inp => { inp.value = pj[inp.dataset.pj] || ""; inp.readOnly = mode !== "edit"; });
+    syncProjectExample(); renderProjectPanel();
+    pp.classList.add("open"); pp.setAttribute("aria-hidden", "false");
+    document.getElementById("projChip").setAttribute("aria-expanded", "true");
+    if (focusTitle || !pj.title.trim()) setTimeout(() => document.getElementById("ppTitle").focus(), 60);
+  }
+  function closeProjectPanel() {
+    const pp = document.getElementById("projPanel"); if (!pp || !pp.classList.contains("open")) return;
+    pp.classList.remove("open"); pp.setAttribute("aria-hidden", "true"); document.getElementById("projChip").setAttribute("aria-expanded", "false");
+  }
+  const openProjectSheet = openProjectPanel;                // older call sites
+  function renderProjectPanel() {
+    const sc = scriptCfg(), b = boardCfg(), ix = boardIndex(), edit = mode === "edit";
+    document.getElementById("ppScript").innerHTML = sc
+      ? '<div class="ppScriptCard"><svg aria-hidden="true"><use href="#i-script"/></svg><b>' + escapeHtml(sc.title) + '</b><small>' + escapeHtml((sc.source && sc.source.app === "Slugger" ? "Slugger breakdown" : "Read from the PDF") + " · " + plural(sc.scenes.length, "scene") + " · " + sc.pages + " pages") +
+          (sc.scenes.some(x => x.onVolume === true) ? " · " + sc.scenes.filter(x => x.onVolume === true).length + " on the volume" : "") + (sc.includesText ? "" : "<br>Breakdown only — no script text in this file") + '</small>' +
+          '<div class="btnRow"><button id="ppScriptShow">Show on the board</button>' + (edit ? '<button class="ghost" id="ppScriptReplace">Replace…</button>' : "") + '</div></div>'
+      : '<p class="ppEmpty">No script yet. Import the screenplay PDF — or a Slugger breakdown — to pick scenes and lines straight from it. It stays on this computer.</p>' + (edit ? '<div class="btnRow"><button id="ppScriptReplace"><svg aria-hidden="true"><use href="#i-script"/></svg>Import script…</button></div>' : "");
+    const boardedScript = sc ? b.scenes.map(x => scriptScene(x.number)).filter(Boolean) : [];
+    const e8 = list => list.reduce((a, x) => a + (x.eighths || 0), 0);
+    const volScenes = sc ? sc.scenes.filter(x => x.onVolume === true) : [];
+    const rowsP = [
+      ["Scenes on the board", b.scenes.length + (sc ? ' <small>of ' + (volScenes.length ? volScenes.length + " on the volume" : sc.scenes.length) + '</small>' : "")],
+      ["Frames", String(b.frames.length)],
+      ["Setups", String(ix._counts.setups)],
+      ["Stage states", String(ix._counts.states) + (ix._counts.states > 1 ? ' <small>' + (ix._counts.states - 1) + ' re-dress' + (ix._counts.states > 2 ? "es" : "") + '</small>' : "")]
+    ];
+    if (sc) rowsP.push(["Pages boarded", escapeHtml(eighthsStr(e8(boardedScript) / 8)) + ' <small>of ' + escapeHtml(eighthsStr(e8(volScenes.length ? volScenes : sc.scenes) / 8)) + (volScenes.length ? " on the volume" : "") + '</small>']);
+    const pj = projectCfg(); if (pj.dates && pj.dates.trim()) rowsP.push(["Shooting", escapeHtml(pj.dates)]);
+    document.getElementById("ppPlan").innerHTML = rowsP.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join("");
+  }
+  // The project is named in the top bar: it spans the stage, prints, the board and every file.
+  function refreshProjectLabels() {
+    const pj = projectCfg(), t = pj.title.trim(), nm = document.getElementById("pcName"), sub = document.getElementById("pcSub");
+    if (nm) { nm.textContent = t || "Untitled project"; nm.classList.toggle("untitled", !t); }
+    if (sub) sub.textContent = t ? ([pj.episode.trim() ? "Ep " + pj.episode.trim() : "", pj.client.trim(), pj.dates.trim()].filter(Boolean).join(" · ") || "Mock & Roll") : "Mock & Roll by Lumostage";
+    const el = document.getElementById("setProjSub"); if (el) el.textContent = t ? t + (pj.episode.trim() ? " · Ep " + pj.episode.trim() : "") : "Untitled — name it for prints and files";
+    document.title = (t ? t + " · " : "") + "Mock & Roll · Lumostage";
+  }
+  function syncProjectExample() {
+    const code = document.querySelector('#projPanel [data-pj=code]'); if (code) code.placeholder = "auto: " + projectCode();
+    const ex = document.getElementById("pjExample");
+    if (ex) ex.innerHTML = "Files are named <code>" + escapeHtml(projectBase()) + "_SC012A_SU03_35mm_v1.jpg</code>";
+  }
+
   function wireBoard() {
     document.getElementById("boardBtn").addEventListener("click", () => boardOpen ? closeBoard() : openBoard());
     document.getElementById("boardOpenBtn").addEventListener("click", openBoard);
     document.getElementById("boardAddBtn").addEventListener("click", openAddToBoard);
-    document.getElementById("lbBoard").addEventListener("click", openAddToBoard);
-    document.getElementById("lbReplace").addEventListener("click", replaceFrame);
-    document.getElementById("bdClose").addEventListener("click", closeBoard);
     // Drop a script (PDF or Slugger file) anywhere on the board to import it.
     const bd = document.getElementById("board");
     bd.addEventListener("dragover", e => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) e.preventDefault(); });
     bd.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && /\.(pdf|json)$/i.test(f.name)) { e.preventDefault(); importScriptFile(f); } });
-    document.getElementById("bdProj").addEventListener("click", openProjectSheet);
-    document.getElementById("projBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
-    document.getElementById("setProjBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
-    refreshProjectLabels();
+    // Board bar
+    bd.querySelectorAll("[data-grp]").forEach(x => x.addEventListener("click", () => { boardUI.group = x.dataset.grp; saveBoardUI(); renderBoard(); document.getElementById("bdBody").scrollTop = 0; }));
+    bd.querySelectorAll("[data-sz]").forEach(x => x.addEventListener("click", () => { boardUI.size = x.dataset.sz; saveBoardUI(); renderBoardHead(); autosizeIn(document.getElementById("bdBody")); }));
     document.getElementById("bdAddScene").addEventListener("click", () => {
       const b = boardCfg(), last = b.scenes[b.scenes.length - 1];
       b.scenes.push({ id: newId("s"), number: String(last ? (parseInt(last.number, 10) + 1 || b.scenes.length + 1) : 1), title: "" });
+      if (boardUI.group !== "scene") { boardUI.group = "scene"; saveBoardUI(); }
       scheduleAutosave(); renderBoard();
-      const inp = document.querySelectorAll("#bdBody .scTitle"); if (inp.length) inp[inp.length - 1].focus();
+      const inp = document.querySelectorAll("#bdBody .scTitle"); if (inp.length) { inp[inp.length - 1].scrollIntoView({ block: "center" }); inp[inp.length - 1].focus(); }
     });
+    // Project chip + panel
+    document.getElementById("projChip").addEventListener("click", () => projectPanelOpen() ? closeProjectPanel() : openProjectPanel());
+    document.getElementById("projBtn").addEventListener("click", () => openProjectPanel(true));
+    document.getElementById("setProjBtn").addEventListener("click", () => openProjectPanel(true));
+    const pp = document.getElementById("projPanel");
+    pp.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); refreshProjectLabels(); renderProjectPanel(); scheduleAutosave(); }));
+    document.getElementById("ppClose").addEventListener("click", closeProjectPanel);
+    pp.addEventListener("keydown", e => { if (e.key === "Escape") { closeProjectPanel(); document.getElementById("projChip").focus(); e.preventDefault(); } e.stopPropagation(); });
+    pp.addEventListener("keyup", e => e.stopPropagation());
+    pp.addEventListener("click", e => {
+      const ex = e.target.closest("[data-exp]"), csv = e.target.closest("[data-exp-csv]");
+      if (csv) { e.preventDefault(); e.stopPropagation(); exportBoard("csv"); return; }
+      if (ex) { exportBoard(ex.dataset.exp); return; }
+      const id = (e.target.closest("button") || {}).id;
+      if (id === "ppBoard" || id === "ppScriptShow") { closeProjectPanel(); if (id === "ppScriptShow") { boardUI.script = true; saveBoardUI(); } openBoard(); }
+      else if (id === "ppScriptReplace") document.getElementById("scriptInput").click();
+      else if (id === "ppPlanSheet") { closeProjectPanel(); openPlanSheet(); }
+      else if (id === "ppSave") saveJSON();
+      else if (id === "ppOpen") { closeProjectPanel(); document.getElementById("loadBtn").click(); }
+      else if (id === "ppNew") { closeProjectPanel(); document.getElementById("newBtn").click(); }
+    });
+    document.addEventListener("pointerdown", e => { if (projectPanelOpen() && !e.target.closest("#projPanel,#projChip,#toast,#newSheet,#planSheet")) closeProjectPanel(); });
+    refreshProjectLabels();
     // Add-to-board sheet
     const ab = document.getElementById("addBoardSheet");
     document.getElementById("abScene").addEventListener("change", syncAddSheet);
@@ -6060,22 +6432,35 @@
     document.getElementById("abCancel").addEventListener("click", () => { ab.classList.add("hidden"); pendingFrame = null; });
     ab.addEventListener("keydown", e => {
       if (e.key === "Escape") { ab.classList.add("hidden"); pendingFrame = null; }
-      else if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") commitAddToBoard();
+      else if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "SELECT") commitAddToBoard();
       else if (e.key === "Enter" && e.target.tagName === "TEXTAREA" && (e.ctrlKey || e.metaKey)) commitAddToBoard();
-      else return;
+      else { e.stopPropagation(); return; }
       e.preventDefault(); e.stopPropagation();
     });
     ab.addEventListener("keyup", e => e.stopPropagation());
     // Export menu
     const eb = document.getElementById("bdExportBtn"), em = document.getElementById("bdExportMenu");
-    eb.addEventListener("click", e => { e.stopPropagation(); const open = em.classList.contains("hidden"); closeMenus(); em.classList.toggle("hidden", !open); eb.setAttribute("aria-expanded", String(open)); });
+    eb.addEventListener("click", e => { e.stopPropagation(); const open = em.classList.contains("hidden"); closeMenus(); closeBdMenu(); em.classList.toggle("hidden", !open); eb.setAttribute("aria-expanded", String(open)); });
     em.addEventListener("click", e => { const it = e.target.closest("[data-exp]"); if (!it) return; em.classList.add("hidden"); eb.setAttribute("aria-expanded", "false"); exportBoard(it.dataset.exp); });
     document.addEventListener("click", e => { if (!e.target.closest("#bdExportWrap")) em.classList.add("hidden"); });
-    // Board body: edits, buttons, revisit, drag + drop
+    // ⋯ menu
+    const mn = document.getElementById("bdMenu");
+    mn.addEventListener("click", e => { const it = e.target.closest("[data-mi]"); if (!it || !bdMenuFor) return; const item = bdMenuFor.items.find(x => x.id === it.dataset.mi); closeBdMenu(); if (item && item.run) item.run(); });
+    mn.addEventListener("keydown", e => {
+      const its = [...mn.querySelectorAll("button:not([disabled])")], k = its.indexOf(document.activeElement);
+      if (e.key === "Escape") { const b2 = bdMenuFor && bdMenuFor.btn; closeBdMenu(); if (b2) b2.focus(); }
+      else if (e.key === "ArrowDown") its[(k + 1) % its.length].focus();
+      else if (e.key === "ArrowUp") its[(k - 1 + its.length) % its.length].focus();
+      else { e.stopPropagation(); return; }
+      e.preventDefault(); e.stopPropagation();
+    });
+    document.addEventListener("pointerdown", e => { if (bdMenuFor && !e.target.closest("#bdMenu") && e.target.closest("button") !== bdMenuFor.btn) closeBdMenu(); });
+    // Board body: edits, revisit, menus, drag + drop
     const body = document.getElementById("bdBody");
+    body.addEventListener("scroll", () => { closeBdMenu(); if (!body._raf) body._raf = requestAnimationFrame(() => { body._raf = null; syncCurrentScene(); }); });
     body.addEventListener("input", e => {
       const card = e.target.closest(".bdCard"), scEl = e.target.closest(".bdScene"), b = boardCfg();
-      if (card && e.target.dataset.f) { const f = b.frames.find(x => x.id === card.dataset.id); if (f) { f[e.target.dataset.f] = e.target.value; scheduleAutosave(); } return; }
+      if (card && e.target.dataset.f) { const f = b.frames.find(x => x.id === card.dataset.id); if (f) { f[e.target.dataset.f] = e.target.value; scheduleAutosave(); } e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + 2 + "px"; return; }
       if (scEl && (e.target.classList.contains("scNum") || e.target.classList.contains("scTitle"))) {
         const sc = b.scenes.find(x => x.id === scEl.dataset.scene); if (!sc) return;
         if (e.target.classList.contains("scNum")) sc.number = e.target.value.trim() || sc.number; else sc.title = e.target.value;
@@ -6084,81 +6469,55 @@
     });
     body.addEventListener("change", e => { if (e.target.classList.contains("scNum")) renderBoard(); });   // codes follow the scene number
     body.addEventListener("click", e => {
-      const b = boardCfg(), go = e.target.closest("[data-go]");
+      const b = boardCfg();
+      if (e.target.closest("[data-shoot-any]")) { shootScene(null); return; }
+      if (e.target.closest("#bdImpEmpty")) { document.getElementById("scriptInput").click(); return; }
+      const go = e.target.closest("[data-go]");
       if (go && mode === "edit") { goToFrame(go.dataset.go); return; }
       const btn = e.target.closest("button"); if (!btn) return;
       const card = e.target.closest(".bdCard"), scEl = e.target.closest(".bdScene");
-      if (card && btn.dataset.act) {
-        const id = card.dataset.id, i = b.frames.findIndex(x => x.id === id), f = b.frames[i];
-        if (btn.dataset.act === "pick") {
-          openLinePicker(boardCfg().scenes.find(x => x.id === f.sceneId).number, txt => { f.line = (f.line && f.line.trim() ? f.line.trim() + "\n\n" : "") + txt; scheduleAutosave(); renderBoard(); });
-          return;
-        }
-        if (btn.dataset.act === "del") {
-          const code = frameCode(id); b.frames.splice(i, 1); if (boardEditId === id) boardEditId = null;
-          scheduleAutosave(); renderBoard(); refreshBoardBar();
-          toast("Deleted " + code, { label: "Undo", fn: () => { b.frames.splice(Math.min(i, b.frames.length), 0, f); scheduleAutosave(); if (boardOpen) renderBoard(); } });
-        } else {
-          const same = b.frames.map((x, k) => [x, k]).filter(([x]) => x.sceneId === f.sceneId), pos = same.findIndex(([x]) => x.id === id);
-          const other = same[pos + (btn.dataset.act === "left" ? -1 : 1)];
-          if (other) { b.frames[i] = other[0]; b.frames[other[1]] = f; scheduleAutosave(); renderBoard(); refreshBoardBar(); }
-        }
+      if (card && btn.dataset.act === "menu") { const f = b.frames.find(x => x.id === card.dataset.id); if (f) frameMenu(btn, f); return; }
+      if (scEl && btn.dataset.sact) {
+        const sc = b.scenes.find(x => x.id === scEl.dataset.scene); if (!sc) return;
+        if (btn.dataset.sact === "shoot") shootScene(sc.id); else if (btn.dataset.sact === "menu") sceneMenu(btn, sc);
         return;
       }
-      if (scEl && btn.dataset.sact) {
-        const si = b.scenes.findIndex(x => x.id === scEl.dataset.scene), sc = b.scenes[si];
-        if (btn.dataset.sact === "del") {
-          const gone = b.frames.filter(x => x.sceneId === sc.id), keep = b.frames.slice();
-          b.scenes.splice(si, 1); b.frames = b.frames.filter(x => x.sceneId !== sc.id);
-          scheduleAutosave(); renderBoard();
-          toast("Deleted scene " + sc.number + (gone.length ? " and its " + gone.length + " frame" + (gone.length === 1 ? "" : "s") : ""), { label: "Undo", fn: () => { b.scenes.splice(si, 0, sc); b.frames = keep; scheduleAutosave(); if (boardOpen) renderBoard(); } });
-        } else {
-          const to = si + (btn.dataset.sact === "up" ? -1 : 1); if (to < 0 || to >= b.scenes.length) return;
-          b.scenes.splice(si, 1); b.scenes.splice(to, 0, sc); scheduleAutosave(); renderBoard();
-        }
+      if (scEl && btn.dataset.stact === "set") {
+        const f = b.frames.find(x => x.stateKey === scEl.dataset.state); if (!f) return;
+        const ix = boardIndex(); applyStage(f.stage); scheduleHistory(); scheduleAutosave(); closeBoard();
+        toast("Stage set to state " + ix[f.id].state + " — " + b.frames.filter(x => x.stateKey === f.stateKey).map(x => ix[x.id].code).join(", ") + " shoot on it");
       }
     });
     body.addEventListener("keydown", e => { const go = e.target.closest("[data-go]"); if (go && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); goToFrame(go.dataset.go); } });
     let dragId = null;
-    body.addEventListener("dragstart", e => { const c = e.target.closest(".bdCard"); if (!c) return; dragId = c.dataset.id; c.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId); });
+    body.addEventListener("dragstart", e => { const c = e.target.closest(".bdCard[draggable]"); if (!c || e.target.closest("textarea")) return; dragId = c.dataset.id; c.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId); });
     body.addEventListener("dragend", () => { dragId = null; body.querySelectorAll(".dragging,.dropBefore,.over").forEach(x => x.classList.remove("dragging", "dropBefore", "over")); });
     body.addEventListener("dragover", e => {
-      if (!dragId) return; const zone = e.target.closest(".bdFrames"); if (!zone) return;
+      if (!dragId) return; const zone = e.target.closest(".bdFrames[data-drop]"); if (!zone) return;
       e.preventDefault();
       body.querySelectorAll(".dropBefore,.over").forEach(x => x.classList.remove("dropBefore", "over"));
       const c = e.target.closest(".bdCard"); if (c && c.dataset.id !== dragId) c.classList.add("dropBefore"); else zone.classList.add("over");
     });
     body.addEventListener("drop", e => {
-      if (!dragId) return; const zone = e.target.closest(".bdFrames"); if (!zone) return;
+      if (!dragId) return; const zone = e.target.closest(".bdFrames[data-drop]"); if (!zone) return;
       e.preventDefault();
       const c = e.target.closest(".bdCard"), id = dragId; dragId = null;
       moveFrame(id, c && c.dataset.id !== id ? c.dataset.id : null, zone.dataset.drop);
     });
-    // Project sheet
-    const ps = document.getElementById("projSheet");
-    ps.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); refreshProjectLabels(); scheduleAutosave(); if (boardOpen) renderBoardHead(); }));
-    document.getElementById("projDone").addEventListener("click", () => ps.classList.add("hidden"));
-    ps.addEventListener("keydown", e => { if (e.key === "Escape" || (e.key === "Enter" && e.target.tagName === "INPUT")) { ps.classList.add("hidden"); e.preventDefault(); } e.stopPropagation(); });
-    ps.addEventListener("keyup", e => e.stopPropagation());
+    // Shot strip
+    const ss = document.getElementById("shotStrip");
+    document.getElementById("ssScene").addEventListener("change", e => {
+      if (e.target.value === "__new") { stripScene = null; openAddToBoard("__new"); refreshShotStrip(); }
+      else { stripScene = e.target.value; refreshShotStrip(); }
+      e.target.blur();                                      // keys go back to driving the camera
+    });
+    document.getElementById("ssFold").addEventListener("click", () => { ss.classList.toggle("folded"); try { localStorage.setItem("lumostage.stripFolded", ss.classList.contains("folded") ? "1" : "0"); } catch (e) {} refreshShotStrip(); });
+    document.getElementById("ssRow").addEventListener("click", e => {
+      const go = e.target.closest("[data-go]"); if (go) { goToFrame(go.dataset.go); return; }
+      const a = e.target.closest("[data-ss]"); if (!a) return;
+      if (a.dataset.ss === "add") openAddToBoard(); else replaceFrame();
+    });
   }
-  // The Settings menu shows which project this is (it spans the stage, prints and the board).
-  function refreshProjectLabels() {
-    const el = document.getElementById("setProjSub"); if (!el) return;
-    const pj = projectCfg();
-    el.textContent = pj.title.trim() ? pj.title.trim() + (pj.episode.trim() ? " · Ep " + pj.episode.trim() : "") : "Untitled — name it for prints and files";
-  }
-  function openProjectSheet() {
-    const pj = projectCfg(), ps = document.getElementById("projSheet");
-    ps.querySelectorAll("[data-pj]").forEach(inp => { inp.value = pj[inp.dataset.pj] || ""; inp.readOnly = mode !== "edit"; });
-    syncProjectExample();
-    ps.classList.remove("hidden");
-    ps.querySelector("[data-pj=title]").focus();
-  }
-  function syncProjectExample() {
-    document.querySelector('#projSheet [data-pj=code]').placeholder = "auto: " + (projectCfg().code.trim() ? projectCode() : (function () { const c = projectCode(); return c; })());
-    document.getElementById("pjExample").textContent = "Files: " + projectBase() + "_SC012A_SU03_35mm_v1.jpg · " + projectBase() + "_stage-plan_revA.pdf";
-  }
-
   // ---- exports ---------------------------------------------------------------------------------
   function boardRows() {
     const b = boardCfg(), ix = boardIndex(), pj = projectCfg();
@@ -6559,7 +6918,8 @@
       config.script = Object.assign({ id: newId("x") }, doc);
       const pj = projectCfg(); if (!pj.title.trim()) pj.title = doc.title.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
       scriptUI.filter = doc.scenes.some(sc => sc.onVolume === true) ? "vol" : "all";
-      scheduleAutosave(); refreshProjectLabels();
+      scheduleAutosave(); refreshProjectLabels(); boardUI.script = true; saveBoardUI();
+      if (projectPanelOpen()) renderProjectPanel();
       if (!boardOpen) openBoard(); else renderBoard();
       const vol = doc.scenes.filter(sc => sc.onVolume === true).length;
       toast("Script: " + doc.scenes.length + " scenes · " + doc.pages + " pages" + (vol ? " · " + vol + " on the volume" : "") + (doc.includesText ? "" : " (no script text in this file)"),
@@ -6596,10 +6956,13 @@
   }
   function renderScriptSide() {
     const side = document.getElementById("bdScript"), sc = scriptCfg(), btn = document.getElementById("bdScriptBtn");
-    btn.textContent = sc ? "Script: " + sc.title + " · " + sc.pages + " pp" : (mode === "edit" ? "+ Import script" : "");
+    btn.querySelector("span").textContent = sc ? "Script" : "Import script";
+    btn.setAttribute("aria-pressed", String(!!sc && boardUI.script));
+    btn.title = sc ? (boardUI.script ? "Hide the script" : "Show the script") + " — " + sc.title : "Import the screenplay PDF or a Slugger breakdown";
     btn.classList.toggle("hidden", !sc && mode !== "edit");
-    side.classList.toggle("hidden", !sc);
-    if (!sc) return;
+    side.classList.toggle("hidden", !sc || !boardUI.script);
+    side.classList.toggle("reading", scriptUI.open != null);
+    if (!sc || !boardUI.script) return;
     const hasVol = sc.scenes.some(x => x.onVolume === true);
     if (!hasVol && scriptUI.filter === "vol") scriptUI.filter = "all";
     const q = scriptUI.q.trim().toLowerCase(), b = boardCfg();
@@ -6612,7 +6975,7 @@
       '<small>' + list.length + ' scene' + (list.length === 1 ? "" : "s") + ' · ' + escapeHtml(eighthsStr(totalE / 8)) + ' pages</small></div><div class="scList">' +
       list.map(x => {
         const fc = frameCount(x.n), open = scriptUI.open === x.n;
-        let h = '<button class="scRow' + (open ? " open" : "") + '" data-sn="' + escapeHtml(x.n) + '"><span class="no">' + escapeHtml(x.n) + '</span><span class="sl" title="' + escapeHtml(x.slug) + '">' + escapeHtml(x.slug) + '</span><span class="pg">p' + (x.page || "–") + ' · ' + escapeHtml(x.eighthsStr || "") + '</span>' +
+        let h = '<button class="scRow' + (open ? " open" : "") + (boardUI.current === x.n ? " current" : "") + '" aria-expanded="' + open + '" data-sn="' + escapeHtml(x.n) + '"><span class="no">' + escapeHtml(x.n) + '</span><span class="sl" title="' + escapeHtml(x.slug) + '">' + escapeHtml(x.slug) + '</span><span class="pg">p' + (x.page || "–") + ' · ' + escapeHtml(x.eighthsStr || "") + '</span>' +
           '<span class="meta">' + (x.approach ? '<span class="apChip" style="--c:' + approachColour(x.approach) + '">' + escapeHtml(x.approach) + '</span>' : "") + (fc ? '<span class="frChip">● ' + fc + ' frame' + (fc === 1 ? "" : "s") + '</span>' : "") + '</span></button>';
         if (open) {
           h += '<div class="scDetail">' +
@@ -6630,7 +6993,13 @@
     const side = document.getElementById("bdScript");
     side.addEventListener("click", e => {
       const f = e.target.closest("[data-sf]"); if (f) { scriptUI.filter = f.dataset.sf; renderScriptSide(); return; }
-      const r = e.target.closest(".scRow"); if (r) { scriptUI.open = scriptUI.open === r.dataset.sn ? null : r.dataset.sn; renderScriptSide(); return; }
+      const r = e.target.closest(".scRow");
+      if (r) {
+        const opening = scriptUI.open !== r.dataset.sn;
+        scriptUI.open = opening ? r.dataset.sn : null; renderScriptSide();
+        if (opening) { scrollBoardTo(r.dataset.sn); const row = document.querySelector('#bdScript .scRow[data-sn="' + CSS.escape(r.dataset.sn) + '"]'); if (row) row.scrollIntoView({ block: "nearest" }); }
+        return;
+      }
       const a = e.target.closest("[data-scact]");
       if (a && scriptUI.open != null) {
         const existed = !!boardSceneFor(scriptUI.open), bs = ensureBoardScene(scriptUI.open);
@@ -6641,7 +7010,7 @@
     side.addEventListener("input", e => { if (e.target.id === "scQ") { scriptUI.q = e.target.value; const pos = e.target.selectionStart; renderScriptSide(); const q = document.getElementById("scQ"); q.focus(); q.setSelectionRange(pos, pos); } });
     document.getElementById("bdScriptBtn").addEventListener("click", () => {
       if (!scriptCfg()) { document.getElementById("scriptInput").click(); return; }
-      const side2 = document.getElementById("bdScript"); side2.classList.toggle("hidden");
+      boardUI.script = !boardUI.script; saveBoardUI(); renderScriptSide();
     });
     document.getElementById("scriptImpBtn").addEventListener("click", () => { closeMenus(); document.getElementById("scriptInput").click(); });
     const si = document.getElementById("scriptInput");
@@ -8822,8 +9191,9 @@
     refreshShotUI();
     syncSettingsUI();
     applyHouseLights();
-    refreshBoardBar();
+    refreshShotStrip();
     refreshProjectLabels();
+    if (projectPanelOpen()) { openProjectPanel(); }
     if (boardOpen) renderBoard();
     anchorPeopleOnFloors();                                  // people standing on decks/sets ride with them
     historyReset();                                          // a loaded layout starts a fresh history
@@ -9033,8 +9403,9 @@
       if (!typing && e.key === "?") { setHelp(true); e.preventDefault(); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); return; }
       if (!document.getElementById("planSheet").classList.contains("hidden")) return;    // the plan sheet keeps its own keys
+      if (!typing && e.key === "Escape" && projectPanelOpen()) { closeProjectPanel(); e.preventDefault(); return; }
       if (boardOpen) {
-        if (!typing && e.key === "Escape") { closeBoard(); e.preventDefault(); }
+        if (!typing && e.key === "Escape") { if (bdMenuFor) closeBdMenu(); else closeBoard(); e.preventDefault(); }
         if (!typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); }
         return;
       }
