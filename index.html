@@ -289,7 +289,8 @@
   .bdImg:hover .go, .bdImg:focus-visible .go { opacity: 1; }
   .bdMeta { padding: 8px 10px 0; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .bdCard textarea, .bdCard input { margin: 6px 10px 0; background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 6px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
-  .bdCard input.bdLine { font-style: italic; }
+  .bdCard textarea.bdLine { font-style: italic; border-left: 3px solid var(--accent); }
+  label.abFull .opt { color: var(--muted); font-size: 11px; opacity: .8; }
   .bdBtns { display: flex; gap: 6px; padding: 8px 10px 10px; }
   .bdBtns button { padding: 5px 9px; font-size: 12px; }
   .bdBtns .sp { flex: 1; }
@@ -986,8 +987,8 @@
         <label>Scene<select id="abScene"></select></label>
         <label id="abNewWrap">New scene number<input type="text" id="abNewNo" placeholder="e.g. 12" maxlength="10"></label>
       </div>
-      <label class="abFull">Action / description<textarea id="abAction" rows="2" placeholder="e.g. Hero boards the train, doors close behind her"></textarea></label>
-      <label class="abFull">Line (optional)<input type="text" id="abLine" placeholder="e.g. “Mind the gap.”"></label>
+      <label class="abFull">Shot description<textarea id="abAction" rows="2" placeholder="e.g. Wide — train pulls in, hero at the doors"></textarea></label>
+      <label class="abFull">Line / action <span class="opt">paste from the script · optional</span><textarea id="abLine" rows="3" placeholder="MAYA&#10;Mind the gap.&#10;&#10;She steps off as the doors close."></textarea></label>
       <div class="hint" id="abHint"></div>
       <div class="btnRow"><button id="abCancel">Cancel</button><button class="primary" id="abGo">Add frame</button></div>
     </div>
@@ -5930,8 +5931,8 @@
           '<div class="bdImg" tabindex="0" role="button" title="' + (edit ? "Go back to this frame" : "") + '" data-go="' + f.id + '"><img alt="Frame ' + escapeHtml(i.code) + '" data-img="' + f.id + '">' +
           '<span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span>' + (edit ? '<span class="go">Go to frame ↗</span>' : "") + '</div>' +
           '<div class="bdMeta">SU' + String(i.setup).padStart(2, "0") + ' · ' + escapeHtml(o.f + "mm · " + (o.label || "")) + ' · v' + (f.version || 1) + '</div>' +
-          '<textarea class="bdAction" rows="2" placeholder="Action / description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
-          '<input class="bdLine" type="text" placeholder="Line / dialogue"' + (edit ? "" : " readonly") + ' data-f="line" value="' + escapeHtml(f.line || "") + '">' +
+          '<textarea class="bdAction" rows="2" placeholder="Shot description" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
+          '<textarea class="bdLine" rows="' + Math.min(6, Math.max(2, String(f.line || "").split("\n").length)) + '" placeholder="LINE / ACTION — paste dialogue or script action" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
           (edit ? '<div class="bdBtns"><button data-act="left" title="Move earlier" aria-label="Move earlier">←</button><button data-act="right" title="Move later" aria-label="Move later">→</button><span class="sp"></span><button class="ghost danger" data-act="del">Delete</button></div>' : '<div style="height:10px"></div>') +
           '</article>';
       }).join("");
@@ -6113,25 +6114,25 @@
       const o = r.f.optics || {};
       html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div>' +
         '<div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + ' · Stage ' + r.i.state + '</div>' +
-        (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + (r.f.line ? '<div class="ln">“' + xmlEsc(r.f.line.replace(/^["“]|["”]$/g, "")) + '”</div>' : "") + '</div>';
+        (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + (r.f.line ? '<div class="ln">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</div>';
     });
     html += "</div>";
     printDoc(projectBase() + "_storyboard_" + todayStamp(),
       'h2{font-size:14px;margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 16px}.fr{break-inside:avoid}.im{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1d2124}' +
       '.im img{max-width:100%;max-height:100%;display:block}.cd{position:absolute;left:5px;top:5px;background:#1d2124;color:#fff;font-weight:700;font-size:11px;padding:2px 6px;border-radius:3px}' +
-      '.mt{font-size:8.5px;color:#6b7278;margin:4px 0 2px}.ac{font-size:10px;line-height:1.35}.ln{font-size:10px;font-style:italic;color:#3b4247;margin-top:2px}.pb{break-after:page}', html);
+      '.mt{font-size:8.5px;color:#6b7278;margin:4px 0 2px}.ac{font-size:10px;line-height:1.35}.ln{font-size:10px;font-style:italic;color:#3b4247;margin-top:3px;padding-left:6px;border-left:2px solid #9aa0a6;white-space:pre-line}.pb{break-after:page}', html);
   }
   function exportShotList(rows) {
     const tr = rows.map(r => { const o = r.f.optics || {};
-      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<br><i>“' + xmlEsc(r.f.line) + '”</i>' : "") + '</td></tr>'; }).join("");
+      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<div style="font-style:italic;white-space:pre-line;margin-top:3px;padding-left:5px;border-left:2px solid #9aa0a6">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</td></tr>'; }).join("");
     printDoc(projectBase() + "_shot-list_" + todayStamp(),
       'table{width:100%;border-collapse:collapse;font-size:9.5px}th{text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#6b7278;border-bottom:1.5px solid #1d2124;padding:4px}' +
       'td{border-bottom:1px solid #d5d9dc;padding:4px;vertical-align:top}tr{break-inside:avoid}td img{width:96px;display:block}',
-      docHeader("Shot list") + '<table><thead><tr><th>Shot</th><th>Frame</th><th>Setup</th><th>Stage</th><th>Lens</th><th>Camera · frame</th><th>Lens height</th><th>Action / line</th></tr></thead><tbody>' + tr + '</tbody></table>');
+      docHeader("Shot list") + '<table><thead><tr><th>Shot</th><th>Frame</th><th>Setup</th><th>Stage</th><th>Lens</th><th>Camera · frame</th><th>Lens height</th><th>Description · line / action</th></tr></thead><tbody>' + tr + '</tbody></table>');
   }
   function shotListCSV(rows) {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const head = ["Project", "Episode", "Scene", "Scene title", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Action", "Line", "Version", "File"];
+    const head = ["Project", "Episode", "Scene", "Scene title", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Shot description", "Line / action", "Version", "File"];
     return [head.map(q).join(",")].concat(rows.map(r => { const o = r.f.optics || {};
       return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title, r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
   }
