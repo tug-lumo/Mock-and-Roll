@@ -180,6 +180,14 @@
   .field label { color: var(--muted); font-size: 12.5px; }
   .field .inl { display: flex; gap: 4px; align-items: center; }
   .unitSfx { color: var(--muted); font-size: 12px; min-width: 14px; }
+  .catItem .row a.linkBtn { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); text-decoration: none; font-size: 12.5px; font-weight: 550; white-space: nowrap; }
+  .catItem .row a.linkBtn:hover { border-color: var(--accent); }
+  #houseBtn b { font-weight: 650; font-size: 11px; letter-spacing: .04em; padding: 2px 6px; border-radius: 5px; background: var(--panel2); color: var(--muted); }
+  #houseBtn[aria-pressed="true"] b { background: #f2bf1b; color: #1b1606; }
+  body.phone #houseBtn { font-size: 0; gap: 0; padding: 8px 10px; }
+  body.phone #houseBtn b { display: none; }
+  body.phone #houseBtn svg { width: 20px; height: 20px; }
+  body.phone #houseBtn[aria-pressed="true"] svg { color: #f2bf1b; }
   .dial { margin: 2px 0 12px; }
   .dial .dialTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .dial .dialTop label { color: var(--muted); font-size: 12.5px; }
@@ -515,6 +523,7 @@
       <symbol id="i-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></g></symbol>
       <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
       <symbol id="i-new" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v6M9 13h6"/></g></symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></g></symbol>
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5H9.5a5 5 0 0 0 0 10H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
@@ -537,6 +546,7 @@
       <button id="camViewBtn" title="Viewfinder — see exactly what the film camera sees"><svg><use href="#i-lens"/></svg>Viewfinder</button>
     </div>
     <span class="spacer"></span>
+    <button class="ghost" id="houseBtn" aria-pressed="true" title="House lights (H) — switch off to see only the light coming from the LED volume"><svg><use href="#i-bulb"/></svg>House lights <b>ON</b></button>
     <div class="histBtns editOnly" role="group" aria-label="History">
       <button class="ghost" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#i-undo"/></svg></button>
       <button class="ghost" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><svg><use href="#i-redo"/></svg></button>
@@ -716,7 +726,8 @@
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move and strafe</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Down / up</dd>
           <dt>Scroll</dt><dd>Move forward / back</dd>
-          <dt><kbd>Shift</kbd></dt><dd>Move faster</dd></dl>
+          <dt><kbd>Shift</kbd></dt><dd>Move faster</dd>
+          <dt><kbd>H</kbd></dt><dd>House lights on / off (off = lit only by the LED volume)</dd></dl>
           <h3>Plan view</h3><dl>
           <dt>Drag or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Pan</dd>
           <dt>Scroll or <kbd>Q</kbd> <kbd>E</kbd></dt><dd>Zoom</dd>
@@ -1304,10 +1315,12 @@
     wrap.appendChild(renderer.domElement);
 
     // Lights
-    scene.add(new THREE.HemisphereLight(0xdfe6f0, 0x2a2d33, 0.9));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.75);
-    dir.position.set(30, 50, 20);
-    scene.add(dir);
+    houseHemi = new THREE.HemisphereLight(0xdfe6f0, 0x2a2d33, 0.9);
+    scene.add(houseHemi);
+    houseDir = new THREE.DirectionalLight(0xffffff, 0.75);
+    houseDir.position.set(30, 50, 20);
+    scene.add(houseDir);
+    buildVolumeLights();
 
     // Floor grid in feet (100ft, 1ft cells)
     grid = new THREE.GridHelper(100, 100, 0x4c9ffe, 0x333842);
@@ -5709,6 +5722,126 @@
   // A soft blue gradient on the wall + ceiling by default, so the opening "look into the stage"
   // view reads as an active LED volume rather than a black void. Any surface can be set to
   // "None" or a loaded plate anytime.
+  // ---- House lights vs light from the volume ---------------------------------------------
+  // House lights = the studio work light (hemisphere + key). Switched off, the stage is lit only by
+  // what's on the LEDs: three lights along the main wall, one down from the ceiling and one per
+  // rolling wall, each coloured by sampling the content on its stretch of panel (flat plates by
+  // their UVs, 360° worlds along the same directions the LED shader uses). Practicals built into
+  // sets (the subway car's interior light) stay on.
+  let houseHemi = null, houseDir = null, volLights = null, volNextT = 0;
+  const VOL = { wall: 1.0, ceil: 0.8, roll: 0.7, bounce: 0.22, rollMax: 4, every: 0.2 };
+  const _volCv = document.createElement("canvas"); _volCv.width = 64; _volCv.height = 32;
+  const _volCx = _volCv.getContext("2d", { willReadFrequently: true });
+  function houseLightsOn() { return !config || config.houseLights !== false; }
+  function buildVolumeLights() {
+    volLights = new THREE.Group(); volLights.visible = false;
+    const u = volLights.userData;
+    u.wall = [0, 1, 2].map(() => new THREE.PointLight(0xffffff, 0, 80, 1.1));
+    u.roll = Array.from({ length: VOL.rollMax }, () => new THREE.PointLight(0xffffff, 0, 45, 1.3));
+    u.ceil = new THREE.DirectionalLight(0xffffff, 0);
+    u.bounce = new THREE.HemisphereLight(0xffffff, 0x000000, 0);
+    u.wall.concat(u.roll, [u.ceil, u.ceil.target, u.bounce]).forEach(l => volLights.add(l));
+    scene.add(volLights);
+  }
+  function setHouseLights(on, quiet) {
+    if (config) config.houseLights = !!on;
+    applyHouseLights();
+    if (!quiet) { scheduleAutosave(); toast(on ? "House lights on" : "House lights off — lit by the LED volume only"); }
+  }
+  function applyHouseLights() {
+    const on = houseLightsOn();
+    if (houseHemi) houseHemi.visible = on;
+    if (houseDir) houseDir.visible = on;
+    if (volLights) volLights.visible = !on;
+    volNextT = 0;                                            // resample straight away
+    const b = document.getElementById("houseBtn");
+    if (b) { b.setAttribute("aria-pressed", String(on)); const t = b.querySelector("b"); if (t) t.textContent = on ? "ON" : "OFF"; }
+  }
+  // Downsample a plate's current frame (image, canvas or video) to 64×32 once per tick.
+  function volPixels(plate, cache) {
+    if (!plate || !plate.tex) return null;
+    if (cache.has(plate)) return cache.get(plate);
+    const src = plate.tex.image;
+    let px = null;
+    try {
+      if (src && (!src.readyState || src.readyState >= 2) && (src.width || src.videoWidth)) {
+        _volCx.clearRect(0, 0, 64, 32); _volCx.drawImage(src, 0, 0, 64, 32);
+        px = _volCx.getImageData(0, 0, 64, 32).data;
+      }
+    } catch (err) { px = null; }                              // tainted / not ready: no light from it this tick
+    cache.set(plate, px);
+    return px;
+  }
+  function pxAt(px, u, v, out) {                             // u, v in 0..1 (v up); adds into out
+    const x = Math.min(63, Math.max(0, Math.floor(u * 64))), y = Math.min(31, Math.max(0, Math.floor((1 - v) * 32))), i = (y * 64 + x) * 4;
+    out.r += px[i] / 255; out.g += px[i + 1] / 255; out.b += px[i + 2] / 255;
+  }
+  const _vd = new THREE.Vector3();
+  // Average colour a surface shows: flat plate → its UV box; 360° world → the directions to `pts`.
+  function surfaceLight(key, uBox, pts, cache) {
+    const plate = surfacePlateOf(key), out = new THREE.Color(0, 0, 0);
+    if (!plate || !plate.tex) return out;
+    const px = volPixels(plate, cache); if (!px) return out;
+    let n = 0;
+    if (plate.kind === "env") {
+      const e = envCfg(), o = envUniforms.origin.value, yaw = degToRad(e.yaw || 0), pitch = degToRad(e.pitch || 0), r = envUniforms.range.value;
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      pts.forEach(P => {
+        _vd.copy(P).sub(o).normalize();
+        let x = cy * _vd.x - sy * _vd.z, y = _vd.y, z = sy * _vd.x + cy * _vd.z;   // same turn + tilt as the LED shader
+        const y2 = cp * y + sp * z, z2 = -sp * y + cp * z;
+        const lon = Math.atan2(x, -z2), lat = Math.asin(Math.max(-1, Math.min(1, y2)));
+        const u = (lon - r.x) / (r.y - r.x), v = (lat - r.z) / (r.w - r.z);
+        n++; if (u >= 0 && u <= 1 && v >= 0 && v <= 1) pxAt(px, u, v, out);
+      });
+      out.multiplyScalar(e.brightness != null ? e.brightness : 1);
+    } else {
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { pxAt(px, uBox[0] + (uBox[1] - uBox[0]) * (i + 0.5) / 6, (j + 0.5) / 4, out); n++; }
+    }
+    return n ? out.multiplyScalar(1 / n) : out;
+  }
+  function updateVolumeLights(t) {
+    if (!volLights || !volLights.visible || t < volNextT) return;
+    volNextT = t + VOL.every;
+    const u = volLights.userData, cache = new Map(), sum = new THREE.Color(0, 0, 0);
+    // Main wall: three stretches of the arc, a light in front of each.
+    const wd = mainWallMesh && mainWallMesh.parent && mainWallMesh.userData.dims;
+    u.wall.forEach((l, i) => {
+      if (!wd) { l.intensity = 0; return; }
+      const span = Math.PI - 2 * wd.delta, th = k => Math.PI / 2 + wd.delta + k * span;
+      const pts = [];
+      for (let a = 0; a < 4; a++) for (let b = -1; b <= 1; b++) {
+        const tt = th((i + (a + 0.5) / 4) / 3);
+        pts.push(mainWallMesh.localToWorld(new THREE.Vector3(wd.radius * Math.sin(tt), b * wd.wallH / 4, wd.radius * Math.cos(tt))));
+      }
+      const c = surfaceLight("mainWall", [i / 3, (i + 1) / 3], pts, cache), tm = th((i + 0.5) / 3);
+      l.position.copy(mainWallMesh.localToWorld(new THREE.Vector3(0.72 * wd.radius * Math.sin(tm), 0, 0.72 * wd.radius * Math.cos(tm))));
+      l.color.copy(c); l.intensity = VOL.wall; sum.add(c);
+    });
+    // Ceiling: straight down over its footprint.
+    let ceilC = new THREE.Color(0, 0, 0);
+    if (ceilingMesh && ceilingMesh.parent && ceilingGroup && ceilingGroup.visible !== false) {
+      const bb = new THREE.Box3().setFromObject(ceilingMesh), pts = [];
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) pts.push(new THREE.Vector3(bb.min.x + (bb.max.x - bb.min.x) * (a + 0.5) / 3, bb.min.y, bb.min.z + (bb.max.z - bb.min.z) * (b + 0.5) / 3));
+      ceilC = surfaceLight("ceiling", [0, 1], pts, cache);
+      const c = bb.getCenter(new THREE.Vector3());
+      u.ceil.position.set(c.x, bb.min.y, c.z); u.ceil.target.position.set(c.x, 0, c.z + 0.01);
+    }
+    u.ceil.color.copy(ceilC); u.ceil.intensity = VOL.ceil;
+    // Rolling walls: a light just in front of each deployed LED face, toward the stage.
+    const rolls = selectableObjects.filter(o => o.userData.kind === "rollingWall" && o.visible && o.userData.ledMesh);
+    u.roll.forEach((l, i) => {
+      const g = rolls[i]; if (!g) { l.intensity = 0; return; }
+      const bb = new THREE.Box3().setFromObject(g.userData.ledMesh), c = bb.getCenter(new THREE.Vector3()), pts = [c.clone()];
+      [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([a, b]) => pts.push(new THREE.Vector3(a ? bb.max.x : bb.min.x, bb.min.y + (bb.max.y - bb.min.y) * (b ? 0.8 : 0.2), a ? bb.max.z : bb.min.z)));
+      const col = surfaceLight("roll:" + g.userData.id, [0, 1], pts, cache);
+      _vd.set(-c.x, 0, 6 - c.z).normalize();
+      l.position.set(c.x + _vd.x * 2.5, c.y, c.z + _vd.z * 2.5);
+      l.color.copy(col); l.intensity = VOL.roll; sum.add(col);
+    });
+    // Soft bounce: the ceiling's colour from above, the walls' from below.
+    u.bounce.color.copy(ceilC); u.bounce.groundColor.copy(sum.multiplyScalar(0.25)); u.bounce.intensity = VOL.bounce;
+  }
   function initDefaultWallPlate() {
     if (wallPlates.length > 1) return;              // already set up (e.g. a re-init)
     const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
@@ -6177,6 +6310,19 @@
     imp.addEventListener("click", () => fi.click());
     gb.appendChild(fi); gb.appendChild(imp);
     gb.appendChild(el("div", "hint", "After importing, select it and type one real dimension (e.g. a pickup's length) — it scales to match."));
+
+    // More models: free libraries to download a .glb from, then bring in with Import above.
+    const mm = group("more", "More models", null, false);
+    [["Poly Pizza", "poly.pizza", "https://poly.pizza", "Thousands of free low-poly models · check each one's licence"],
+     ["Kenney", "kenney.nl", "https://kenney.nl/assets", "Free asset packs (CC0) · props, furniture, vehicles"],
+     ["Quaternius", "quaternius.com", "https://quaternius.com", "Free low-poly packs (CC0) · city, nature, characters"]].forEach(([name, host, url, sub]) => {
+      const row = item(mm, name, sub);
+      const a = document.createElement("a");
+      a.className = "linkBtn"; a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.textContent = "Open ↗"; a.title = "Opens " + host + " in a new tab";
+      row.appendChild(a);
+    });
+    mm.appendChild(el("div", "hint", "Download a model as .glb (or glTF binary), then use “Import a .glb file…” under Your 3D models."));
   }
 
   function freeSpawnSpot() {
@@ -7503,6 +7649,7 @@
     renderInspector();
     refreshShotUI();
     syncSettingsUI();
+    applyHouseLights();
     anchorPeopleOnFloors();                                  // people standing on decks/sets ride with them
     historyReset();                                          // a loaded layout starts a fresh history
     // Bring back the layout's 360° environment when it came from the library.
@@ -7653,6 +7800,8 @@
     document.addEventListener("click", () => closeMenus());
     // Help + welcome
     document.getElementById("helpBtn").addEventListener("click", () => setHelp(true));
+    document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
+    applyHouseLights();
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));
     document.getElementById("help").addEventListener("click", e => { if (e.target.id === "help") setHelp(false); });
     document.getElementById("welcomeOk").addEventListener("click", dismissWelcome);
@@ -7724,6 +7873,7 @@
         e.preventDefault(); e.stopPropagation(); return;
       }
       if (!typing && (e.key === "l" || e.key === "L") && !e.ctrlKey && !e.metaKey) { openLensMenu(); e.preventDefault(); return; }
+      if (!typing && (e.key === "h" || e.key === "H") && !e.ctrlKey && !e.metaKey && !e.altKey) { setHouseLights(!houseLightsOn()); e.preventDefault(); return; }
       if (viewCamUid != null) {
         // FPS controls: WASD move (A/D strafe), Q/E height, arrows look, Shift = fast.
         if (e.key === "Escape") { exitCameraView(); return; }
@@ -7778,6 +7928,7 @@
     updatePhone(dt);
     updateCollisionWarning();
     updateEnvironment();               // 360° eyepoint + look controls, before anything renders the LEDs
+    updateVolumeLights(t / 1000);      // house lights off: light the stage from what the LEDs show
     updateProbes(performance.now());   // reflections snapshot the stage before the frame is drawn
     if (viewCamUid != null) { updateCameraFPS(dt); renderCameraView(); return; }
     updateNav(dt);
