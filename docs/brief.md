@@ -312,3 +312,10 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - **Exports** (Export ▾): storyboard (print/PDF, by scene), setup sheets per stage state (stage plan without cameras, or with each setup's camera labelled `SU01 · 12A, 12B`, + that state's frames), shot list (print/PDF and .csv), all frames as a .zip (stored-zip writer, + CSV).
 - **Storage**: frame images live in IndexedDB (`lumostage-board`), never in the localStorage autosave; File → Save layout embeds them, so one file carries the whole project; loading moves them back into IndexedDB. New layout clears the board and project (undoable).
 - Next (phase 4): shooting order grouped by stage state with changeover estimates; a read-only client board.
+
+## Script: Slugger handoff + client PDF import (2026-10-07)
+- **Import script** (File menu, the board's Script button, or drop a file on the board): a screenplay **PDF** (read in the browser with vendored pdf.js — nothing leaves the machine) or a **Slugger export** (`.lumoscript.json`, format in docs/script-format.md). Stored as `config.script`, saved with the project.
+- The PDF reader is a port of Slugger's parser (margin-number anchors, wrapped / non-standard slugs, eighths) plus element classification and watermark removal; it matches Slugger scene-for-scene on four production scripts.
+- **Board → Script sidebar**: scenes with page, eighths, Slugger approach chip (filter "On the volume" / All), search, frames-per-scene; open a scene for characters, volume solutions, notes, its formatted text, and "Add scene to the board" (board scenes keep script order, titled with the slug).
+- **Add to board** offers script scenes ("From the script (on the volume)"); **Pick from the script…** (dialog and each card's Script… button) selects lines into LINE / ACTION in script layout. Board scenes show page · length · approach · characters; storyboard + CSV carry page, length, approach.
+- Slugger side (branch `mock-and-roll-link`): `mockroll_link.py` + "Export to Mock & Roll" (with an "Include script text" tick-box, off for client copies).

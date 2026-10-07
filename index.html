@@ -294,7 +294,7 @@
   .bdBtns { display: flex; gap: 6px; padding: 8px 10px 10px; }
   .bdBtns button { padding: 5px 9px; font-size: 12px; }
   .bdBtns .sp { flex: 1; }
-  #projSheet, #addBoardSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #projSheet, #addBoardSheet { position: fixed; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
   #projSheet.hidden, #addBoardSheet.hidden { display: none; }
   #projSheet .card, #addBoardSheet .card { width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
   #projSheet h3, #addBoardSheet h3 { margin: 0 0 6px; }
@@ -311,6 +311,57 @@
   #projSheet .btnRow, #addBoardSheet .btnRow { justify-content: flex-end; }
   #projSheet .btnRow button, #addBoardSheet .btnRow button { flex: 0 0 auto; }
   body.phone .pjGrid { grid-template-columns: 1fr; }
+
+  /* Script (board sidebar, line picker) */
+  .bdMain { flex: 1; min-height: 0; display: flex; }
+  .bdMain .bdBody { flex: 1; min-width: 0; }
+  #bdScript { width: 360px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #bdScript.hidden { display: none; }
+  .bdScriptBtn { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 10px; font-size: 12px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bdScriptBtn:hover { color: var(--text); border-color: var(--accent); }
+  .scHead { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+  .scHead b { font-size: 13.5px; }
+  .scHead small { color: var(--muted); font-size: 11.5px; }
+  .scHead .row { display: flex; gap: 6px; align-items: center; }
+  .scHead input[type=search] { flex: 1; background: #0e1314; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 6px 9px; font: inherit; font-size: 12.5px; min-width: 0; }
+  .scHead .seg button { padding: 4px 10px; font-size: 12px; }
+  .scList { overflow-y: auto; flex: 1; padding: 6px; }
+  .scRow { display: grid; grid-template-columns: 38px 1fr auto; gap: 4px 8px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; color: var(--text); padding: 7px 8px; border-radius: 7px; font: inherit; cursor: pointer; }
+  .scRow:hover { background: var(--panel2); }
+  .scRow.open { background: var(--panel2); }
+  .scRow .no { font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .scRow .sl { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scRow .pg { font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .scRow .meta { grid-column: 2 / -1; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .apChip { font-size: 10px; font-weight: 700; letter-spacing: .03em; padding: 2px 6px; border-radius: 4px; color: #1d2124; background: var(--c, #d9d9d9); }
+  .frChip { font-size: 10.5px; color: var(--accent); }
+  .scDetail { margin: 2px 4px 10px; padding: 10px; background: #0e1314; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+  .scDetail .kv { color: var(--muted); margin-bottom: 6px; line-height: 1.45; }
+  .scDetail .kv b { color: var(--text); font-weight: 600; }
+  .scDetail .btnRow { margin: 8px 0 0; }
+  .scDetail .btnRow button { flex: 0 0 auto; padding: 5px 10px; font-size: 12px; }
+  .scriptText { font-family: "Courier Prime", "Courier New", Courier, monospace; font-size: 12px; line-height: 1.35; color: #e8e6df; }
+  .scriptText .el { padding: 2px 6px; border-radius: 4px; white-space: pre-wrap; }
+  .scriptText .el.slug { font-weight: 700; margin-top: 8px; }
+  .scriptText .el.action { margin-top: 6px; }
+  .scriptText .el.character { padding-left: 38%; margin-top: 8px; }
+  .scriptText .el.paren { padding-left: 30%; }
+  .scriptText .el.dialogue { padding-left: 18%; padding-right: 14%; }
+  .scriptText .el.transition { text-align: right; margin-top: 6px; }
+  .scDetail .scriptText { max-height: 340px; overflow: auto; margin-top: 8px; padding: 4px 0; }
+  #linePick { position: fixed; inset: 0; z-index: 48; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #linePick.hidden { display: none; }
+  #linePick .card { width: min(640px, calc(100% - 32px)); max-height: calc(100% - 40px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #linePick h3 { margin: 0 0 4px; }
+  #lpBody { flex: 1; overflow: auto; margin: 10px 0; padding: 6px; background: #0e1314; border: 1px solid var(--line); border-radius: 8px; }
+  #lpBody .el { cursor: pointer; }
+  #lpBody .el:hover { background: rgba(255,255,255,.05); }
+  #lpBody .el.sel { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+  #linePick .btnRow { justify-content: flex-end; }
+  #linePick .btnRow button { flex: 0 0 auto; }
+  button.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-size: 11.5px; cursor: pointer; margin-left: 6px; }
+  .bdScene .scInfo { font-size: 11.5px; color: var(--muted); margin: -4px 0 10px 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  body.phone #bdScript { width: 260px; }
 
   /* Stage plan sheet */
   #planSheet { position: absolute; inset: 0; z-index: 46; background: rgba(10,11,13,.72); display: grid; place-items: center; }
@@ -619,6 +670,8 @@
         <button class="item" id="projBtn" role="menuitem"><svg><use href="#i-board"/></svg><span>Project details…<small>Production, episode, director — names every file you export</small></span></button>
         <button class="item editOnly" id="newBtn" role="menuitem"><svg><use href="#i-new"/></svg><span>New layout…<small>Clear the stage and plan another setup</small></span></button>
         <button class="item editOnly" id="saveBtn" role="menuitem"><svg><use href="#i-save"/></svg><span>Save layout<small>Download this stage as a .json file</small></span></button>
+        <button class="item editOnly" id="scriptImpBtn" role="menuitem"><svg><use href="#i-file"/></svg><span>Import script…<small>A screenplay PDF, or a Slugger breakdown (.lumoscript.json)</small></span></button>
+        <input id="scriptInput" type="file" accept=".pdf,application/pdf,.json,application/json" class="hidden" />
         <button class="item editOnly" id="loadBtn" role="menuitem"><svg><use href="#i-open"/></svg><span>Open layout…<small>Load a saved .json file</small></span></button>
         <input id="fileInput" type="file" accept="application/json,.json" class="hidden" />
         <button class="item hidden" id="openPublished" role="menuitem"><svg><use href="#i-phone"/></svg><span>Open the published layout<small>The setup last published from the studio PC</small></span></button>
@@ -820,7 +873,7 @@
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
           <dt><kbd>L</kbd></dt><dd>Lens menu</dd>
           <dt><kbd>F</kbd> / <kbd>Shift</kbd> <kbd>F</kbd></dt><dd>Next / previous frame (2.39, 16:9, 9:16…)</dd>
-          <dt><kbd>B</kbd></dt><dd>Add this frame to the storyboard</dd>
+          <dt><kbd>B</kbd></dt><dd>Add this frame to the storyboard (pick its scene and lines from the script)</dd>
           <dt><kbd>Esc</kbd></dt><dd>Exit</dd></dl></div>
         <div><h3>Gamepad</h3><dl>
           <dt>Left stick</dt><dd>Move</dd>
@@ -944,6 +997,7 @@
   <div id="board" class="hidden" role="region" aria-label="Storyboard">
     <div class="bdHead">
       <button class="bdProj" id="bdProj" title="Project details"><b id="bdProjTitle">Untitled project</b><small id="bdProjSub">Set the production, episode and code</small></button>
+      <button class="bdScriptBtn" id="bdScriptBtn" title="The script this board is built from"></button>
       <span class="spacer"></span>
       <span class="bdStats" id="bdStats"></span>
       <button class="editOnly" id="bdAddScene">+ Scene</button>
@@ -960,7 +1014,19 @@
       </div>
       <button class="ghost" id="bdClose" title="Back to the stage (Esc)" aria-label="Close board"><svg><use href="#i-x"/></svg></button>
     </div>
-    <div class="bdBody" id="bdBody"></div>
+    <div class="bdMain">
+      <aside id="bdScript" class="hidden" aria-label="Script"></aside>
+      <div class="bdBody" id="bdBody"></div>
+    </div>
+  </div>
+
+  <div id="linePick" class="hidden" role="dialog" aria-modal="true" aria-labelledby="lpTitle">
+    <div class="card">
+      <h3 id="lpTitle">Pick lines</h3>
+      <div class="hint">Click lines to select them (Shift-click for a run). They go into LINE / ACTION in script layout.</div>
+      <div id="lpBody" class="scriptText"></div>
+      <div class="btnRow"><button id="lpCancel">Cancel</button><button class="primary" id="lpGo">Use selected lines</button></div>
+    </div>
   </div>
 
   <div id="projSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="projTitleH">
@@ -990,7 +1056,7 @@
         <label id="abNewWrap">New scene number<input type="text" id="abNewNo" placeholder="e.g. 12" maxlength="10"></label>
       </div>
       <label class="abFull">Shot description<textarea id="abAction" rows="2" placeholder="e.g. Wide — train pulls in, hero at the doors"></textarea></label>
-      <label class="abFull">Line / action <span class="opt">paste from the script · optional</span><textarea id="abLine" rows="3" placeholder="MAYA&#10;Mind the gap.&#10;&#10;She steps off as the doors close."></textarea></label>
+      <label class="abFull">Line / action <span class="opt">paste from the script · optional</span> <button type="button" class="linkish" id="abPick">Pick from the script…</button><textarea id="abLine" rows="3" placeholder="MAYA&#10;Mind the gap.&#10;&#10;She steps off as the doors close."></textarea></label>
       <div class="hint" id="abHint"></div>
       <div class="btnRow"><button id="abCancel">Cancel</button><button class="primary" id="abGo">Add frame</button></div>
     </div>
@@ -5781,7 +5847,11 @@
     const img = captureFrameImage(pa); if (!img) { toast("Couldn't capture the frame"); return; }
     pendingFrame = Object.assign({ img: img }, frameDataFrom(pa));
     const b = boardCfg(), sel = document.getElementById("abScene");
-    sel.innerHTML = b.scenes.map(sc => '<option value="' + sc.id + '">Scene ' + escapeHtml(sc.number) + (sc.title ? " · " + escapeHtml(sc.title) : "") + '</option>').join("") + '<option value="__new">+ New scene…</option>';
+    const scr = scriptCfg(), onBoard = new Set(b.scenes.map(x => String(x.number).trim().toLowerCase()));
+    const fromScript = scr ? scr.scenes.filter(x => !onBoard.has(String(x.n).trim().toLowerCase()) && (scriptUI.filter !== "vol" || x.onVolume === true || !scr.scenes.some(y => y.onVolume === true))) : [];
+    sel.innerHTML = (b.scenes.length ? '<optgroup label="On the board">' + b.scenes.map(sc => '<option value="' + sc.id + '">Scene ' + escapeHtml(sc.number) + (sc.title ? " · " + escapeHtml(sc.title) : "") + '</option>').join("") + '</optgroup>' : "") +
+      (fromScript.length ? '<optgroup label="From the script' + (scriptUI.filter === "vol" && scr.scenes.some(y => y.onVolume === true) ? " (on the volume)" : "") + '">' + fromScript.map(x => '<option value="script:' + escapeHtml(x.n) + '">Scene ' + escapeHtml(x.n) + " · " + escapeHtml(x.slug) + " · " + escapeHtml(x.eighthsStr || "") + '</option>').join("") + '</optgroup>' : "") +
+      '<option value="__new">+ New scene…</option>';
     sel.value = b.scenes.some(sc => sc.id === lastSceneId) ? lastSceneId : (b.scenes.length ? b.scenes[b.scenes.length - 1].id : "__new");
     const nextNo = b.scenes.length ? (parseInt(b.scenes[b.scenes.length - 1].number, 10) + 1 || "") : 1;
     document.getElementById("abNewNo").value = String(nextNo);
@@ -5794,6 +5864,7 @@
   function syncAddSheet() {
     const isNew = document.getElementById("abScene").value === "__new";
     document.getElementById("abNewWrap").style.display = isNew ? "" : "none";
+    document.getElementById("abPick").classList.toggle("hidden", !scriptCfg());
     const b = boardCfg(), ix = boardIndex(), st = pendingFrame;
     let hint = "";
     if (st) {
@@ -5808,10 +5879,11 @@
     if (!pendingFrame) return;
     const b = boardCfg(), sel = document.getElementById("abScene");
     let sceneId = sel.value;
+    if (sceneId.indexOf("script:") === 0) sceneId = ensureBoardScene(sceneId.slice(7)).id;
     if (sceneId === "__new") {
       const no = document.getElementById("abNewNo").value.trim() || String(b.scenes.length + 1);
       let sc = b.scenes.find(x => String(x.number).trim().toLowerCase() === no.toLowerCase());
-      if (!sc) { sc = { id: newId("s"), number: no, title: "" }; b.scenes.push(sc); }
+      if (!sc) sc = scriptScene(no) ? ensureBoardScene(no) : (b.scenes.push({ id: newId("s"), number: no, title: "" }), b.scenes[b.scenes.length - 1]);
       sceneId = sc.id;
     }
     const f = Object.assign({ id: newId("f"), sceneId: sceneId, action: document.getElementById("abAction").value.trim(), line: document.getElementById("abLine").value.trim(), notes: "", version: 1 }, pendingFrame);
@@ -5920,6 +5992,7 @@
   }
   function renderBoard() {
     renderBoardHead();
+    renderScriptSide();
     const body = document.getElementById("bdBody"), b = boardCfg(), ix = boardIndex(), edit = mode === "edit";
     if (!b.frames.length && !b.scenes.length) {
       body.innerHTML = '<div class="bdEmpty"><b>No frames yet</b>Line up a shot in the <b style="display:inline;font-size:inherit">Viewfinder</b> and press <kbd>B</kbd> (or <i>Add to board</i>). Each frame keeps the stage and camera it came from, so you can click it later to go straight back, adjust, and replace it.</div>';
@@ -5935,15 +6008,18 @@
           '<div class="bdMeta">SU' + String(i.setup).padStart(2, "0") + ' · ' + escapeHtml(o.f + "mm · " + (o.label || "")) + ' · v' + (f.version || 1) + '</div>' +
           '<textarea class="bdAction" rows="2" placeholder="Shot description" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
           '<textarea class="bdLine" rows="' + Math.min(6, Math.max(2, String(f.line || "").split("\n").length)) + '" placeholder="LINE / ACTION — paste dialogue or script action" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
-          (edit ? '<div class="bdBtns"><button data-act="left" title="Move earlier" aria-label="Move earlier">←</button><button data-act="right" title="Move later" aria-label="Move later">→</button><span class="sp"></span><button class="ghost danger" data-act="del">Delete</button></div>' : '<div style="height:10px"></div>') +
+          (edit ? '<div class="bdBtns"><button data-act="left" title="Move earlier" aria-label="Move earlier">←</button><button data-act="right" title="Move later" aria-label="Move later">→</button>' + (scriptScene(i.scene.number) ? '<button data-act="pick" title="Pick this frame\'s LINE / ACTION from the script">Script…</button>' : "") + '<span class="sp"></span><button class="ghost danger" data-act="del">Delete</button></div>' : '<div style="height:10px"></div>') +
           '</article>';
       }).join("");
       return '<section class="bdScene" data-scene="' + sc.id + '"><header>' +
         '<span class="scNo">SCENE <input class="scNum" value="' + escapeHtml(sc.number) + '"' + (edit ? "" : " readonly") + ' aria-label="Scene number"></span>' +
-        '<input class="scTitle" value="' + escapeHtml(sc.title || "") + '" placeholder="Scene title or slugline (e.g. INT. SUBWAY CAR – NIGHT)"' + (edit ? "" : " readonly") + ' aria-label="Scene title">' +
+        '<input class="scTitle" value="' + escapeHtml(sc.title || "") + '" placeholder="' + escapeHtml((scriptScene(sc.number) || {}).slug || "Scene title or slugline (e.g. INT. SUBWAY CAR – NIGHT)") + '"' + (edit ? "" : " readonly") + ' aria-label="Scene title">' +
         '<span class="count">' + frames.length + ' frame' + (frames.length === 1 ? "" : "s") + '</span>' +
         (edit ? '<button data-sact="up" title="Move scene up"' + (si === 0 ? " disabled" : "") + '>↑</button><button data-sact="down" title="Move scene down"' + (si === b.scenes.length - 1 ? " disabled" : "") + '>↓</button><button class="ghost danger" data-sact="del">Delete scene</button>' : "") +
-        '</header><div class="bdFrames" data-drop="' + sc.id + '">' + (cards || '<div class="bdEmpty" style="margin:10px 0;text-align:left">No frames in this scene yet — add one from the viewfinder, or drag a frame here.</div>') + '</div></section>';
+        '</header>' + (function () { const ss = scriptScene(sc.number); if (!ss) return "";
+          return '<div class="scInfo"><span>p' + (ss.page || "–") + ' · ' + escapeHtml(ss.eighthsStr || "") + ' pages</span>' + (ss.approach ? '<span class="apChip" style="--c:' + approachColour(ss.approach) + '">' + escapeHtml(ss.approach) + '</span>' : "") +
+            ((ss.chars || []).length ? '<span>' + escapeHtml(ss.chars.slice(0, 6).join(", ")) + (ss.chars.length > 6 ? "…" : "") + '</span>' : "") + '</div>'; })() +
+        '<div class="bdFrames" data-drop="' + sc.id + '">' + (cards || '<div class="bdEmpty" style="margin:10px 0;text-align:left">No frames in this scene yet — add one from the viewfinder, or drag a frame here.</div>') + '</div></section>';
     }).join("");
     body.querySelectorAll("img[data-img]").forEach(im => getFrameImg(im.dataset.img).then(u => { if (u) im.src = u; }));
   }
@@ -5963,6 +6039,10 @@
     document.getElementById("lbBoard").addEventListener("click", openAddToBoard);
     document.getElementById("lbReplace").addEventListener("click", replaceFrame);
     document.getElementById("bdClose").addEventListener("click", closeBoard);
+    // Drop a script (PDF or Slugger file) anywhere on the board to import it.
+    const bd = document.getElementById("board");
+    bd.addEventListener("dragover", e => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) e.preventDefault(); });
+    bd.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && /\.(pdf|json)$/i.test(f.name)) { e.preventDefault(); importScriptFile(f); } });
     document.getElementById("bdProj").addEventListener("click", openProjectSheet);
     document.getElementById("projBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
     document.getElementById("setProjBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
@@ -6010,6 +6090,10 @@
       const card = e.target.closest(".bdCard"), scEl = e.target.closest(".bdScene");
       if (card && btn.dataset.act) {
         const id = card.dataset.id, i = b.frames.findIndex(x => x.id === id), f = b.frames[i];
+        if (btn.dataset.act === "pick") {
+          openLinePicker(boardCfg().scenes.find(x => x.id === f.sceneId).number, txt => { f.line = (f.line && f.line.trim() ? f.line.trim() + "\n\n" : "") + txt; scheduleAutosave(); renderBoard(); });
+          return;
+        }
         if (btn.dataset.act === "del") {
           const code = frameCode(id); b.frames.splice(i, 1); if (boardEditId === id) boardEditId = null;
           scheduleAutosave(); renderBoard(); refreshBoardBar();
@@ -6119,7 +6203,10 @@
       if (r.sc !== cur) {
         if (cur) html += "</div>";
         cur = r.sc;
-        html += (html ? '<div class="pb"></div>' : "") + docHeader("Storyboard") + '<h2>Scene ' + xmlEsc(r.sc.number) + (r.sc.title ? ' — ' + xmlEsc(r.sc.title) : "") + '</h2><div class="grid">';
+        const ss = scriptScene(r.sc.number);
+        const scT = r.sc.title || (ss && ss.slug) || "";
+        html += (html ? '<div class="pb"></div>' : "") + docHeader("Storyboard") + '<h2>Scene ' + xmlEsc(r.sc.number) + (scT ? ' — ' + xmlEsc(scT) : "") +
+          (ss ? ' <small style="font-weight:400;color:#6b7278">· p' + ss.page + ' · ' + xmlEsc(ss.eighthsStr || "") + ' pages' + (ss.approach ? ' · ' + xmlEsc(ss.approach) : "") + '</small>' : "") + '</h2><div class="grid">';
       }
       const o = r.f.optics || {};
       html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div>' +
@@ -6142,9 +6229,10 @@
   }
   function shotListCSV(rows) {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const head = ["Project", "Episode", "Scene", "Scene title", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Shot description", "Line / action", "Version", "File"];
+    const head = ["Project", "Episode", "Scene", "Scene title", "Script page", "Scene length", "Approach", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Shot description", "Line / action", "Version", "File"];
     return [head.map(q).join(",")].concat(rows.map(r => { const o = r.f.optics || {};
-      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title, r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
+      const ss = scriptScene(r.sc.number) || {};
+      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title || ss.slug || "", ss.page || "", ss.eighthsStr || "", ss.approach || "", r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
   }
   // One page per stage state: the plan of that state (cameras off, or every setup's camera on), then its frames.
   function exportSetupSheets(rows, withCams) {
@@ -6218,6 +6306,390 @@
       downloadBlob(makeZip(files), projectBase() + "_frames_" + todayStamp() + ".zip");
       toast("Saved " + (files.length - 1) + " frames + the shot list");
     });
+  }
+
+  // ==================================================================
+  //  SCRIPT — a screenplay behind the board
+  // ==================================================================
+  // config.script holds a "lumostage.script" document: from Slugger (Export to Mock & Roll — scenes,
+  // pages, the VP breakdown, optionally the text) or read here from a screenplay PDF (clients).
+  // The PDF reader below is a port of Slugger's: margin scene numbers anchor scenes, slug lines are
+  // matched (with wrapped / non-standard headers), pages are counted in eighths, and watermarks are
+  // dropped by font, size, rotation, and by repeating off the 12 pt line grid.
+  function scriptCfg() { return config.script || null; }
+  const SLUG_TOD = "DAY|NIGHT|CONTINUOUS|LATER THAT (?:DAY|NIGHT|MORNING|EVENING)|LATER|MOMENTS LATER|DAWN|DUSK|MORNING|EVENING|SUNSET|AFTERNOON|" +
+    "ESTABLISHING|FLASHBACK|FLASH FORWARD|UNDERWATER|DREAM|INTERCUT.*?|PRE-LAP|MAGIC HOUR|SAME DAY|SAME NIGHT|SAME TIME|SAME MOMENT|SAME|" +
+    "EARLIER THAT (?:DAY|NIGHT|MORNING|EVENING)|EARLIER|PRESENT|PAST";
+  const SLUG_HEAD = "^(?:\\d+[A-Z]?\\s+)?(INT\\.|EXT\\.|INT\\./EXT\\.|EXT\\./INT\\.|I/E\\.)\\s+(.+?)\\s*[-–—]\\s*";
+  const SLUG_TAIL = "\\.?(?:\\s*[\\(\\[].*?[\\)\\]])*(?:\\s+\\d+[A-Z]?)?$";
+  const SLUG_RE = new RegExp(SLUG_HEAD + "(" + SLUG_TOD + ")" + SLUG_TAIL, "i");
+  const SLUG_FB_RE = new RegExp(SLUG_HEAD + "([A-Z][A-Z0-9 ']{0,35})" + SLUG_TAIL, "i");
+  const SLUG_STARTS = ["INT.", "EXT.", "INT./EXT.", "EXT./INT.", "I/E."];
+  const SCENE_NUM_RE = /^\s*(\d+[A-Z]?)\s*$/;
+  const SP_TRANSITIONS = new Set(["CUT TO:", "FADE IN:", "FADE IN", "FADE OUT:", "FADE OUT", "FADE TO:", "FADE TO BLACK.", "FADE TO BLACK", "MATCH CUT TO:", "SMASH CUT TO:",
+    "JUMP CUT TO:", "DISSOLVE TO:", "WIPE TO:", "IRIS IN:", "IRIS OUT:", "TITLE CARD:", "SUPER:", "CHYRON:", "TITLE:", "INTERCUT WITH:", "THE END", "CONTINUED:", "CONT'D",
+    "MORE", "END CREDITS", "BEGIN TITLES", "END TITLES", "CLOSE ON:", "CLOSE UP:", "INSERT:", "BACK TO SCENE", "SERIES OF SHOTS:", "SERIES OF SHOTS", "MONTAGE:", "END MONTAGE"]);
+  const SP_CAMERA = new Set(["CLOSE ON", "ANGLE ON", "WIDE ON", "INSERT", "POV", "BACK TO SCENE", "RESUME"]);
+  const normSlugPrefix = t => t.replace(/INT\.\s*\/\s*EXT\./gi, "INT./EXT.").replace(/EXT\.\s*\/\s*INT\./gi, "EXT./INT.");
+  const isUpper = t => t === t.toUpperCase() && t !== t.toLowerCase();
+  function trySlug(text) {
+    text = normSlugPrefix(text);
+    const m = text.match(SLUG_RE); if (m) return m;
+    const st = text.replace(/^\d+[A-Z]?\s+/, "");
+    return SLUG_STARTS.some(p => st.toUpperCase().startsWith(p)) ? text.match(SLUG_FB_RE) : null;
+  }
+  function nonstdHeader(text, x) {
+    if (!isUpper(text) || x >= 145) return false;
+    const t = text.trim();
+    if (!t || ".!?:".includes(t[t.length - 1]) || SP_TRANSITIONS.has(t) || SP_CAMERA.has(t) || t.length < 4 || t.length > 80) return false;
+    if (/^["'“‘«]/.test(t)) return false;
+    const tk = t.split(/\s+/); if (tk.length > 1 && new Set(tk).size === 1) return false;
+    return true;
+  }
+  function slugParts(raw, m) {
+    if (/^\d+[A-Z]?\s+/.test(raw)) { const clean = raw.replace(/^\d+[A-Z]?\s+/, "").replace(/\s+\d+[A-Z]?$/, "").trim(), m2 = trySlug(clean); if (m2) m = m2; }
+    return { raw: raw, ie: m[1].toUpperCase().replace(/\.$/, ""), loc: m[2], tod: m[3] };
+  }
+  function findSlug(L, a, b) {
+    for (let i = a; i < b; i++) {
+      const t = L[i].text;
+      if (SCENE_NUM_RE.test(t)) continue;
+      const m = trySlug(t); if (m) return Object.assign(slugParts(t, m), { pos: L[i].abs });
+      if (nonstdHeader(t, L[i].x)) return { raw: t, ie: "", loc: t.replace(/^\d+[A-Z]?\s+/, "").trim().toUpperCase(), tod: "", pos: L[i].abs };
+      const st = normSlugPrefix(t.replace(/^\d+[A-Z]?\s+/, "")).toUpperCase();
+      if (SLUG_STARTS.some(p => st.startsWith(p))) {                     // wrapped slug: join caps continuation lines
+        let acc = t;
+        for (let j = i + 1; j < Math.min(b, i + 10); j++) {
+          const c = L[j].text; if (SCENE_NUM_RE.test(c) || !isUpper(c)) continue;
+          acc += " " + c; const m2 = trySlug(acc); if (m2) return Object.assign(slugParts(acc, m2), { pos: L[i].abs });
+          if (!SLUG_STARTS.some(p => normSlugPrefix(acc.replace(/^\d+[A-Z]?\s+/, "")).toUpperCase().startsWith(p))) break;
+        }
+      }
+    }
+    return null;
+  }
+  function eighthsStr(pages) { const t = Math.max(1, Math.round(pages * 8)), w = Math.floor(t / 8), r = t % 8; return w && r ? w + " " + r + "/8" : w ? String(w) : r + "/8"; }
+  // Text lines from a PDF: Courier-ish, horizontal, body-size; split where a row has a wide gap
+  // (scene numbers sit apart from the slug in the margins).
+  async function pdfLines(pdf, onPage) {
+    const out = [], pagesItems = [];
+    for (let pn = 1; pn <= pdf.numPages; pn++) {
+      if (onPage) onPage(pn, pdf.numPages);
+      const page = await pdf.getPage(pn), vp = page.getViewport({ scale: 1 }), ph = vp.height, tc = await page.getTextContent();
+      const items = tc.items.filter(it => it.str && it.str.trim() !== "" || it.str === " ").map(it => {
+        const [a, b, c, d, e, f] = it.transform, size = Math.hypot(a, b);
+        return { str: it.str, x: e, base: ph - f, size: size, w: it.width, rot: Math.abs(b) > 0.01 || Math.abs(c) > 0.01 || a < 0, mono: (tc.styles[it.fontName] || {}).fontFamily === "monospace" };
+      }).filter(it => !it.rot && it.size >= 8.5 && it.size <= 14.5);
+      pagesItems.push({ pn: pn, ph: ph, items: items });
+    }
+    // Watermark fragments set in the body font ("Lumostage" tiled over every page) are dropped before
+    // lines are assembled, so they can't join a real line or shift where it starts.
+    const pageCount = {}, perPage = {}, offCount = {};
+    pagesItems.forEach(pg => {
+      const c = {}; pg.items.forEach(it => { if (it.str.trim()) { const k = Math.round(it.base % 12) % 12; c[k] = (c[k] || 0) + 1; } });
+      const grid = +Object.keys(c).sort((a, b) => c[b] - c[a])[0] || 0, seen = {};
+      pg.items.forEach(it => { const t = it.str.trim(); if (t.length < 4 || !/[a-z]/.test(t)) return; seen[t] = (seen[t] || 0) + 1;
+        const d = Math.abs(((it.base - grid) % 12 + 12) % 12); if (Math.min(d, 12 - d) > 1) offCount[t] = (offCount[t] || 0) + 1; });
+      Object.keys(seen).forEach(t => { pageCount[t] = (pageCount[t] || 0) + 1; perPage[t] = (perPage[t] || 0) + seen[t]; });
+    });
+    const wmItems = new Set(Object.keys(pageCount).filter(t => pageCount[t] >= Math.max(3, 0.25 * pdf.numPages) && perPage[t] / pageCount[t] >= 2 && (offCount[t] || 0) / perPage[t] >= 0.5));
+    for (const pg of pagesItems) {
+      const pn = pg.pn, ph = pg.ph, items = pg.items.filter(it => !wmItems.has(it.str.trim()));
+      const anyMono = items.some(it => it.mono && it.str.trim());
+      const use = items.filter(it => !anyMono || it.mono).sort((p, q) => p.base - q.base || p.x - q.x);
+      const rows = [];
+      use.forEach(it => { const r = rows.find(r => Math.abs(r.base - it.base) < 2); if (r) r.items.push(it); else rows.push({ base: it.base, items: [it] }); });
+      rows.forEach(r => {
+        // Margin scene numbers are their own lines, even where a long slug runs into the margin.
+        const isDigitNear = it => r.items.some(o => o !== it && /\d/.test(o.str) && Math.abs(o.x - (it.x + it.w)) < it.size * 0.6 || o !== it && /\d/.test(o.str) && Math.abs(it.x - (o.x + o.w)) < it.size * 0.6);
+        const nums = r.items.length > 1 ? r.items.filter(it => SCENE_NUM_RE.test(it.str.trim()) && (it.x > 430 || it.x < 90) && r.base > 60 && !isDigitNear(it)) : [];
+        nums.forEach(it => out.push({ text: it.str.trim(), page: pn, x: it.x, y: r.base - it.size * 0.83, y2: r.base + it.size * 0.2, abs: (pn - 1) + (r.base - it.size * 0.83) / ph, ph: ph }));
+        r.items = r.items.filter(it => nums.indexOf(it) < 0);
+        r.items.sort((p, q) => p.x - q.x);
+        let seg = null;
+        const push = (text, x) => { if (text.trim()) out.push({ text: text.replace(/\s+/g, " ").trim(), page: pn, x: x, y: r.base - seg.size * 0.83, y2: r.base + seg.size * 0.2, abs: (pn - 1) + (r.base - seg.size * 0.83) / ph, ph: ph }); };
+        const flush = () => {
+          if (!seg || !seg.text.trim()) { seg = null; return; }
+          // One text run can carry the margin scene number and the slug ("46      INT. OFFICE - NIGHT      46").
+          const cw = seg.size * 0.6;
+          let m = seg.x < 100 && seg.text.match(/^(\s*\d+[A-Z]?)(\s{2,})(\S.*)$/);
+          if (!m && seg.x < 85) { const m2 = seg.text.match(/^(\s*\d+[A-Z]?)(\s+)(\S.*)$/); if (m2 && trySlug(m2[3])) m = m2; }
+          if (m) { push(m[1], seg.x); seg = { text: m[3], x: seg.x + (m[1].length + m[2].length) * cw, end: seg.end, size: seg.size }; }
+          const t = seg.text.match(/^(.*\S)(\s{3,})(\d+[A-Z]?)\s*$/);
+          if (t) { push(t[1], seg.x); push(t[3], seg.x + (t[1].length + t[2].length) * cw); } else push(seg.text, seg.x);
+          seg = null;
+        };
+        r.items.forEach(it => {
+          if (!it.str.trim()) return;                           // spacing comes from positions, not space glyphs
+          const cw = it.size * 0.6, trimmedW = it.w * (it.str.trimEnd().length / Math.max(1, it.str.length));
+          const g = seg ? it.x - seg.end : 0;
+          // New segment on a wide gap, or where a margin scene number meets the slug / sits after it.
+          if (seg && (g > cw * 3.2 || (g > cw * 0.8 && seg.x < 100 && SCENE_NUM_RE.test(seg.text)) || (g > cw * 2 && SCENE_NUM_RE.test(it.str.trim()) && it.x > 400))) flush();
+          if (!seg) seg = { text: "", x: it.x, end: it.x, size: it.size };
+          const gap = it.x - seg.end;
+          seg.text += (seg.text && gap > cw * 0.4 ? " ".repeat(Math.max(1, Math.round(gap / cw))) : "") + it.str.trimEnd();
+          seg.end = it.x + trimmedW;
+        });
+        flush();
+      });
+    }
+    out.sort((p, q) => p.abs - q.abs || p.x - q.x);
+    return dropWatermarks(out, wmItems);
+  }
+  function dropWatermarks(L, known) {
+    if (!L.length) return L;
+    const pages = Math.max(...L.map(l => l.page)), grid = {};
+    [...new Set(L.map(l => l.page))].forEach(pg => { const c = {}; L.filter(l => l.page === pg).forEach(l => { const k = Math.round(l.y % 12) % 12; c[k] = (c[k] || 0) + 1; }); grid[pg] = +Object.keys(c).sort((a, b) => c[b] - c[a])[0]; });
+    const off = l => { const d = Math.abs(((l.y - grid[l.page]) % 12 + 12) % 12); return Math.min(d, 12 - d) > 1.5; };
+    const by = {}; L.forEach(l => { (by[l.text] = by[l.text] || []).push(l); });
+    const marks = new Set();
+    Object.keys(by).forEach(t => {
+      const ls = by[t], pgs = new Set(ls.map(l => l.page)).size;
+      if (pgs < Math.max(3, 0.25 * pages)) return;
+      const offF = ls.filter(off).length / ls.length, perPage = ls.length / pgs, mixed = /[a-z]/.test(t);
+      if ((mixed && (perPage >= 2 || offF >= 0.5)) || offF >= 0.6) marks.add(t);
+    });
+    let kept = L.filter(l => !marks.has(l.text));
+    const inner = [...new Set([...marks, ...(known || [])])].filter(m => m.length >= 4 && /[a-z]/.test(m)).sort((a, b) => b.length - a.length);
+    if (inner.length) {
+      const re = new RegExp(inner.map(m => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g");
+      kept.forEach(l => { if (re.test(l.text)) { re.lastIndex = 0; l.text = l.text.replace(re, " ").replace(/\s{2,}/g, " ").trim(); } re.lastIndex = 0; });
+      kept = kept.filter(l => l.text);
+    }
+    return kept;
+  }
+  function actionIndent(L) { const c = {}; L.filter(l => l.x >= 90 && l.x < 145).forEach(l => { const k = Math.round(l.x / 2) * 2; c[k] = (c[k] || 0) + 1; }); const k = Object.keys(c).sort((a, b) => c[b] - c[a])[0]; return k ? +k : 108; }
+  function classifyLine(l, base) {
+    const t = l.text.trim(), dx = l.x - base;
+    if (l.y < 60 || l.y > l.ph - 48) return null;
+    if (/^[*\s]+$/.test(t)) return null;
+    if (SCENE_NUM_RE.test(t) && (l.x < 90 || l.x > 430)) return null;
+    if (/^\(?(MORE|CONTINUED|CONT'D|CONT’D)\)?:?$/i.test(t) || /^CONTINUED[:\s(]/i.test(t)) return null;
+    if (dx < 25 && (trySlug(t) || nonstdHeader(t, l.x))) return "slug";
+    const letters = /[A-Za-z]/.test(t);
+    if (dx >= 230 || (letters && isUpper(t) && t.endsWith(":") && dx > 150)) return "transition";
+    if (t.startsWith("(") && dx >= 40 && dx < 150) return "paren";
+    if (letters && t === t.toUpperCase() && dx >= 110 && t.length < 55) return "character";
+    if (dx >= 40 && dx < 110) return "dialogue";
+    return "action";
+  }
+  function mergeEls(els) {
+    const out = [];
+    els.forEach(e => { const p = out[out.length - 1];
+      if (p && e.t === p.t && ["action", "dialogue", "paren"].includes(e.t) && e.p === p.p && e.y - p.y2 >= -2 && e.y - p.y2 < 8) { p.text += " " + e.text; p.y2 = e.y2; }
+      else out.push(Object.assign({}, e)); });
+    return out;
+  }
+  // The whole parse → a lumostage.script document (same shape Slugger exports).
+  function parseScreenplayLines(L, title, totalPages) {
+    if (!L.length) return null;
+    const base = actionIndent(L), scenes = [];
+    const anchors = [], seen = new Set();
+    L.forEach((l, i) => { const m = l.text.match(SCENE_NUM_RE); if (m && l.x < 90 && !seen.has(m[1])) { seen.add(m[1]); anchors.push([m[1], i]); } });
+    if (anchors.length) {
+      anchors.forEach(([num, ai], k) => {
+        const next = k + 1 < anchors.length ? anchors[k + 1][1] : L.length;
+        let r = findSlug(L, ai + 1, next);
+        if (!r) {                                              // synthesise a header (BLACK SCREEN, MONTAGE…)
+          r = null; let firstUp = null;
+          for (let i = ai + 1; i < Math.min(next, ai + 10); i++) { const t = L[i].text.trim(); if (t.length < 2 || SCENE_NUM_RE.test(t)) continue;
+            if (Math.abs(L[i].abs - L[ai].abs) <= 0.02) { r = { raw: t.slice(0, 120), ie: "", loc: t.slice(0, 120).toUpperCase(), tod: "", pos: L[i].abs }; break; }
+            if (!firstUp && isUpper(t)) firstUp = { raw: t.slice(0, 120), ie: "", loc: t.slice(0, 120), tod: "", pos: L[i].abs }; }
+          r = r || firstUp || { raw: "(NO HEADER)", ie: "", loc: "", tod: "", pos: L[ai].abs };
+        }
+        scenes.push({ n: num, raw: r.raw, ie: r.ie, loc: r.loc.toUpperCase().trim().replace(/[–—]/g, "-"), tod: (r.tod || "").toUpperCase().trim(), pg: r.pos });
+      });
+    } else {
+      let pending = null;
+      L.forEach(l => {
+        const t = l.text, nm = t.match(SCENE_NUM_RE);
+        if (nm) { if ((l.x < 90 || l.x > 430) && l.y >= 60) { if (!(scenes.length && scenes[scenes.length - 1].n === nm[1])) pending = nm[1]; } return; }
+        const m = trySlug(t);
+        if (m) { const emb = t.match(/^(\d+[A-Z]?)\s+/), sp = slugParts(t, m);
+          scenes.push({ n: (emb && emb[1]) || pending || String(scenes.length + 1), raw: t, ie: sp.ie, loc: sp.loc.toUpperCase().trim().replace(/[–—]/g, "-"), tod: sp.tod.toUpperCase().trim(), pg: l.abs }); pending = null; return; }
+        if (nonstdHeader(t, l.x)) { const emb = t.match(/^(\d+[A-Z]?)\s+/);
+          scenes.push({ n: (emb && emb[1]) || pending || String(scenes.length + 1), raw: t, ie: "", loc: t.replace(/^\d+[A-Z]?\s+/, "").trim().toUpperCase(), tod: "", pg: l.abs }); pending = null; }
+      });
+    }
+    scenes.sort((a, b) => a.pg - b.pg);
+    const out = scenes.map((sc, k) => {
+      const end = k + 1 < scenes.length ? scenes[k + 1].pg : totalPages;
+      const els = mergeEls(L.filter(l => l.abs >= sc.pg - 1e-6 && l.abs < end - 1e-6).map(l => ({ l: l, t: classifyLine(l, base) })).filter(o => o.t)
+        .map(o => ({ t: o.t, text: o.l.text.trim(), p: o.l.page, y: Math.round(o.l.y * 10) / 10, y2: Math.round(o.l.y2 * 10) / 10 })));
+      const chars = []; els.forEach(e => { if (e.t === "character") { const c = e.text.replace(/\s*\([^)]*\)\s*$/, "").trim(); if (c.length >= 2 && !SP_TRANSITIONS.has(c) && chars.indexOf(c) < 0) chars.push(c); } });
+      const desc = (els.find(e => e.t === "action") || {}).text || "";
+      return { n: sc.n, slug: sc.raw.replace(/^\d+[A-Z]?\s+/, "").replace(/\s+\d+[A-Z]?$/, "").trim(), ie: sc.ie, loc: sc.loc, tod: sc.tod, page: Math.floor(sc.pg) + 1,
+        pg: Math.round(sc.pg * 1000) / 1000, pgEnd: Math.round(end * 1000) / 1000, eighths: Math.max(1, Math.round((end - sc.pg) * 8)), eighthsStr: eighthsStr(end - sc.pg),
+        chars: chars, desc: desc.slice(0, 250), flags: [], approach: "", onVolume: null, solutions: [], vfxNotes: "", prodNotes: "", stageNotes: "", manual: false, elements: els };
+    });
+    return { format: "lumostage.script", version: 1, source: { app: "Mock & Roll", exportedAt: new Date().toISOString().slice(0, 19), file: title },
+      title: title, pages: totalPages, includesText: true, approaches: [], scenes: out };
+  }
+  let pdfjsReady = null;
+  function loadPdfJs() {
+    if (pdfjsReady) return pdfjsReady;
+    pdfjsReady = new Promise((resolve, reject) => {
+      const sc = document.createElement("script"); sc.src = "vendor/pdfjs/pdf.min.js";
+      sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js"; resolve(window.pdfjsLib); };
+      sc.onerror = () => { pdfjsReady = null; reject(new Error("couldn't load the PDF reader")); };
+      document.head.appendChild(sc);
+    });
+    return pdfjsReady;
+  }
+  async function readScriptPdf(file) {
+    const lib = await loadPdfJs();
+    let pdf;
+    try { pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise; }
+    catch (err) {
+      if (err && err.name === "PasswordException") throw new Error("this PDF is password-protected — save an unprotected copy from your PDF reader, or ask for one");
+      throw err;
+    }
+    const L = await pdfLines(pdf, (n, of) => { if (n === 1 || n % 10 === 0) toast("Reading the script… page " + n + " of " + of); });
+    if (!L.length) throw new Error("no script text found — it may be a scan (image only)");
+    const doc = parseScreenplayLines(L, file.name.replace(/\.pdf$/i, ""), pdf.numPages);
+    if (!doc || !doc.scenes.length) throw new Error("no scenes found — is this a screenplay?");
+    return doc;
+  }
+  function validScript(d) { return d && d.format === "lumostage.script" && Array.isArray(d.scenes); }
+  function importScriptFile(file) {
+    if (mode !== "edit") return;
+    const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+    const done = doc => {
+      const prev = config.script ? deepClone(config.script) : null;
+      config.script = Object.assign({ id: newId("x") }, doc);
+      const pj = projectCfg(); if (!pj.title.trim()) pj.title = doc.title.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+      scriptUI.filter = doc.scenes.some(sc => sc.onVolume === true) ? "vol" : "all";
+      scheduleAutosave(); refreshProjectLabels();
+      if (!boardOpen) openBoard(); else renderBoard();
+      const vol = doc.scenes.filter(sc => sc.onVolume === true).length;
+      toast("Script: " + doc.scenes.length + " scenes · " + doc.pages + " pages" + (vol ? " · " + vol + " on the volume" : "") + (doc.includesText ? "" : " (no script text in this file)"),
+        prev ? { label: "Undo", fn: () => { config.script = prev; scheduleAutosave(); if (boardOpen) renderBoard(); } } : null);
+    };
+    if (isPdf) {
+      readScriptPdf(file).then(done).catch(err => toast("Couldn't read the script: " + (err && err.message ? err.message : err)));
+    } else {
+      file.text().then(t => { const d = JSON.parse(t); if (!validScript(d)) throw new Error("not a Slugger / Mock & Roll script file"); done(d); })
+        .catch(err => toast("Couldn't import: " + (err && err.message ? err.message : err)));
+    }
+  }
+
+  // ---- script sidebar on the board ------------------------------------------------------------
+  const scriptUI = { filter: "vol", q: "", open: null };
+  function approachColour(name) {
+    const sc = scriptCfg(), a = sc && (sc.approaches || []).find(x => x.name === name);
+    return a ? a.colour : "#d9d9d9";
+  }
+  function scriptScene(n) { const sc = scriptCfg(); return sc ? sc.scenes.find(x => String(x.n).trim().toLowerCase() === String(n).trim().toLowerCase()) : null; }
+  function boardSceneFor(n) { return boardCfg().scenes.find(x => String(x.number).trim().toLowerCase() === String(n).trim().toLowerCase()); }
+  function ensureBoardScene(n) {
+    let sc = boardSceneFor(n); if (sc) return sc;
+    const ss = scriptScene(n), b = boardCfg();
+    sc = { id: newId("s"), number: String(n), title: ss ? ss.slug : "" };
+    // Keep board scenes in script order.
+    const order = x => { const s2 = scriptScene(x.number); return s2 ? s2.pg : 1e9; };
+    let at = b.scenes.findIndex(x => order(x) > order(sc)); if (at < 0) at = b.scenes.length;
+    b.scenes.splice(at, 0, sc);
+    return sc;
+  }
+  function elementsHTML(els, pickable) {
+    return (els || []).map((e, i) => '<div class="el ' + e.t + '"' + (pickable ? ' data-i="' + i + '"' : "") + '>' + escapeHtml(e.text) + '</div>').join("");
+  }
+  function renderScriptSide() {
+    const side = document.getElementById("bdScript"), sc = scriptCfg(), btn = document.getElementById("bdScriptBtn");
+    btn.textContent = sc ? "Script: " + sc.title + " · " + sc.pages + " pp" : (mode === "edit" ? "+ Import script" : "");
+    btn.classList.toggle("hidden", !sc && mode !== "edit");
+    side.classList.toggle("hidden", !sc);
+    if (!sc) return;
+    const hasVol = sc.scenes.some(x => x.onVolume === true);
+    if (!hasVol && scriptUI.filter === "vol") scriptUI.filter = "all";
+    const q = scriptUI.q.trim().toLowerCase(), b = boardCfg();
+    const list = sc.scenes.filter(x => (scriptUI.filter !== "vol" || x.onVolume === true) && (!q || (x.n + " " + x.slug + " " + (x.chars || []).join(" ") + " " + (x.approach || "")).toLowerCase().includes(q)));
+    const frameCount = n => { const bs = boardSceneFor(n); return bs ? b.frames.filter(f => f.sceneId === bs.id).length : 0; };
+    const totalE = list.reduce((a, x) => a + (x.eighths || 0), 0);
+    side.innerHTML = '<div class="scHead"><div><b>' + escapeHtml(sc.title) + '</b><br><small>' + escapeHtml((sc.source && sc.source.app === "Slugger" ? "Slugger breakdown" : "Read from PDF") + " · " + sc.scenes.length + " scenes · " + sc.pages + " pages") + '</small></div>' +
+      '<div class="row">' + (hasVol ? '<div class="seg" role="group" aria-label="Which scenes"><button data-sf="vol" class="' + (scriptUI.filter === "vol" ? "active" : "") + '">On the volume</button><button data-sf="all" class="' + (scriptUI.filter === "all" ? "active" : "") + '">All</button></div>' : "") +
+      '<input type="search" id="scQ" placeholder="Find a scene, place or character" value="' + escapeHtml(scriptUI.q) + '"></div>' +
+      '<small>' + list.length + ' scene' + (list.length === 1 ? "" : "s") + ' · ' + escapeHtml(eighthsStr(totalE / 8)) + ' pages</small></div><div class="scList">' +
+      list.map(x => {
+        const fc = frameCount(x.n), open = scriptUI.open === x.n;
+        let h = '<button class="scRow' + (open ? " open" : "") + '" data-sn="' + escapeHtml(x.n) + '"><span class="no">' + escapeHtml(x.n) + '</span><span class="sl" title="' + escapeHtml(x.slug) + '">' + escapeHtml(x.slug) + '</span><span class="pg">p' + (x.page || "–") + ' · ' + escapeHtml(x.eighthsStr || "") + '</span>' +
+          '<span class="meta">' + (x.approach ? '<span class="apChip" style="--c:' + approachColour(x.approach) + '">' + escapeHtml(x.approach) + '</span>' : "") + (fc ? '<span class="frChip">● ' + fc + ' frame' + (fc === 1 ? "" : "s") + '</span>' : "") + '</span></button>';
+        if (open) {
+          h += '<div class="scDetail">' +
+            ((x.chars || []).length ? '<div class="kv"><b>Characters</b> ' + escapeHtml(x.chars.join(", ")) + '</div>' : "") +
+            ((x.solutions || []).length ? '<div class="kv"><b>Volume</b> ' + escapeHtml(x.solutions.join(" · ")) + '</div>' : "") +
+            [["VFX", x.vfxNotes], ["Production", x.prodNotes], ["Notes", x.stageNotes]].filter(v => v[1]).map(v => '<div class="kv"><b>' + v[0] + '</b> ' + escapeHtml(v[1]) + '</div>').join("") +
+            (mode === "edit" ? '<div class="btnRow"><button data-scact="board">' + (boardSceneFor(x.n) ? "Go to its board scene" : "Add scene to the board") + '</button></div>' : "") +
+            ((x.elements || []).length ? '<div class="scriptText">' + elementsHTML(x.elements) + '</div>' : (x.desc ? '<div class="kv" style="margin-top:8px">' + escapeHtml(x.desc) + '</div>' : "")) +
+            '</div>';
+        }
+        return h;
+      }).join("") + '</div>';
+  }
+  function wireScriptSide() {
+    const side = document.getElementById("bdScript");
+    side.addEventListener("click", e => {
+      const f = e.target.closest("[data-sf]"); if (f) { scriptUI.filter = f.dataset.sf; renderScriptSide(); return; }
+      const r = e.target.closest(".scRow"); if (r) { scriptUI.open = scriptUI.open === r.dataset.sn ? null : r.dataset.sn; renderScriptSide(); return; }
+      const a = e.target.closest("[data-scact]");
+      if (a && scriptUI.open != null) {
+        const existed = !!boardSceneFor(scriptUI.open), bs = ensureBoardScene(scriptUI.open);
+        if (!existed) { scheduleAutosave(); renderBoard(); }
+        const el = document.querySelector('#bdBody .bdScene[data-scene="' + bs.id + '"]'); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    side.addEventListener("input", e => { if (e.target.id === "scQ") { scriptUI.q = e.target.value; const pos = e.target.selectionStart; renderScriptSide(); const q = document.getElementById("scQ"); q.focus(); q.setSelectionRange(pos, pos); } });
+    document.getElementById("bdScriptBtn").addEventListener("click", () => {
+      if (!scriptCfg()) { document.getElementById("scriptInput").click(); return; }
+      const side2 = document.getElementById("bdScript"); side2.classList.toggle("hidden");
+    });
+    document.getElementById("scriptImpBtn").addEventListener("click", () => { closeMenus(); document.getElementById("scriptInput").click(); });
+    const si = document.getElementById("scriptInput");
+    si.addEventListener("change", () => { if (si.files[0]) importScriptFile(si.files[0]); si.value = ""; });
+    // Line picker
+    const lp = document.getElementById("linePick"), body = document.getElementById("lpBody");
+    let lastI = null;
+    body.addEventListener("click", e => {
+      const el = e.target.closest(".el[data-i]"); if (!el) return;
+      const i = +el.dataset.i;
+      if (e.shiftKey && lastI != null) { const [a, b] = [Math.min(lastI, i), Math.max(lastI, i)]; body.querySelectorAll(".el[data-i]").forEach(x => { const k = +x.dataset.i; if (k >= a && k <= b) x.classList.add("sel"); }); }
+      else el.classList.toggle("sel");
+      lastI = i;
+    });
+    document.getElementById("lpCancel").addEventListener("click", () => lp.classList.add("hidden"));
+    document.getElementById("lpGo").addEventListener("click", () => {
+      const els = linePickState.els, pick = [...body.querySelectorAll(".el.sel")].map(x => els[+x.dataset.i]);
+      lp.classList.add("hidden");
+      if (pick.length && linePickState.cb) linePickState.cb(formatLines(pick));
+    });
+    lp.addEventListener("keydown", e => { if (e.key === "Escape") { lp.classList.add("hidden"); e.stopPropagation(); e.preventDefault(); } else if (e.key === "Enter") { document.getElementById("lpGo").click(); e.stopPropagation(); e.preventDefault(); } else e.stopPropagation(); });
+    document.getElementById("abPick").addEventListener("click", () => {
+      const v = document.getElementById("abScene").value;
+      const n = v.indexOf("script:") === 0 ? v.slice(7) : v === "__new" ? document.getElementById("abNewNo").value.trim() : ((boardCfg().scenes.find(x => x.id === v) || {}).number);
+      openLinePicker(n, txt => { const ta = document.getElementById("abLine"); ta.value = (ta.value.trim() ? ta.value.trim() + "\n\n" : "") + txt; });
+    });
+  }
+  const linePickState = { els: [], cb: null };
+  function openLinePicker(n, cb) {
+    const ss = n != null && scriptScene(n);
+    if (!ss) { toast(scriptCfg() ? "Scene " + (n || "?") + " isn't in the script" : "Import a script first (File → Import script…)"); return; }
+    if (!(ss.elements || []).length) { toast("This script file has no text — re-export from Slugger with “Include script text”, or import the PDF"); return; }
+    linePickState.els = ss.elements; linePickState.cb = cb;
+    document.getElementById("lpTitle").textContent = "Scene " + ss.n + " — " + ss.slug;
+    document.getElementById("lpBody").innerHTML = elementsHTML(ss.elements, true);
+    const lp = document.getElementById("linePick"); lp.classList.remove("hidden");
+    document.getElementById("lpGo").focus({ preventScroll: true });
+  }
+  // Selected elements as script text: a speech stays together; blocks are separated by a blank line.
+  function formatLines(els) {
+    let out = "", prev = null;
+    els.forEach(e => {
+      const speech = e.t === "paren" || e.t === "dialogue";
+      if (out && !(speech && prev && (prev.t === "character" || prev.t === "paren" || prev.t === "dialogue"))) out += "\n\n";
+      else if (out) out += "\n";
+      out += e.text; prev = e;
+    });
+    return out;
   }
 
   function wrapText(c, text, x, y, maxW, lh) {
@@ -8505,6 +8977,7 @@
     document.getElementById("helpBtn").addEventListener("click", () => setHelp(true));
     document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
     wireBoard();
+    wireScriptSide();
     applyHouseLights();
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));
     document.getElementById("help").addEventListener("click", e => { if (e.target.id === "help") setHelp(false); });
