@@ -632,6 +632,8 @@
     <div class="menuWrap" id="setWrap">
       <button class="ghost" id="setMenuBtn" aria-haspopup="true" aria-expanded="false"><svg><use href="#i-sliders"/></svg>Settings</button>
       <div class="menu hidden" id="setMenu">
+        <button class="item" id="setProjBtn" role="menuitem"><svg><use href="#i-board"/></svg><span>Project details…<small id="setProjSub">Untitled project</small></span></button>
+        <div class="sep"></div>
         <label class="menuField">Units
           <select id="unitSel"><option value="ft" selected>Imperial (ft · in)</option><option value="m">Metric (m)</option></select></label>
         <label class="menuField editOnly">Snap moves to
@@ -5963,6 +5965,8 @@
     document.getElementById("bdClose").addEventListener("click", closeBoard);
     document.getElementById("bdProj").addEventListener("click", openProjectSheet);
     document.getElementById("projBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
+    document.getElementById("setProjBtn").addEventListener("click", () => { closeMenus(); openProjectSheet(); });
+    refreshProjectLabels();
     document.getElementById("bdAddScene").addEventListener("click", () => {
       const b = boardCfg(), last = b.scenes[b.scenes.length - 1];
       b.scenes.push({ id: newId("s"), number: String(last ? (parseInt(last.number, 10) + 1 || b.scenes.length + 1) : 1), title: "" });
@@ -6048,10 +6052,16 @@
     });
     // Project sheet
     const ps = document.getElementById("projSheet");
-    ps.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); scheduleAutosave(); if (boardOpen) renderBoardHead(); }));
+    ps.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); refreshProjectLabels(); scheduleAutosave(); if (boardOpen) renderBoardHead(); }));
     document.getElementById("projDone").addEventListener("click", () => ps.classList.add("hidden"));
     ps.addEventListener("keydown", e => { if (e.key === "Escape" || (e.key === "Enter" && e.target.tagName === "INPUT")) { ps.classList.add("hidden"); e.preventDefault(); } e.stopPropagation(); });
     ps.addEventListener("keyup", e => e.stopPropagation());
+  }
+  // The Settings menu shows which project this is (it spans the stage, prints and the board).
+  function refreshProjectLabels() {
+    const el = document.getElementById("setProjSub"); if (!el) return;
+    const pj = projectCfg();
+    el.textContent = pj.title.trim() ? pj.title.trim() + (pj.episode.trim() ? " · Ep " + pj.episode.trim() : "") : "Untitled — name it for prints and files";
   }
   function openProjectSheet() {
     const pj = projectCfg(), ps = document.getElementById("projSheet");
@@ -8341,6 +8351,7 @@
     syncSettingsUI();
     applyHouseLights();
     refreshBoardBar();
+    refreshProjectLabels();
     if (boardOpen) renderBoard();
     anchorPeopleOnFloors();                                  // people standing on decks/sets ride with them
     historyReset();                                          // a loaded layout starts a fresh history
