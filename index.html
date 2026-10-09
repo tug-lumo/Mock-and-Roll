@@ -792,6 +792,41 @@
     .msFoot { flex-wrap: wrap; }
   }
 
+  /* Camera move panel (viewfinder) */
+  #movePanel { position: absolute; top: calc(var(--top) + 12px); right: 16px; z-index: 19; width: 300px; padding: 12px; display: flex; flex-direction: column; gap: 9px;
+    background: rgba(20,22,26,.94); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--panelShadow); font-size: 12.5px; }
+  #movePanel.hidden { display: none; }
+  .mpHead { display: flex; align-items: center; gap: 8px; }
+  .mpHead b { font-size: 13.5px; margin-right: auto; }
+  .mpRec { display: none; color: var(--salmon); font-weight: 700; font-size: 11px; letter-spacing: .06em; }
+  #movePanel.recording .mpRec { display: inline; }
+  #movePanel.recording { box-shadow: 0 0 0 1.5px var(--salmon), var(--panelShadow); }
+  .mpKeys { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .mpKey { width: 30px; height: 30px; padding: 0; border-radius: 50%; font-weight: 700; background: #2a2410; border-color: #6d5a1c; color: #ffd24a; }
+  .mpKey.on { background: #ffd24a; border-color: #ffd24a; color: #14161a; }
+  .mpLeg { width: 10px; height: 2px; background: #6d5a1c; border-radius: 1px; }
+  .mpAdd { margin-left: 4px; border-style: dashed; color: #ffd24a; border-color: #6d5a1c; }
+  .mpSel { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-height: 22px; }
+  .mpSel .ghost { padding: 3px 6px; font-size: 12px; }
+  .mpSel .hint { margin: 0; }
+  .mpStats { color: #ffd24a; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mpStats:empty { display: none; }
+  .mpRow { display: flex; gap: 8px; align-items: center; }
+  .mpRow label { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+  .mpRow input { width: 56px; }
+  .mpRow select { flex: 1; min-width: 0; }
+  .mpPlay { display: flex; align-items: center; gap: 6px; }
+  .mpPlay svg { width: 13px; height: 13px; fill: currentColor; }
+  #mpPlay { display: inline-flex; align-items: center; gap: 6px; min-width: 80px; justify-content: center; }
+  #mpScrub { flex: 1; min-width: 0; accent-color: #ffd24a; padding: 0; background: none; border: 0; }
+  #mpTime { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+  .mpFoot { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  .mpLoop { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .mpBtns { gap: 6px; flex-wrap: wrap; }
+  body.phone #movePanel { top: auto; bottom: 120px; right: 8px; left: calc(var(--rail) + 8px); width: auto; }
+  .bdImg .endImg { position: absolute; right: 8px; bottom: 30px; width: 32%; aspect-ratio: 16 / 9; object-fit: cover; border: 1.5px solid #fff; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.6); pointer-events: none; }
+  .bdImg .moveTag { position: absolute; right: 8px; top: 32px; background: #ffd24a; color: #14161a; font-size: 10.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: .03em; pointer-events: none; }
+  .bdMove { font-size: 11.5px; font-weight: 600; color: #ffd24a; margin: 0 0 3px; }
   .grpBtns { margin: 10px 0 4px; }
   .grpNote { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); }
   .grpNote span { display: inline-flex; gap: 12px; }
@@ -1016,6 +1051,7 @@
     <button id="lbLens" title="Lens menu (L)">Lens</button>
     <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
     <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
+    <button id="lbMove" title="Plan a camera move: A, B, C… points played over a set time">Move</button>
     <button class="editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
     <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
     <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
@@ -1032,6 +1068,26 @@
       <button class="ghost iconBtn" id="ssFold" aria-label="Hide the frames" aria-expanded="true"><svg><use href="#i-chev"/></svg></button>
     </div>
     <div class="ssRow" id="ssRow"></div>
+  </div>
+
+  <!-- Camera move: A, B, C… points on this camera, played over a set time -->
+  <div id="movePanel" class="hidden" role="region" aria-label="Camera move">
+    <div class="mpHead"><b>Camera move</b><span class="mpRec">● REC</span><button class="ghost iconBtn" id="mpClose" aria-label="Close the move panel"><svg><use href="#i-x"/></svg></button></div>
+    <div class="mpKeys" id="mpKeys"></div>
+    <div class="mpSel" id="mpSel"></div>
+    <div class="mpStats" id="mpStats"></div>
+    <div class="mpRow">
+      <label>Time<input type="number" id="mpDur" min="0.5" max="300" step="0.5" aria-label="Duration in seconds"><span>s</span></label>
+      <select id="mpEase" aria-label="Speed profile"><option value="smooth">Smooth start and stop</option><option value="linear">Constant speed</option><option value="in">Ease in (starts slow)</option><option value="out">Ease out (lands slow)</option></select>
+    </div>
+    <div class="mpPlay">
+      <button class="ghost iconBtn" id="mpStart" title="Back to A" aria-label="Back to A"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="2" height="11" rx=".8"/><path d="M14 2.8v10.4L5.5 8z"/></svg></button>
+      <button class="primary" id="mpPlay" title="Play / pause (Space)"></button>
+      <input type="range" id="mpScrub" min="0" max="1000" value="0" aria-label="Scrub through the move">
+      <span id="mpTime"></span>
+    </div>
+    <div class="mpFoot"><label class="mpLoop"><input type="checkbox" id="mpLoop"> Loop</label><span id="mpSpeed"></span></div>
+    <div class="btnRow mpBtns"><button class="editOnly" id="mpBoard" title="A board frame that holds the whole move">Add move to board</button><button id="mpRec" title="Plays the move and saves it as a video clip">Record clip</button><button class="ghost danger editOnly" id="mpClear">Clear</button></div>
   </div>
 
   <div id="vfGuides" class="hidden" role="group" aria-label="Viewfinder guides">
@@ -1844,7 +1900,7 @@
     wirePicker();
     updatePlanStyleUI();
     wireCamSetup();
-    wireVfBar();
+    wireVfBar(); wireMovePanel();
     wireNewLayout();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
@@ -4319,6 +4375,7 @@
     if (humanMesh) { scene.remove(humanMesh); humanMesh.geometry.dispose(); humanMesh.material.dispose(); humanMesh = null; }
     humanUidByIndex = [];
     deselect();
+    movePathsDirty = true;
 
     // Rolling walls (wall + integral deck) first
     buildRollingWalls();
@@ -5892,7 +5949,8 @@
     ["camOrbit", "camTop"].forEach(id => document.getElementById(id).classList.remove("active"));
     document.getElementById("camViewBtn").classList.add("active");
     document.getElementById("lensBar").classList.remove("hidden");
-    refreshVfBar(); refreshBoardBar();
+    refreshVfBar(); refreshBoardBar(); refreshMoveBtn();
+    if (mvUI.open) openMovePanel();
     updatePlanStyleUI();
     if (isTouch) updateTouchBar();
     openDrawer(null);                                   // the lens image gets the whole window
@@ -5912,6 +5970,7 @@
     document.getElementById("lensBar").classList.add("hidden");
     document.getElementById("shotStrip").classList.add("hidden");
     document.getElementById("vfGuides").classList.add("hidden");
+    stopMove(); finishRecording(); document.getElementById("movePanel").classList.add("hidden");
     closeLensMenu();
     if (isTouch) setTimeout(updateTouchBar, 0);
     setNavButtons();
@@ -5979,11 +6038,14 @@
     if (vh > H) { vh = H; vw = H * vAsp; }
     const vx = (W - vw) / 2, vy = (H - vh) / 2;
     g.visible = false; // the camera's own body would sit inside its near plane
+    if (movePaths) movePaths.visible = false;              // the planned path is for the stage view, not the lens
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.clear();
     renderer.setScissorTest(true); renderer.setScissor(vx, vy, vw, vh); renderer.setViewport(vx, vy, vw, vh);
     renderer.render(scene, shotCam);
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
+    if (mvUI.rec) captureRecFrame(vx, vy, vw, vh);
     g.visible = true;
+    if (movePaths) movePaths.visible = true;
     updateViewfinder(pa, o, vx, vy, vw, vh);
   }
 
@@ -6152,6 +6214,293 @@
     upd("vgShade", (v, el) => { v.shade = parseFloat(el.value); });
     upd("vgSafe", (v, el) => { v.safe = el.checked; });
     upd("vgThirds", (v, el) => { v.thirds = el.checked; });
+  }
+
+
+  // ==================================================================
+  //  CAMERA MOVES (A → B → C… poses on one camera, played over a set time)
+  // ==================================================================
+  // A move lives on the camera: pa.move = { keys: [pose…], dur: seconds, ease }. Each key is a whole
+  // camera pose (floor position, lens height, pan, tilt, focal length, focus). Between keys the
+  // position follows a smooth curve (a dolly, a crane arc); pan and tilt take the short way round;
+  // a focal change is a zoom. Time is shared out by how much happens in each leg, so the speed
+  // stays even, and the whole move eases in and out. Playing it drives the real camera, so the
+  // viewfinder, the stage plan and prints all see the camera where the move has it.
+  const MOVE_FIELDS = ["x", "z", "heightFt", "rotationDeg", "tiltDeg", "focalMm", "focusFt"];
+  const MOVE_EASE = { smooth: ["Smooth start and stop", t => t * t * (3 - 2 * t)], linear: ["Constant speed", t => t],
+                      in: ["Ease in (starts slow)", t => t * t], out: ["Ease out (lands slow)", t => 1 - (1 - t) * (1 - t)] };
+  const keyLetter = i => String.fromCharCode(65 + i);
+  function poseOf(pa) {
+    const k = {};
+    MOVE_FIELDS.forEach(n => { k[n] = round2(+(n === "x" || n === "z" || n === "rotationDeg" ? pa[n] : camVal(pa, n)) || 0); });
+    return k;
+  }
+  function moveOf(pa) { return pa && pa.move && Array.isArray(pa.move.keys) && pa.move.keys.length ? pa.move : null; }
+  function moveDur(mv) { return clamp(+mv.dur || 4, 0.5, 300); }
+  function moveEase(mv) { return (MOVE_EASE[mv.ease] || MOVE_EASE.smooth)[1]; }
+  function setCamPose(pa, p) {
+    pa.x = round2(p.x); pa.z = round2(p.z); pa.heightFt = round2(p.heightFt); pa.rotationDeg = normDeg(p.rotationDeg);
+    pa.tiltDeg = round2(p.tiltDeg); pa.focalMm = Math.round(p.focalMm * 10) / 10; pa.focusFt = round2(p.focusFt);
+    applyCamPose(pa);
+  }
+  // Pan unwrapped so each leg turns the short way; time shared by how much each leg does.
+  function moveLegs(mv) {
+    const ks = mv.keys.map(k => Object.assign({}, k));
+    for (let i = 1; i < ks.length; i++) { const d = ((ks[i].rotationDeg - ks[i - 1].rotationDeg) % 360 + 540) % 360 - 180; ks[i].rotationDeg = ks[i - 1].rotationDeg + d; }
+    const e = [0];
+    for (let i = 1; i < ks.length; i++) {
+      const a = ks[i - 1], b = ks[i];
+      e.push(e[i - 1] + Math.hypot(b.x - a.x, b.z - a.z, b.heightFt - a.heightFt) + Math.abs(b.rotationDeg - a.rotationDeg) / 15 +
+        Math.abs(b.tiltDeg - a.tiltDeg) / 15 + Math.abs(Math.log((b.focalMm || 35) / (a.focalMm || 35))) * 8 + 0.05);
+    }
+    const tot = e[e.length - 1] || 1;
+    return { ks: ks, u: e.map(v => v / tot) };
+  }
+  // The pose a fraction u (0..1, after easing) of the way through the move.
+  function movePoseAt(mv, u) {
+    const L = moveLegs(mv), ks = L.ks, n = ks.length;
+    if (n === 1) return Object.assign({}, ks[0]);
+    let i = 0; while (i < n - 2 && u > L.u[i + 1]) i++;
+    const s = clamp((u - L.u[i]) / ((L.u[i + 1] - L.u[i]) || 1), 0, 1);
+    const P = j => ks[clamp(j, 0, n - 1)];
+    const cr = f => { const p0 = f(P(i - 1)), p1 = f(P(i)), p2 = f(P(i + 1)), p3 = f(P(i + 2));
+      return 0.5 * (2 * p1 + (-p0 + p2) * s + (2 * p0 - 5 * p1 + 4 * p2 - p3) * s * s + (-p0 + 3 * p1 - 3 * p2 + p3) * s * s * s); };
+    const lin = f => f(P(i)) + (f(P(i + 1)) - f(P(i))) * s;
+    return { x: cr(k => k.x), z: cr(k => k.z), heightFt: Math.max(0.3, cr(k => k.heightFt)), rotationDeg: cr(k => k.rotationDeg),
+      tiltDeg: clamp(cr(k => k.tiltDeg), -85, 85), focalMm: Math.exp(lin(k => Math.log(k.focalMm || 35))), focusFt: Math.max(0.5, lin(k => k.focusFt)) };
+  }
+  const movePoseAtTime = (mv, t) => movePoseAt(mv, moveEase(mv)(clamp(t, 0, 1)));
+  // "Dolly 12′ · crane 4′–9′ · pan 35° · 24→35mm · 4s" — what the grips and the AD need.
+  function moveSummary(mv, short) {
+    if (!mv || mv.keys.length < 2) return "";
+    const ks = moveLegs(mv).ks;
+    let travel = 0, pan = 0; for (let i = 1; i < ks.length; i++) { travel += Math.hypot(ks[i].x - ks[i - 1].x, ks[i].z - ks[i - 1].z); pan += Math.abs(ks[i].rotationDeg - ks[i - 1].rotationDeg); }
+    const hs = ks.map(k => k.heightFt), hMin = Math.min.apply(null, hs), hMax = Math.max.apply(null, hs);
+    const f0 = ks[0].focalMm, f1 = ks[ks.length - 1].focalMm, bits = [];
+    if (travel >= 1) bits.push((short ? "Dolly " : "Track ") + fmtLen(travel));
+    if (hMax - hMin >= 1) bits.push("crane " + fmtLen(hMin) + "–" + fmtLen(hMax));
+    if (pan >= 5) bits.push("pan " + Math.round(pan) + "°");
+    if (Math.abs(f1 - f0) >= 1) bits.push("zoom " + Math.round(f0) + "→" + Math.round(f1) + "mm");
+    if (!bits.length) bits.push("Hold");
+    bits.push(moveDur(mv) + "s");
+    const s = bits.join(" · ");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // ---- the move panel (viewfinder) ---------------------------------------------------------------
+  const mvUI = { open: false, sel: -1, playing: false, pos: 0, t0: 0, loop: false, rec: null };
+  function openMovePanel() {
+    mvUI.open = true;
+    const pa = activeCameraPA(), mv = moveOf(pa);
+    if (mv && mvUI.sel >= mv.keys.length) mvUI.sel = -1;
+    document.getElementById("movePanel").classList.remove("hidden");
+    renderMovePanel();
+  }
+  function closeMovePanel() { mvUI.open = false; stopMove(); document.getElementById("movePanel").classList.add("hidden"); refreshMoveBtn(); }
+  function refreshMoveBtn() {
+    const b = document.getElementById("lbMove"); if (!b) return;
+    const mv = moveOf(activeCameraPA());
+    b.textContent = mv ? "Move · " + keyLetter(0) + "–" + keyLetter(mv.keys.length - 1) : "Move";
+    b.classList.toggle("active", mvUI.open);
+  }
+  function renderMovePanel() {
+    refreshMoveBtn(); movePathsDirty = true;
+    if (!mvUI.open) return;
+    const pa = activeCameraPA(), mv = moveOf(pa), n = mv ? mv.keys.length : 0, edit = mode === "edit";
+    document.getElementById("mpKeys").innerHTML =
+      (mv ? mv.keys.map((k, i) => '<button class="mpKey' + (i === mvUI.sel ? " on" : "") + '" data-key="' + i + '" title="Go to ' + keyLetter(i) + '">' + keyLetter(i) + '</button>').join('<span class="mpLeg"></span>') : "") +
+      (edit && n < 26 ? '<button class="mpAdd" id="mpAdd" title="Put the next point where the camera is now (K)">' + (n ? "+ Set " + keyLetter(n) : "Set A here") + '</button>' : "");
+    const sel = mv && mvUI.sel >= 0 ? mvUI.sel : -1;
+    document.getElementById("mpSel").innerHTML = !n ? '<span class="hint">Frame the start, Set A. Move the camera, Set B. Add C, D… for a longer move.</span>'
+      : sel >= 0 ? '<span>At <b>' + keyLetter(sel) + '</b></span>' + (edit ? '<button class="ghost" id="mpUpd" title="Move point ' + keyLetter(sel) + ' to where the camera is now">Update ' + keyLetter(sel) + ' to here</button><button class="ghost danger" id="mpDel">Remove ' + keyLetter(sel) + '</button>' : "")
+      : '<span class="hint">Click a letter to go to that point' + (n < 2 ? ", then set the next one." : ".") + '</span>';
+    document.getElementById("mpStats").textContent = n > 1 ? moveSummary(mv) : "";
+    const has = n > 1;
+    ["mpPlay", "mpStart", "mpScrub", "mpBoard", "mpRec"].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !has; });
+    document.getElementById("mpClear").disabled = !n;
+    document.getElementById("mpDur").value = mv ? moveDur(mv) : 4;
+    document.getElementById("mpEase").value = mv && MOVE_EASE[mv.ease] ? mv.ease : "smooth";
+    document.getElementById("mpLoop").checked = mvUI.loop;
+    syncMoveTime();
+  }
+  function syncMoveTime() {
+    const mv = moveOf(activeCameraPA()), d = mv ? moveDur(mv) : 4;
+    document.getElementById("mpTime").textContent = (mvUI.pos * d).toFixed(1) + " / " + d.toFixed(1) + "s";
+    const sc = document.getElementById("mpScrub"); if (document.activeElement !== sc) sc.value = Math.round(mvUI.pos * 1000);
+    const pb = document.getElementById("mpPlay");
+    pb.innerHTML = mvUI.playing ? '<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Pause'
+      : '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>Play';
+    const avg = mv && mv.keys.length > 1 ? moveSpeedNote(mv) : "";
+    document.getElementById("mpSpeed").textContent = avg;
+  }
+  function moveSpeedNote(mv) {
+    const ks = mv.keys; let d = 0; for (let i = 1; i < ks.length; i++) d += Math.hypot(ks[i].x - ks[i - 1].x, ks[i].z - ks[i - 1].z, ks[i].heightFt - ks[i - 1].heightFt);
+    if (d < 1) return "";
+    const v = d / moveDur(mv);
+    return "average " + (displayUnit === "m" ? (v / FT_PER_M).toFixed(2) + " m/s" : v.toFixed(1) + " ft/s") + (v > 8 ? " · fast for a dolly" : "");
+  }
+  function moveEnsure(pa) { if (!pa.move || !Array.isArray(pa.move.keys)) pa.move = { keys: [], dur: 4, ease: "smooth" }; return pa.move; }
+  function moveEdited(msg) { stopMove(); mvUI.pos = 0; scheduleAutosave(); renderMovePanel(); if (msg) toast(msg); }
+  function addMoveKey() {
+    const pa = activeCameraPA(); if (!pa || mode !== "edit") return;
+    const mv = moveEnsure(pa);
+    if (mv.keys.length >= 26) return;
+    const at = mvUI.sel >= 0 && mvUI.sel < mv.keys.length - 1 ? mvUI.sel + 1 : mv.keys.length;   // after the selected point
+    mv.keys.splice(at, 0, poseOf(pa)); mvUI.sel = at;
+    if (mv.keys.length > 1 && !mv.durSet) mv.dur = suggestDur(mv);       // until a time is typed, it follows the path
+    moveEdited(mv.keys.length === 1 ? "A set — now move the camera and set B" : keyLetter(at) + " set" + (at < mv.keys.length - 1 ? " (between " + keyLetter(at - 1) + " and " + keyLetter(at + 1) + ")" : ""));
+  }
+  // A comfortable starting time: ~4 ft/s for travel, ~30°/s for pans, at least two seconds.
+  function suggestDur(mv) {
+    const ks = moveLegs(mv).ks; let d = 0, a = 0;
+    for (let i = 1; i < ks.length; i++) { d += Math.hypot(ks[i].x - ks[i - 1].x, ks[i].z - ks[i - 1].z, ks[i].heightFt - ks[i - 1].heightFt); a += Math.abs(ks[i].rotationDeg - ks[i - 1].rotationDeg) + Math.abs(ks[i].tiltDeg - ks[i - 1].tiltDeg); }
+    return Math.max(2, Math.round(Math.max(d / 4, a / 30) * 2) / 2);
+  }
+  function goMoveKey(i) {
+    const pa = activeCameraPA(), mv = moveOf(pa); if (!mv || !mv.keys[i]) return;
+    stopMove(); mvUI.sel = i;
+    setCamPose(pa, mv.keys[i]);
+    // Where that point sits on the timeline (invert the ease by bisection).
+    const ui = moveLegs(mv).u[i], ef = moveEase(mv); let lo = 0, hi = 1;
+    for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (ef(m) < ui) lo = m; else hi = m; }
+    mvUI.pos = (lo + hi) / 2;
+    renderMovePanel();
+  }
+  function playMove() {
+    const pa = activeCameraPA(), mv = moveOf(pa); if (!mv || mv.keys.length < 2) { toast("Set at least two points (A and B) first"); return; }
+    if (mvUI.pos >= 0.999) mvUI.pos = 0;
+    mvUI.playing = true; mvUI.sel = -1; mvUI.t0 = performance.now() - mvUI.pos * moveDur(mv) * 1000;
+    renderMovePanel();
+  }
+  function stopMove() { if (!mvUI.playing) return; mvUI.playing = false; if (mvUI.rec) finishRecording(); syncMoveTime(); }
+  // Each frame while playing (from animate, before the viewfinder draws).
+  function tickMove(now) {
+    const pa = activeCameraPA(), mv = moveOf(pa);
+    if (!mv || mv.keys.length < 2 || viewCamUid == null) { mvUI.playing = false; return; }
+    let p = (now - mvUI.t0) / (moveDur(mv) * 1000);
+    if (p >= 1) { if (mvUI.loop && !mvUI.rec) { mvUI.t0 = now; p = 0; } else { p = 1; mvUI.playing = false; } }
+    mvUI.pos = p;
+    setCamPose(pa, movePoseAtTime(mv, p));
+    if (mvUI.open) syncMoveTime();
+    if (!mvUI.playing && mvUI.rec) setTimeout(finishRecording, 120);   // let the last frame land in the clip
+  }
+  function scrubMove(v) {
+    const pa = activeCameraPA(), mv = moveOf(pa); if (!mv || mv.keys.length < 2) return;
+    mvUI.playing = false; mvUI.sel = -1; mvUI.pos = clamp(v, 0, 1);
+    setCamPose(pa, movePoseAtTime(mv, mvUI.pos));
+    syncMoveTime();
+  }
+  function wireMovePanel() {
+    const p = document.getElementById("movePanel");
+    document.getElementById("lbMove").addEventListener("click", () => mvUI.open ? closeMovePanel() : openMovePanel());
+    document.getElementById("mpClose").addEventListener("click", closeMovePanel);
+    p.addEventListener("click", e => {
+      const k = e.target.closest("[data-key]"), id = (e.target.closest("button") || {}).id;
+      if (k) { goMoveKey(+k.dataset.key); return; }
+      const pa = activeCameraPA(), mv = moveOf(pa);
+      if (id === "mpAdd") addMoveKey();
+      else if (id === "mpUpd" && mv && mv.keys[mvUI.sel]) { mv.keys[mvUI.sel] = poseOf(pa); moveEdited(keyLetter(mvUI.sel) + " updated"); }
+      else if (id === "mpDel" && mv && mv.keys[mvUI.sel]) { const was = mvUI.sel; mv.keys.splice(was, 1); mvUI.sel = Math.min(was, mv.keys.length - 1); if (!mv.keys.length) delete pa.move; moveEdited("Removed " + keyLetter(was) + " — the later points moved up a letter"); }
+      else if (id === "mpPlay") mvUI.playing ? stopMove() : playMove();
+      else if (id === "mpStart") goMoveKey(0);
+      else if (id === "mpBoard") { stopMove(); openAddToBoard(null, true); }
+      else if (id === "mpRec") recordMove();
+      else if (id === "mpClear" && mv) {
+        const keep = deepClone(pa.move); delete pa.move; mvUI.sel = -1;
+        moveEdited();
+        toast("Cleared the move", { label: "Undo", fn: () => { pa.move = keep; renderMovePanel(); scheduleAutosave(); } });
+      }
+      if (e.target.closest("button")) e.target.closest("button").blur();   // keys go back to driving the camera
+    });
+    document.getElementById("mpDur").addEventListener("change", e => {
+      const pa = activeCameraPA(), mv = moveOf(pa); if (!mv) return;
+      const v = parseFloat(e.target.value); if (v > 0) { mv.dur = clamp(Math.round(v * 10) / 10, 0.5, 300); mv.durSet = true; }
+      scheduleAutosave(); renderMovePanel(); e.target.blur();
+    });
+    document.getElementById("mpEase").addEventListener("change", e => { const mv = moveOf(activeCameraPA()); if (mv) { mv.ease = e.target.value; scheduleAutosave(); } renderMovePanel(); e.target.blur(); });
+    document.getElementById("mpLoop").addEventListener("change", e => { mvUI.loop = e.target.checked; e.target.blur(); });
+    document.getElementById("mpScrub").addEventListener("input", e => scrubMove(e.target.value / 1000));
+    document.getElementById("mpScrub").addEventListener("change", e => e.target.blur());
+    p.addEventListener("keydown", e => { if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") e.stopPropagation(); });
+  }
+
+  // ---- the path, drawn on the stage (hidden while looking through the lens) ----------------------
+  let movePaths = null, movePathsDirty = true;
+  function refreshMovePaths() {
+    movePathsDirty = false;
+    if (!movePaths) { movePaths = new THREE.Group(); movePaths.name = "movePaths"; scene.add(movePaths); }
+    movePaths.children.slice().forEach(c => { movePaths.remove(c); disposeObject3D(c); });
+    config.placedAssets.forEach(pa => {
+      const mv = pa.assetId === "camera" && moveOf(pa); if (!mv) return;
+      const gold = 0xffd24a, n = mv.keys.length;
+      if (n > 1) {
+        const pts = [], flat = [];
+        for (let i = 0; i <= 80; i++) { const q = movePoseAt(mv, i / 80); pts.push(new THREE.Vector3(q.x, q.heightFt, q.z)); flat.push(new THREE.Vector3(q.x, 0.06, q.z)); }
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: gold }));
+        const shadow = new THREE.Line(new THREE.BufferGeometry().setFromPoints(flat), new THREE.LineDashedMaterial({ color: gold, dashSize: 0.6, gapSize: 0.4, transparent: true, opacity: 0.6 }));
+        shadow.computeLineDistances();
+        [line, shadow].forEach(l => { l.raycast = function () {}; movePaths.add(l); });
+      }
+      mv.keys.forEach((k, i) => {
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshBasicMaterial({ color: gold }));
+        dot.position.set(k.x, k.heightFt, k.z); dot.raycast = function () {}; movePaths.add(dot);
+        if (Math.abs(k.heightFt) > 0.2) {
+          const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(k.x, 0.06, k.z), new THREE.Vector3(k.x, k.heightFt, k.z)]), new THREE.LineBasicMaterial({ color: gold, transparent: true, opacity: 0.35 }));
+          drop.raycast = function () {}; movePaths.add(drop);
+        }
+        const tag = makeNameTag(keyLetter(i), "#ffd24a"); tag.position.set(k.x, k.heightFt + 0.9, k.z); movePaths.add(tag);
+      });
+    });
+  }
+
+  // ---- a clip of the move ---------------------------------------------------------------------
+  // The delivered frame (frame lines, not the black around it) is copied from the lens view into a
+  // recording canvas each frame, with a slim burn-in, and saved as a video when the move ends.
+  function recordMove() {
+    const pa = activeCameraPA(), mv = moveOf(pa);
+    if (!mv || mv.keys.length < 2 || viewCamUid == null) return;
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) { toast("This browser can't record video"); return; }
+    const o = camOptics(pa), W = 1280, H = Math.round(W / o.aspect / 2) * 2;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    const type = types.find(t => MediaRecorder.isTypeSupported(t)) || "";
+    const stream = cv.captureStream(30), rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 8e6 } : undefined), chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      const ext = /mp4/.test(type) ? "mp4" : "webm", blob = new Blob(chunks, { type: type || "video/webm" });
+      const cams = config.placedAssets.filter(p => p.assetId === "camera");
+      const code = boardEditId && frameCode(boardEditId) ? "SC" + frameCode(boardEditId) : "CAM" + (cams.indexOf(pa) + 1);
+      downloadBlob(blob, projectBase() + "_" + code + "_move_" + moveDur(mv) + "s." + ext);
+      toast("Saved the move as a " + ext.toUpperCase() + " clip");
+    };
+    mvUI.rec = { rec: rec, cv: cv, ctx: cv.getContext("2d"), pa: pa, label: (boardEditId && frameCode(boardEditId)) || ("CAM " + (cams => cams.indexOf(pa) + 1)(config.placedAssets.filter(p => p.assetId === "camera"))) };
+    document.getElementById("movePanel").classList.add("recording");
+    goMoveKey(0);
+    rec.start(200);
+    setTimeout(() => { mvUI.pos = 0; playMove(); }, 250);   // a beat on A before it moves
+    toast("Recording the move…");
+  }
+  // Called right after the lens view is drawn (same frame, so the WebGL image is still there).
+  function captureRecFrame(vx, vy, vw, vh) {
+    const R = mvUI.rec; if (!R) return;
+    const pa = R.pa, o = camOptics(pa), full = vfPrefs().full;
+    const fx = full ? o.frameW / o.sensorW : 1, fy = full ? o.frameH / o.sensorH : 1;
+    const dpr = renderer.getPixelRatio(), src = renderer.domElement, Hc = src.height;
+    const sw = vw * fx * dpr, sh = vh * fy * dpr, sx = (vx + vw * (1 - fx) / 2) * dpr, syTop = Hc - (vy + vh) * dpr + vh * (1 - fy) / 2 * dpr;
+    const c = R.ctx, W = R.cv.width, H = R.cv.height;
+    c.drawImage(src, sx, syTop, sw, sh, 0, 0, W, H);
+    const mv = moveOf(pa), t = mv ? mvUI.pos * moveDur(mv) : 0;
+    const txt = R.label + "  ·  " + Math.round(camVal(pa, "focalMm")) + "mm  ·  " + t.toFixed(1) + "s";
+    c.font = "600 " + Math.round(H * 0.032) + "px Arial, sans-serif";
+    const tw = c.measureText(txt).width, pad = H * 0.018;
+    c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(pad, H - pad * 2 - H * 0.04, tw + pad * 2, H * 0.04 + pad);
+    c.fillStyle = "#fff"; c.fillText(txt, pad * 2, H - pad * 1.6);
+  }
+  function finishRecording() {
+    const R = mvUI.rec; if (!R) return;
+    mvUI.rec = null;
+    document.getElementById("movePanel").classList.remove("recording");
+    try { R.rec.stop(); } catch (err) {}
   }
 
   // ---- Lens menu (gamepad Select, viewfinder MENU, or click) ---------------
@@ -6740,6 +7089,15 @@
       out.push('<polyline points="' + pts(fa) + '" fill="none" stroke="#d99a00" stroke-width="0.9" stroke-dasharray="3 2"/>');
       const body = [[-0.9, 0.7], [0.9, 0.7], [0.9, -0.7], [-0.9, -0.7]].map(v => [pa.x + v[0] * Math.cos(th) + v[1] * Math.sin(th), pa.z - v[0] * Math.sin(th) + v[1] * Math.cos(th)]);
       out.push('<polygon points="' + pts(body) + '" fill="' + INK + '"/>');
+      const mvp = moveOf(pa);
+      if (mvp && mvp.keys.length > 1) {
+        const path = []; for (let i = 0; i <= 60; i++) { const m = movePoseAt(mvp, i / 60); path.push([m.x, m.z]); }
+        out.push('<polyline points="' + pts(path) + '" fill="none" stroke="#d99a00" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>');
+        mvp.keys.forEach((k, i) => { const kq = P(k.x, k.z); out.push('<circle cx="' + f2(kq[0]) + '" cy="' + f2(kq[1]) + '" r="3.2" fill="#ffd24a" stroke="' + INK + '" stroke-width="0.6"/>');
+          text(kq[0] - 2, kq[1] + 2.2, keyLetter(i), { size: 5, weight: 700 }); });
+        const mq = P(mvp.keys[mvp.keys.length - 1].x, mvp.keys[mvp.keys.length - 1].z);
+        text(mq[0] + 6, mq[1] - 5, moveSummary(mvp, true), { size: 5.5, fill: "#a86f00", halo: true });
+      }
       const q = P(pa.x, pa.z), no = allCams.indexOf(pa) + 1;
       text(q[0] + 7, q[1] + 11, (typeof pa._planLabel === "string" ? pa._planLabel + " · " + o.f + "mm" : "CAM " + no + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : "")), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
     });
@@ -6984,9 +7342,25 @@
     g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion); pc.updateMatrixWorld(true);
     return renderOffscreen(pc, W, H, [yawRing, collOutline, g]).toDataURL("image/jpeg", 0.84);
   }
-  function frameDataFrom(pa) {
-    const st = stageSnapshot();
-    return { stage: st, stateKey: stateKeyOf(st), camera: camSnapshot(pa), optics: frameOptics(pa), cast: castInFrame(pa), updated: Date.now() };
+  // A still keeps the camera's pose only; a move frame (asMove) also keeps its A, B, C… points.
+  function frameDataFrom(pa, asMove) {
+    const st = stageSnapshot(), cam = camSnapshot(pa);
+    if (!asMove) delete cam.move;
+    return { stage: st, stateKey: stateKeyOf(st), camera: cam, optics: frameOptics(pa), cast: castInFrame(pa), updated: Date.now() };
+  }
+  // A move frame: pose + optics at A, pictures at A and at the last point, cast seen anywhere along it.
+  function captureMove(pa) {
+    stopMove();
+    const mv = moveOf(pa), keep = poseOf(pa), seen = new Set();
+    setCamPose(pa, mv.keys[0]);
+    const data = frameDataFrom(pa, true), img = captureFrameImage(pa);
+    (data.cast || []).forEach(id => seen.add(id));
+    setCamPose(pa, mv.keys[Math.floor((mv.keys.length - 1) / 2)]); castInFrame(pa).forEach(id => seen.add(id));
+    setCamPose(pa, mv.keys[mv.keys.length - 1]);
+    const imgEnd = captureFrameImage(pa); castInFrame(pa).forEach(id => seen.add(id));
+    data.cast = castList().filter(c => seen.has(c.id)).map(c => c.id);
+    setCamPose(pa, keep);
+    return { data: data, img: img, imgEnd: imgEnd };
   }
 
   // ---- frame images: IndexedDB (too big for the localStorage autosave) ------------------------
@@ -7011,7 +7385,10 @@
   }
   // A loaded project file carries its frames' images inline: move them into IndexedDB.
   function ingestBoardImages() {
-    boardCfg().frames.forEach(f => { if (f.img) { putFrameImg(f.id, f.img); delete f.img; } });
+    boardCfg().frames.forEach(f => {
+      if (f.img) { putFrameImg(f.id, f.img); delete f.img; }
+      if (f.imgEnd) { putFrameImg(f.id + "~end", f.imgEnd); delete f.imgEnd; }
+    });
   }
 
   // ---- numbering ------------------------------------------------------------------------------
@@ -7036,13 +7413,17 @@
 
   // ---- add / replace / revisit -----------------------------------------------------------------
   let boardEditId = null, pendingFrame = null, lastSceneId = null;
-  function openAddToBoard(presetScene) {
+  function openAddToBoard(presetScene, asMove) {
     if (mode !== "edit") return;
     if (typeof presetScene !== "string") presetScene = null;
     const pa = activeCameraPA();
     if (!pa || !placedGroupByUid[pa._uid]) { toast("Place a camera first, then add its frame to the board."); return; }
-    const img = captureFrameImage(pa); if (!img) { toast("Couldn't capture the frame"); return; }
-    pendingFrame = Object.assign({ img: img }, frameDataFrom(pa));
+    asMove = asMove === true && moveOf(pa) && moveOf(pa).keys.length > 1;
+    let img;
+    if (asMove) { const cap = captureMove(pa); img = cap.img; pendingFrame = Object.assign({ img: img, imgEnd: cap.imgEnd }, cap.data); }
+    else { img = captureFrameImage(pa); if (img) pendingFrame = Object.assign({ img: img }, frameDataFrom(pa)); }
+    if (!img) { toast("Couldn't capture the frame"); return; }
+    document.getElementById("abTitle").textContent = asMove ? "Add move to board · " + moveSummary(pa.move) : "Add to board";
     const b = boardCfg(), sel = document.getElementById("abScene");
     const scr = scriptCfg(), onBoard = new Set(b.scenes.map(x => String(x.number).trim().toLowerCase()));
     const fromScript = scr ? scr.scenes.filter(x => !onBoard.has(String(x.n).trim().toLowerCase()) && (scriptUI.filter !== "vol" || x.onVolume === true || !scr.scenes.some(y => y.onVolume === true))) : [];
@@ -7087,11 +7468,12 @@
       sceneId = sc.id;
     }
     const f = Object.assign({ id: newId("f"), sceneId: sceneId, action: document.getElementById("abAction").value.trim(), line: document.getElementById("abLine").value.trim(), notes: "", version: 1 }, pendingFrame);
-    const img = f.img; delete f.img;
+    const img = f.img, imgEnd = f.imgEnd; delete f.img; delete f.imgEnd;
     // Insert after the scene's last frame so board order = shooting-code order.
     let at = -1; b.frames.forEach((x, i) => { if (x.sceneId === sceneId) at = i; });
     b.frames.splice(at < 0 ? b.frames.length : at + 1, 0, f);
     putFrameImg(f.id, img);
+    if (imgEnd) putFrameImg(f.id + "~end", imgEnd);
     lastSceneId = sceneId; stripScene = sceneId; pendingFrame = null; boardEditId = f.id;
     document.getElementById("addBoardSheet").classList.add("hidden");
     scheduleAutosave(); refreshBoardBar();
@@ -7101,14 +7483,17 @@
   function replaceFrame() {
     const b = boardCfg(), f = b.frames.find(x => x.id === boardEditId), pa = activeCameraPA();
     if (!f || !pa) return;
-    const img = captureFrameImage(pa); if (!img) return;
-    const prev = deepClone(f), prevImg = boardImgs[f.id];
-    Object.assign(f, frameDataFrom(pa), { version: (f.version || 1) + 1 });
+    // A move frame is replaced by the camera's current move (if it has one); a still by a still.
+    const cap = f.camera && f.camera.move && moveOf(pa) && moveOf(pa).keys.length > 1 ? captureMove(pa) : null;
+    const img = cap ? cap.img : captureFrameImage(pa); if (!img) return;
+    const prev = deepClone(f), prevImg = boardImgs[f.id], prevEnd = boardImgs[f.id + "~end"];
+    Object.assign(f, cap ? cap.data : frameDataFrom(pa), { version: (f.version || 1) + 1 });
     putFrameImg(f.id, img);
+    if (cap) putFrameImg(f.id + "~end", cap.imgEnd);
     scheduleAutosave(); if (boardOpen) renderBoard(); refreshShotStrip();
     toast("Replaced " + frameCode(f.id) + " (v" + f.version + ")", { label: "Undo", fn: () => {
       const i = b.frames.findIndex(x => x.id === prev.id); if (i < 0) return;
-      b.frames[i] = prev; if (prevImg) putFrameImg(prev.id, prevImg);
+      b.frames[i] = prev; if (prevImg) putFrameImg(prev.id, prevImg); if (prevEnd) putFrameImg(prev.id + "~end", prevEnd);
       scheduleAutosave(); if (boardOpen) renderBoard(); toast("Kept the earlier " + frameCode(prev.id));
     } });
   }
@@ -7144,9 +7529,11 @@
     if (stateKeyOf(stageSnapshot()) !== f.stateKey) applyStage(f.stage);
     let pa = activeCameraPA();
     if (!pa) { pa = { assetId: "camera" }; config.placedAssets.push(pa); }
-    const keepUid = pa._uid, keepKey = pa.key;
+    const keepUid = pa._uid, keepKey = pa.key, keepMove = pa.move;
     Object.keys(pa).forEach(k => { if (k !== "_uid") delete pa[k]; });
     Object.assign(pa, deepClone(f.camera));
+    if (!pa.move && keepMove) pa.move = keepMove;           // a still doesn't wipe the move being planned
+    if (f.camera.move) { mvUI.open = true; mvUI.sel = 0; mvUI.pos = 0; }
     if (keepUid != null) pa._uid = keepUid;
     if (keepKey != null) pa.key = keepKey;
     rebuildPlaced(); refreshCamPicker();
@@ -7198,9 +7585,10 @@
     return '<article class="bdCard' + (f.id === boardEditId ? " editing" : "") + '" data-id="' + f.id + '"' + (edit && draggable ? ' draggable="true"' : "") + '>' +
       '<div class="bdImg" tabindex="0" role="button" aria-label="Frame ' + escapeHtml(i.code) + (edit ? " — go back to it" : "") + '" data-go="' + f.id + '"><img alt="" src="' + imgSrc(f.id) + '" data-img="' + f.id + '">' +
         '<div class="ov top"><span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span></div>' +
+        (f.camera && f.camera.move ? '<img class="endImg" alt="Where the move ends" src="' + imgSrc(f.id + "~end") + '" data-img="' + f.id + '~end"><span class="moveTag" title="' + escapeHtml(moveSummary(f.camera.move)) + '">MOVE ' + keyLetter(0) + '→' + keyLetter(f.camera.move.keys.length - 1) + ' · ' + moveDur(f.camera.move) + 's</span>' : "") +
         '<div class="ov bot"><span>SU' + pad2(i.setup) + ' · ' + escapeHtml(o.f + "mm · " + (o.fmt || "")) + '</span><span class="ver">v' + (f.version || 1) + '</span></div>' +
         (edit ? '<span class="go">Go to frame</span>' : "") + '</div>' +
-      '<div class="bdText">' + castLineHTML(f) +
+      '<div class="bdText">' + castLineHTML(f) + (f.camera && f.camera.move ? '<div class="bdMove">' + escapeHtml(moveSummary(f.camera.move)) + '</div>' : "") +
         '<textarea class="bdAction" rows="1" placeholder="' + (edit ? "Describe the shot" : "") + '" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
         '<textarea class="bdLine" rows="1" placeholder="' + (edit ? (hasScript ? "Line / action — paste, or pick from the script" : "Line / action — paste from the script") : "") + '" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
         (edit ? '<button class="ghost iconBtn cardMenu" data-act="menu" aria-label="Options for frame ' + escapeHtml(i.code) + '" aria-haspopup="true"><svg><use href="#i-more"/></svg></button>' : "") +
@@ -7601,8 +7989,8 @@
     if (!rows.length) { toast("The board is empty — add frames from the viewfinder first."); return; }
     if (kind === "csv") { downloadBlob(new Blob([shotListCSV(rows)], { type: "text/csv" }), projectBase() + "_shot-list_" + todayStamp() + ".csv"); toast("Saved the shot list"); return; }
     if (kind === "zip") { exportZip(rows); return; }
-    Promise.all(rows.map(r => getFrameImg(r.f.id))).then(urls => {
-      rows.forEach((r, k) => { r.img = urls[k] || ""; });
+    Promise.all(rows.map(r => Promise.all([getFrameImg(r.f.id), r.f.camera && r.f.camera.move ? getFrameImg(r.f.id + "~end") : null]))).then(urls => {
+      rows.forEach((r, k) => { r.img = urls[k][0] || ""; r.imgEnd = urls[k][1] || ""; });
       if (kind === "boards") exportStoryboard(rows);
       else if (kind === "list") exportShotList(rows);
       else exportSetupSheets(rows, kind === "sheetsCams");
@@ -7620,7 +8008,9 @@
           (ss ? ' <small style="font-weight:400;color:#6b7278">· p' + ss.page + ' · ' + xmlEsc(ss.eighthsStr || "") + ' pages' + (ss.approach ? ' · ' + xmlEsc(ss.approach) : "") + '</small>' : "") + '</h2><div class="grid">';
       }
       const o = r.f.optics || {};
-      html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div>' +
+      const mvS = r.f.camera && r.f.camera.move ? moveSummary(r.f.camera.move) : "";
+      html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span>' +
+        (r.imgEnd ? '<img class="end" src="' + r.imgEnd + '"><span class="et">END</span>' : "") + '</div>' + (mvS ? '<div class="mv">MOVE · ' + xmlEsc(mvS) + '</div>' : "") +
         '<div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + ' · Stage ' + r.i.state + (castText(r.f) ? ' · <b>' + xmlEsc(castText(r.f)) + '</b>' : "") + '</div>' +
         (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + (r.f.line ? '<div class="ln">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</div>';
     });
@@ -7628,11 +8018,11 @@
     printDoc(projectBase() + "_storyboard_" + todayStamp(),
       'h2{font-size:14px;margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 16px}.fr{break-inside:avoid}.im{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1d2124}' +
       '.im img{max-width:100%;max-height:100%;display:block}.cd{position:absolute;left:5px;top:5px;background:#1d2124;color:#fff;font-weight:700;font-size:11px;padding:2px 6px;border-radius:3px}' +
-      '.mt{font-size:8.5px;color:#6b7278;margin:4px 0 2px}.ac{font-size:10px;line-height:1.35}.ln{font-size:10px;font-style:italic;color:#3b4247;margin-top:3px;padding-left:6px;border-left:2px solid #9aa0a6;white-space:pre-line}.pb{break-after:page}', html);
+      '.mt{font-size:8.5px;color:#6b7278;margin:4px 0 2px}.ac{font-size:10px;line-height:1.35}.ln{font-size:10px;font-style:italic;color:#3b4247;margin-top:3px;padding-left:6px;border-left:2px solid #9aa0a6;white-space:pre-line}.pb{break-after:page}.im img.end{position:absolute;right:5px;bottom:5px;width:34%;max-height:none;border:1.5px solid #fff}.et{position:absolute;right:7px;bottom:7px;transform:translateY(-100%);background:#1d2124;color:#fff;font-size:7px;font-weight:700;padding:1px 4px}.mv{font-size:8.5px;font-weight:700;color:#a86f00;margin-top:2px}', html);
   }
   function exportShotList(rows) {
     const tr = rows.map(r => { const o = r.f.optics || {};
-      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(castText(r.f)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<div style="font-style:italic;white-space:pre-line;margin-top:3px;padding-left:5px;border-left:2px solid #9aa0a6">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</td></tr>'; }).join("");
+      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(castText(r.f)) + '</td><td>' + (r.f.camera && r.f.camera.move ? '<b style="color:#a86f00">MOVE · ' + xmlEsc(moveSummary(r.f.camera.move)) + '</b><br>' : "") + xmlEsc(r.f.action || "") + (r.f.line ? '<div style="font-style:italic;white-space:pre-line;margin-top:3px;padding-left:5px;border-left:2px solid #9aa0a6">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</td></tr>'; }).join("");
     printDoc(projectBase() + "_shot-list_" + todayStamp(),
       'table{width:100%;border-collapse:collapse;font-size:9.5px}th{text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#6b7278;border-bottom:1.5px solid #1d2124;padding:4px}' +
       'td{border-bottom:1px solid #d5d9dc;padding:4px;vertical-align:top}tr{break-inside:avoid}td img{width:96px;display:block}',
@@ -7640,10 +8030,10 @@
   }
   function shotListCSV(rows) {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const head = ["Project", "Episode", "Scene", "Scene title", "Script page", "Scene length", "Approach", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Cast", "Shot description", "Line / action", "Version", "File"];
+    const head = ["Project", "Episode", "Scene", "Scene title", "Script page", "Scene length", "Approach", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Cast", "Camera move", "Shot description", "Line / action", "Version", "File"];
     return [head.map(q).join(",")].concat(rows.map(r => { const o = r.f.optics || {};
       const ss = scriptScene(r.sc.number) || {};
-      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title || ss.slug || "", ss.page || "", ss.eighthsStr || "", ss.approach || "", r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, castText(r.f), r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
+      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title || ss.slug || "", ss.page || "", ss.eighthsStr || "", ss.approach || "", r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, castText(r.f), r.f.camera && r.f.camera.move ? moveSummary(r.f.camera.move) : "", r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
   }
   // One page per stage state: the plan of that state (cameras off, or every setup's camera on), then its frames.
   function exportSetupSheets(rows, withCams) {
@@ -7710,9 +8100,11 @@
   }
   function dataUrlBytes(u) { const b = atob(u.slice(u.indexOf(",") + 1)), out = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i); return out; }
   function exportZip(rows) {
-    Promise.all(rows.map(r => getFrameImg(r.f.id))).then(urls => {
+    Promise.all(rows.map(r => getFrameImg(r.f.id).then(u => (r.f.camera && r.f.camera.move ? getFrameImg(r.f.id + "~end") : null).then(() => u)))).then(urls => {
       const files = [], enc = new TextEncoder();
       rows.forEach((r, k) => { if (urls[k]) files.push({ name: frameFileName(r.f, r.ix, "jpg"), data: dataUrlBytes(urls[k]) }); });
+      const ends = rows.filter(r => r.f.camera && r.f.camera.move && boardImgs[r.f.id + "~end"]);
+      ends.forEach(r => files.push({ name: frameFileName(r.f, r.ix, "jpg").replace(/\.jpg$/, "_end.jpg"), data: dataUrlBytes(boardImgs[r.f.id + "~end"]) }));
       files.push({ name: projectBase() + "_shot-list.csv", data: enc.encode("\ufeff" + shotListCSV(rows)) });
       downloadBlob(makeZip(files), projectBase() + "_frames_" + todayStamp() + ".zip");
       toast("Saved " + (files.length - 1) + " frames + the shot list");
@@ -10179,7 +10571,8 @@
   // The saved file is the whole project: layout, board, and the board's frame images inline.
   function saveJSON() {
     const out = exportConfig(), frames = (out.board && out.board.frames) || [];
-    Promise.all(frames.map(f => getFrameImg(f.id).then(u => { if (u) f.img = u; }))).then(() => {
+    Promise.all(frames.map(f => getFrameImg(f.id).then(u => { if (u) f.img = u; })
+      .then(() => f.camera && f.camera.move ? getFrameImg(f.id + "~end").then(u => { if (u) f.imgEnd = u; }) : null))).then(() => {
       const name = projectBase() + "_layout_" + todayStamp() + ".json";
       downloadBlob(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }), name);
       toast("Saved " + name + (frames.length ? " (with " + frames.length + " board frame" + (frames.length === 1 ? "" : "s") + ")" : ""));
@@ -10542,6 +10935,8 @@
           e.preventDefault(); return;
         }
         if ((e.key === "b" || e.key === "B") && !e.ctrlKey && !e.metaKey && mode === "edit") { openAddToBoard(); e.preventDefault(); return; }
+        if ((e.key === "k" || e.key === "K") && !e.ctrlKey && !e.metaKey && mode === "edit") { if (!mvUI.open) openMovePanel(); addMoveKey(); e.preventDefault(); return; }
+        if (e.code === "Space" && moveOf(activeCameraPA()) && moveOf(activeCameraPA()).keys.length > 1) { if (!mvUI.open) openMovePanel(); mvUI.playing ? stopMove() : playMove(); e.preventDefault(); return; }
         if (CAM_KEYS.indexOf(e.code) !== -1) { camKeys[e.code] = true; e.preventDefault(); }
         return;
       }
@@ -10590,7 +10985,8 @@
     updateEnvironment();               // 360° eyepoint + look controls, before anything renders the LEDs
     updateVolumeLights(t / 1000);      // house lights off: light the stage from what the LEDs show
     updateProbes(performance.now());   // reflections snapshot the stage before the frame is drawn
-    if (viewCamUid != null) { updateCameraFPS(dt); renderCameraView(); return; }
+    if (movePathsDirty) refreshMovePaths();
+    if (viewCamUid != null) { if (mvUI.playing) tickMove(performance.now()); else updateCameraFPS(dt); renderCameraView(); return; }
     updateNav(dt);
     syncFootprints();
     renderer.render(scene, viewCam());
