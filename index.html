@@ -792,6 +792,10 @@
     .msFoot { flex-wrap: wrap; }
   }
 
+  .grpBtns { margin: 10px 0 4px; }
+  .grpNote { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); }
+  .grpNote span { display: inline-flex; gap: 12px; }
+  .grpNote .linkish { margin: 0; font-size: 12px; }
   /* Cast */
   .castChips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .castChip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 7px; border-radius: 999px; font-size: 12.5px; }
@@ -3417,7 +3421,7 @@
     closePackSheet();
     buildLibrary(); scheduleAutosave();
     const mb = made.reduce((a, m) => a + (m.entry.bytes || 0), 0) / 1048576;
-    if (made.length) toast("Added " + plural(made.length, "piece") + " to “" + shelf + "” (" + mb.toFixed(1) + " MB)" + (arrange ? " and laid them out on the stage" : ""), { label: "Library", fn: openLibManager });
+    if (made.length) toast("Added " + plural(made.length, "piece") + " to “" + shelf + "” (" + mb.toFixed(1) + " MB)" + (arrange ? " and laid them out on the stage as one group (double-click a piece to move it on its own)" : ""), { label: "Library", fn: openLibManager });
   }
   // Textures bigger than `max` px (0 = keep) are redrawn smaller once, before the pieces are cut,
   // in their own format (PNG keeps alpha). Returns { imageIndex: { bytes, mime } }.
@@ -3454,9 +3458,10 @@
     const bins = {}; rows.forEach(r => { const b = Math.round(r.minY * 10); bins[b] = (bins[b] || 0) + 1; });
     const floorY = +Object.keys(bins).sort((a, b) => bins[b] - bins[a] || a - b)[0] / 10;
     const cx = rows.reduce((a, r) => a + r.x, 0) / rows.length, cz = rows.reduce((a, r) => a + r.z, 0) / rows.length;
-    const t = viewFocus(), ox = snap(t.x), oz = snap(t.z);
+    const t = viewFocus(), ox = snap(t.x), oz = snap(t.z), gid = rows.length > 1 ? newId("g") : null;
     rows.forEach(r => {
       const pa = { assetId: r.id, x: round2(ox + r.x - cx), z: round2(oz + r.z - cz), rotationDeg: Math.round(r.rot * 10) / 10 };
+      if (gid) pa.grp = gid;
       const up = r.minY - floorY;
       if (up > 0.15) pa.elevFt = round2(up);
       config.placedAssets.push(pa);
@@ -4447,7 +4452,7 @@
   //  SELECTION + MOVE / ROTATE
   // ==================================================================
   function deselect() {
-    selected = null; selectedObject = null; bodyDrag = null;
+    selected = null; selectedObject = null; bodyDrag = null; pierce = null;
     updateYawRing(true);
     renderInspector();
   }
@@ -4593,7 +4598,9 @@
         const already = hit.obj && ((multi.length > 1 && multi.indexOf(hit.obj.userData.uid) !== -1) || selectedObject === hit.obj);
         if (!already) return;                                   // selection happens on the tap's release (onPointerUp)
       }
+      const grpMem = hitPlaced ? groupUids(getPlacedByUid(hit.obj.userData.uid)) : [];
       if (multi.length > 1 && hitPlaced && multi.indexOf(hit.obj.userData.uid) !== -1) startGroupDrag(hit);
+      else if (grpMem.length > 1 && pierce !== hit.obj.userData.uid) { selectPiece(hit.obj); startGroupDrag(hit); }
       else {
         clearMulti();
         if (hit.human != null) { if (!(selected && selected.type === "human" && selected.instanceId === hit.human)) selectHuman(hit.human); }
@@ -4665,6 +4672,48 @@
 
 
   // ==================================================================
+  //  GROUPS (pieces that stay together: pa.grp)
+  // ==================================================================
+  // Clicking any grouped piece selects the whole group (the multi-select below), so dragging,
+  // turning, nudging and removing act on all of it. Double-click picks one piece out of its group
+  // for editing; clicking elsewhere puts it back to whole-group picking.
+  let pierce = null;                       // uid of a group member picked on its own
+  function groupUids(pa) {
+    if (!pa || !pa.grp) return [];
+    return config.placedAssets.filter(p => p.grp === pa.grp && placedGroupByUid[p._uid]).map(p => p._uid);
+  }
+  function selectPiece(g) {
+    const pa = g && g.userData.kind === "placed" && getPlacedByUid(g.userData.uid), mem = pa ? groupUids(pa) : [];
+    if (mem.length > 1 && pierce !== pa._uid) {
+      pierce = null;
+      multi = mem; selected = null; selectedObject = null; bodyDrag = null; updateYawRing(true);
+      refreshMultiMarks(); renderInspector();
+      return true;
+    }
+    if (!pa || pa._uid !== pierce) pierce = null;
+    if (selectedObject !== g) selectObject(g);
+    return false;
+  }
+  function multiIsOneGroup() {
+    const pas = multiPAs(); if (pas.length < 2 || !pas[0].grp) return false;
+    return pas.every(p => p.grp === pas[0].grp) && groupUids(pas[0]).length === pas.length;
+  }
+  function groupSelection() {
+    const pas = multiPAs(); if (pas.length < 2) { toast("Ctrl-click two or more pieces, then group them"); return; }
+    const id = newId("g"); pas.forEach(p => { p.grp = id; }); pierce = null;
+    scheduleAutosave(); renderInspector();
+    toast("Grouped " + pas.length + " pieces — click any of them to move them together; double-click picks one out", { label: "Undo", fn: () => { pas.forEach(p => { if (p.grp === id) delete p.grp; }); scheduleAutosave(); renderInspector(); } });
+  }
+  function ungroupSelection() {
+    const pas = multi.length > 1 ? multiPAs() : [cfgForSelected()].filter(Boolean);
+    const ids = new Set(pas.map(p => p.grp).filter(Boolean)); if (!ids.size) return;
+    const was = config.placedAssets.filter(p => ids.has(p.grp)).map(p => [p, p.grp]);
+    was.forEach(w => { delete w[0].grp; });
+    pierce = null; scheduleAutosave(); renderInspector();
+    toast("Ungrouped " + was.length + " pieces", { label: "Undo", fn: () => { was.forEach(w => { w[0].grp = w[1]; }); scheduleAutosave(); renderInspector(); } });
+  }
+
+  // ==================================================================
   //  MULTI-SELECT (Ctrl/Cmd-click, Ctrl+A = all people) + group tools
   // ==================================================================
   // multi = uids of placed pieces. With 2+ the inspector shows group tools; dragging any member
@@ -4694,10 +4743,12 @@
   }
   function clearMulti() { if (!multi.length) return; multi = []; refreshMultiMarks(); }
   function toggleMulti(g) {
-    const uid = g.userData.uid;
-    if (!multi.length && selected && selected.kind === "placed" && selected.uid !== uid) multi = [selected.uid];
-    const i = multi.indexOf(uid);
-    if (i >= 0) multi.splice(i, 1); else multi.push(uid);
+    const uid = g.userData.uid, pa = getPlacedByUid(uid), mem = pa ? groupUids(pa) : [];
+    const uids = mem.length > 1 && pierce !== uid ? mem : [uid];          // a grouped piece brings its group
+    if (!multi.length && selected && selected.kind === "placed" && uids.indexOf(selected.uid) === -1) multi = [selected.uid];
+    pierce = null;
+    if (uids.every(u => multi.indexOf(u) !== -1)) multi = multi.filter(u => uids.indexOf(u) === -1);
+    else uids.forEach(u => { if (multi.indexOf(u) === -1) multi.push(u); });
     if (multi.length === 1) { const only = placedGroupByUid[multi[0]]; multi = []; refreshMultiMarks(); if (only) selectObject(only); return; }
     if (!multi.length) { refreshMultiMarks(); deselect(); return; }
     selected = null; selectedObject = null; bodyDrag = null; updateYawRing(true);
@@ -4767,12 +4818,15 @@
     const body = document.getElementById("inspectorBody"), panel = document.getElementById("inspector");
     panel.classList.remove("hidden"); panel.classList.remove("wide"); panel.classList.add("multiMode");
     const all = multiPAs(), people = all.filter(isPersonEntry).length, other = all.length - people;
-    document.getElementById("inspTitle").textContent = all.length + " selected";
+    const oneGroup = multiIsOneGroup();
+    document.getElementById("inspTitle").textContent = oneGroup ? "Group · " + all.length + " pieces" : all.length + " selected";
     const turnBtns = [-90, -15, 15, 90, 180].map(d => '<button data-turn="' + d + '">' + (d > 0 && d !== 180 ? "+" : "") + d + '°</button>').join("");
     const rotBtns = [-90, -15, 15, 90, 180].map(d => '<button data-rot="' + d + '">' + (d > 0 && d !== 180 ? "+" : "") + d + '°</button>').join("");
     body.innerHTML =
       '<div class="dims" style="margin-top:0">' + [people ? people + (people === 1 ? " person" : " people") : "", other ? other + (other === 1 ? " piece" : " pieces") : ""].filter(Boolean).join(" · ") +
-        '<br>Ctrl-click to add or drop pieces · drag any of them to move them all</div>' +
+        '<br>' + (oneGroup ? "Drag any of them to move the group · double-click one to edit it on its own" : "Ctrl-click to add or drop pieces · drag any of them to move them all") + '</div>' +
+      '<div class="btnRow grpBtns">' + (oneGroup ? '<button id="mUngroup" title="Ctrl+Shift+G">Ungroup</button>'
+        : '<button id="mGroup" class="primary" title="Ctrl+G — they stay together until you ungroup">Group these</button>' + (all.some(p => p.grp) ? '<button id="mUngroup" class="ghost" title="Ctrl+Shift+G">Ungroup</button>' : "")) + '</div>' +
       grpHTML("mMove", "Move all", "", '<div class="field"><label for="mDx">Left / right by</label><input type="number" id="mDx" step="0.25" value="0"></div>' +
         '<div class="field"><label for="mDz">Front / back by</label><input type="number" id="mDz" step="0.25" value="0"></div>' +
         '<div class="btnRow"><button id="mMoveGo">Move</button></div>', true) +
@@ -4796,6 +4850,9 @@
     body.querySelectorAll("[data-rot]").forEach(b => b.addEventListener("click", () => multiRotateGroup(+b.dataset.rot)));
     document.getElementById("mClear").addEventListener("click", () => { clearMulti(); deselect(); });
     document.getElementById("mRemove").addEventListener("click", multiRemove);
+    const mg = document.getElementById("mGroup"), mu = document.getElementById("mUngroup");
+    if (mg) mg.addEventListener("click", groupSelection);
+    if (mu) mu.addEventListener("click", ungroupSelection);
     addSteppers(body);
     if (isTouch) updateTouchBar();
   }
@@ -4954,8 +5011,9 @@
     if (hit && hit.human != null) { selectHuman(hit.human); return; }
     if (hit && hit.obj) {
       if (e.pointerType === "touch" && touchSelectMode && hit.obj.userData.kind === "placed") return;   // handled on press
-      if (multi.length > 1 && multi.indexOf(hit.obj.userData.uid) === -1) clearMulti();
-      if (selectedObject !== hit.obj) selectObject(hit.obj);
+      if (multi.length > 1 && multi.indexOf(hit.obj.userData.uid) !== -1) return;
+      clearMulti();
+      selectPiece(hit.obj);
       return;
     }
     clearMulti();
@@ -5031,6 +5089,7 @@
         : "") +
       (selected.type === "human" ? grpHTML("seat", "Seat", "", seatFieldHTML(cur), true) : "") +
       (isCamera ? cameraFieldsHTML(cur) : "") +
+      (cur && selected.kind === "placed" && groupUids(cur).length > 1 ? '<div class="grpNote">One piece of a group of ' + groupUids(cur).length + '<span><button class="linkish" id="selGrp">Select the group</button><button class="linkish" id="leaveGrp">Take it out</button></span></div>' : "") +
       (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button></div>' : "");
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
       inspOpenState()[d.dataset.k] = d.open;
@@ -5696,6 +5755,9 @@
     if (del) del.addEventListener("click", removeSelected);
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
+    const sg = document.getElementById("selGrp"), lg = document.getElementById("leaveGrp");
+    if (sg) sg.addEventListener("click", () => { pierce = null; const g = selectedObject; if (g) selectPiece(g); });
+    if (lg) lg.addEventListener("click", () => { const pa = cfgForSelected(); if (!pa) return; delete pa.grp; pierce = null; scheduleAutosave(); renderInspector(); toast("Taken out of the group"); });
     wireCameraFields();
     wirePlateControls();   // rolling-wall "Add image / video" button, if present
     wireSurfSelects();     // rolling-wall "Shows" dropdown
@@ -8135,7 +8197,7 @@
   function duplicateSelected() {
     if (!isRemovable()) return;
     const src = getPlacedByUid(selected.uid);
-    const copy = deepClone(src); delete copy._uid; delete copy.key; delete copy.seat; delete copy._setKey; delete copy.pin;
+    const copy = deepClone(src); delete copy._uid; delete copy.key; delete copy.seat; delete copy._setKey; delete copy.pin; delete copy.grp;
     copy.x = snap(src.x + 4); copy.z = snap(src.z + 4);
     config.placedAssets.push(copy);
     rebuildPlaced();
@@ -9099,7 +9161,7 @@
   function choosePick(key, addToGroup) {
     const it = pickItems().find(x => x.key === key); if (!it) return;
     if (addToGroup && it.uid != null) toggleMulti(it.g);
-    else { clearMulti(); selectObject(it.g); }
+    else { clearMulti(); if (it.uid != null) pierce = it.uid; selectObject(it.g); }
     // Bring it into view if it's off screen.
     const vc = viewCam(), v = it.g.position.clone().project(vc);
     if (Math.abs(v.x) > 0.85 || Math.abs(v.y) > 0.85) { camera.position.x = it.g.position.x; camera.position.z = it.g.position.z; }
@@ -9869,9 +9931,10 @@
     const m = document.getElementById("lpMenu"), uid = g.userData.uid, pa = getPlacedByUid(uid);
     if (!pa) return;
     const inGroup = multi.length > 1 && multi.indexOf(uid) !== -1;
-    if (!inGroup && selectedObject !== g) { clearMulti(); selectObject(g); }
-    const items = inGroup
-      ? [["Turn all −90°", () => multiTurnEach(90)], ["Turn all +90°", () => multiTurnEach(-90)], ["Clear selection", () => { clearMulti(); deselect(); }], ["Remove all", multiRemove, true]]
+    if (!inGroup && selectedObject !== g) { clearMulti(); selectPiece(g); }
+    const inG = multi.length > 1 && multi.indexOf(uid) !== -1;
+    const items = inG
+      ? [multiIsOneGroup() ? ["Ungroup", ungroupSelection] : ["Group these", groupSelection], ["Turn all −90°", () => multiTurnEach(90)], ["Turn all +90°", () => multiTurnEach(-90)], ["Clear selection", () => { clearMulti(); deselect(); }], ["Remove all", multiRemove, true]]
       : [["Duplicate", duplicateSelected], ["Turn −90°", () => setSelectedYaw((pa.rotationDeg || 0) + 90)], ["Turn +90°", () => setSelectedYaw((pa.rotationDeg || 0) - 90)],
          ["Select multiple", () => { touchSelectMode = true; multi = [uid]; updateTouchBar(); toast("Tap more pieces to add them"); }]]
         .concat(pa.pin ? [["Unpin", () => { delete pa.pin; pa.noAnchor = true; pa.x = snap(pa.x + 1.5); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); }]] : [])
@@ -10415,6 +10478,13 @@
     showWelcomeIfNew();   // after nudgeNavHud: the welcome card mutes the hint while it's up
 
     renderer.domElement.addEventListener("pointerdown", onCanvasDownCapture, true);
+    // Double-click a grouped piece: pick it out of its group to edit it on its own.
+    renderer.domElement.addEventListener("dblclick", e => {
+      if (mode !== "edit" || viewCamUid != null) return;
+      const hit = pickAt(e); if (!hit || !hit.obj || hit.obj.userData.kind !== "placed") return;
+      const pa = getPlacedByUid(hit.obj.userData.uid); if (!pa || groupUids(pa).length < 2) return;
+      clearMulti(); pierce = pa._uid; selectObject(hit.obj);
+    });
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     renderer.domElement.addEventListener("pointerdown", onCanvasDownNav);
     renderer.domElement.addEventListener("pointerup", onPointerUp);
@@ -10493,6 +10563,7 @@
       else if (e.key === "1") gm.click();
       else if (e.key === "2") gr.click();
       else if (e.key === "Escape") { clearMulti(); deselect(); }
+      else if ((e.ctrlKey || e.metaKey) && (e.key === "g" || e.key === "G")) { e.preventDefault(); if (e.shiftKey) ungroupSelection(); else groupSelection(); }
       else if ((e.key === "Delete" || e.key === "Backspace") && multi.length > 1) multiRemove();
       else if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         if (isRemovable()) removeSelected();
