@@ -792,6 +792,23 @@
     .msFoot { flex-wrap: wrap; }
   }
 
+  /* Move timeline outside the lens + blocking chips */
+  #moveBar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 17; display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+    background: rgba(20,22,26,.94); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--panelShadow); font-size: 12px; max-width: calc(100% - var(--rail) - 32px); }
+  #moveBar.hidden { display: none; }
+  #moveBar .mbLbl { font-weight: 700; color: #ffd24a; white-space: nowrap; }
+  #moveBar .mbKeys { display: inline-flex; align-items: center; gap: 3px; }
+  #moveBar .mpKey { width: 26px; height: 26px; font-size: 12px; }
+  #moveBar #mbPlay { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; }
+  #moveBar svg { width: 12px; height: 12px; fill: currentColor; }
+  #mbScrub { width: 160px; accent-color: #ffd24a; padding: 0; background: none; border: 0; }
+  #mbTime { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 34px; }
+  .mbHint { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  body.phone #moveBar { bottom: 8px; flex-wrap: wrap; justify-content: center; }
+  .bkChips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .bkChip { width: 30px; height: 30px; padding: 0; border-radius: 50%; font-weight: 700; color: var(--muted); }
+  .bkChip.on { background: #2a2410; border-color: #ffd24a; color: #ffd24a; }
+  .bkChip.at { box-shadow: 0 0 0 2px var(--accent); color: var(--text); }
   /* Camera move panel (viewfinder) */
   #movePanel { position: absolute; top: calc(var(--top) + 12px); right: 16px; z-index: 19; width: 300px; padding: 12px; display: flex; flex-direction: column; gap: 9px;
     background: rgba(20,22,26,.94); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--panelShadow); font-size: 12.5px; }
@@ -1069,6 +1086,8 @@
     </div>
     <div class="ssRow" id="ssRow"></div>
   </div>
+
+  <div id="moveBar" class="hidden" role="region" aria-label="Camera move timeline"></div>
 
   <!-- Camera move: A, B, C… points on this camera, played over a set time -->
   <div id="movePanel" class="hidden" role="region" aria-label="Camera move">
@@ -1900,7 +1919,7 @@
     wirePicker();
     updatePlanStyleUI();
     wireCamSetup();
-    wireVfBar(); wireMovePanel();
+    wireVfBar(); wireMovePanel(); wireMoveBar();
     wireNewLayout();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
@@ -5146,6 +5165,7 @@
         : "") +
       (selected.type === "human" ? grpHTML("seat", "Seat", "", seatFieldHTML(cur), true) : "") +
       (isCamera ? cameraFieldsHTML(cur) : "") +
+      (cur && selected.kind === "placed" && mode === "edit" ? blockingGroupHTML(cur) : "") +
       (cur && selected.kind === "placed" && groupUids(cur).length > 1 ? '<div class="grpNote">One piece of a group of ' + groupUids(cur).length + '<span><button class="linkish" id="selGrp">Select the group</button><button class="linkish" id="leaveGrp">Take it out</button></span></div>' : "") +
       (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button></div>' : "");
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
@@ -5812,6 +5832,7 @@
     if (del) del.addEventListener("click", removeSelected);
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
+    wireBlocking();
     const sg = document.getElementById("selGrp"), lg = document.getElementById("leaveGrp");
     if (sg) sg.addEventListener("click", () => { pierce = null; const g = selectedObject; if (g) selectPiece(g); });
     if (lg) lg.addEventListener("click", () => { const pa = cfgForSelected(); if (!pa) return; delete pa.grp; pierce = null; scheduleAutosave(); renderInspector(); toast("Taken out of the group"); });
@@ -6283,6 +6304,8 @@
     if (Math.abs(f1 - f0) >= 1) bits.push("zoom " + Math.round(f0) + "→" + Math.round(f1) + "mm");
     if (!bits.length) bits.push("Hold");
     bits.push(moveDur(mv) + "s");
+    const bn = blockingNames(mv);
+    if (bn.length) bits.push((short ? bn.length + " moving" : bn.slice(0, 2).join(", ") + (bn.length > 2 ? " +" + (bn.length - 2) : "") + " on marks"));
     const s = bits.join(" · ");
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
@@ -6346,6 +6369,7 @@
     const mv = moveEnsure(pa);
     if (mv.keys.length >= 26) return;
     const at = mvUI.sel >= 0 && mvUI.sel < mv.keys.length - 1 ? mvUI.sel + 1 : mv.keys.length;   // after the selected point
+    shiftBlocking(mv, at, 1);
     mv.keys.splice(at, 0, poseOf(pa)); mvUI.sel = at;
     if (mv.keys.length > 1 && !mv.durSet) mv.dur = suggestDur(mv);       // until a time is typed, it follows the path
     moveEdited(mv.keys.length === 1 ? "A set — now move the camera and set B" : keyLetter(at) + " set" + (at < mv.keys.length - 1 ? " (between " + keyLetter(at - 1) + " and " + keyLetter(at + 1) + ")" : ""));
@@ -6364,6 +6388,7 @@
     const ui = moveLegs(mv).u[i], ef = moveEase(mv); let lo = 0, hi = 1;
     for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (ef(m) < ui) lo = m; else hi = m; }
     mvUI.pos = (lo + hi) / 2;
+    applyBlocking(mv, mvUI.pos);
     renderMovePanel();
   }
   function playMove() {
@@ -6376,11 +6401,12 @@
   // Each frame while playing (from animate, before the viewfinder draws).
   function tickMove(now) {
     const pa = activeCameraPA(), mv = moveOf(pa);
-    if (!mv || mv.keys.length < 2 || viewCamUid == null) { mvUI.playing = false; return; }
+    if (!mv || mv.keys.length < 2) { mvUI.playing = false; return; }
     let p = (now - mvUI.t0) / (moveDur(mv) * 1000);
     if (p >= 1) { if (mvUI.loop && !mvUI.rec) { mvUI.t0 = now; p = 0; } else { p = 1; mvUI.playing = false; } }
     mvUI.pos = p;
     setCamPose(pa, movePoseAtTime(mv, p));
+    applyBlocking(mv, p);
     if (mvUI.open) syncMoveTime();
     if (!mvUI.playing && mvUI.rec) setTimeout(finishRecording, 120);   // let the last frame land in the clip
   }
@@ -6388,6 +6414,7 @@
     const pa = activeCameraPA(), mv = moveOf(pa); if (!mv || mv.keys.length < 2) return;
     mvUI.playing = false; mvUI.sel = -1; mvUI.pos = clamp(v, 0, 1);
     setCamPose(pa, movePoseAtTime(mv, mvUI.pos));
+    applyBlocking(mv, mvUI.pos);
     syncMoveTime();
   }
   function wireMovePanel() {
@@ -6400,7 +6427,7 @@
       const pa = activeCameraPA(), mv = moveOf(pa);
       if (id === "mpAdd") addMoveKey();
       else if (id === "mpUpd" && mv && mv.keys[mvUI.sel]) { mv.keys[mvUI.sel] = poseOf(pa); moveEdited(keyLetter(mvUI.sel) + " updated"); }
-      else if (id === "mpDel" && mv && mv.keys[mvUI.sel]) { const was = mvUI.sel; mv.keys.splice(was, 1); mvUI.sel = Math.min(was, mv.keys.length - 1); if (!mv.keys.length) delete pa.move; moveEdited("Removed " + keyLetter(was) + " — the later points moved up a letter"); }
+      else if (id === "mpDel" && mv && mv.keys[mvUI.sel]) { const was = mvUI.sel; shiftBlocking(mv, was, -1); mv.keys.splice(was, 1); mvUI.sel = Math.min(was, mv.keys.length - 1); if (!mv.keys.length) delete pa.move; moveEdited("Removed " + keyLetter(was) + " — the later points moved up a letter"); }
       else if (id === "mpPlay") mvUI.playing ? stopMove() : playMove();
       else if (id === "mpStart") goMoveKey(0);
       else if (id === "mpBoard") { stopMove(); openAddToBoard(null, true); }
@@ -6449,6 +6476,23 @@
           drop.raycast = function () {}; movePaths.add(drop);
         }
         const tag = makeNameTag(keyLetter(i), "#ffd24a"); tag.position.set(k.x, k.heightFt + 0.9, k.z); movePaths.add(tag);
+      });
+      // Blocked pieces: their marks on the floor, joined in order, lettered by camera point.
+      const bl = blockingOf(mv) || {};
+      Object.keys(bl).forEach(key => {
+        const p = pieceByKey(key); if (!p) return;
+        const ids = markIdx(bl[key], n); if (!ids.length) return;
+        const col = p.role && p.role.color ? p.role.color : "#c3c8ce", c3 = parseInt(col.slice(1), 16);
+        if (ids.length > 1) {
+          const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(ids.map(i => new THREE.Vector3(bl[key][i].x, 0.08, bl[key][i].z))),
+            new THREE.LineDashedMaterial({ color: c3, dashSize: 0.5, gapSize: 0.3 }));
+          ln.computeLineDistances(); ln.raycast = function () {}; movePaths.add(ln);
+        }
+        ids.forEach(i => {
+          const m = bl[key][i], ring = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 20), new THREE.MeshBasicMaterial({ color: c3, side: THREE.DoubleSide }));
+          ring.rotation.x = -Math.PI / 2; ring.position.set(m.x, 0.09, m.z); ring.raycast = function () {}; movePaths.add(ring);
+          const tg = makeNameTag(keyLetter(i), col); tg.position.set(m.x, 0.9, m.z); movePaths.add(tg);
+        });
       });
     });
   }
@@ -6501,6 +6545,130 @@
     mvUI.rec = null;
     document.getElementById("movePanel").classList.remove("recording");
     try { R.rec.stop(); } catch (err) {}
+  }
+
+
+  // ==================================================================
+  //  BLOCKING (people and pieces moving mark to mark with a camera move)
+  // ==================================================================
+  // mv.blocking = { <piece key>: { <camera point index>: { x, z, r } } }. At any camera point a
+  // piece can have a mark. Between its marks it goes straight there — starting and stopping at
+  // each — timed by when the camera reaches those points; before its first mark it waits on it,
+  // after its last it stays. Playing, scrubbing or going to a point puts everyone where they'd be.
+  function blockingOf(mv) { return mv && mv.blocking ? mv.blocking : null; }
+  function pieceByKey(k) { return config.placedAssets.find(p => p.key === k) || null; }
+  // When (0..1 of the move's time) the camera reaches each point.
+  function moveKeyTimes(mv) {
+    const L = moveLegs(mv), ef = moveEase(mv);
+    return L.u.map(ui => { let lo = 0, hi = 1; for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (ef(m) < ui) lo = m; else hi = m; } return (lo + hi) / 2; });
+  }
+  function markIdx(marks, n) { return Object.keys(marks).map(Number).filter(i => i < n).sort((a, b) => a - b); }
+  function markPoseAt(marks, T, p) {
+    const ids = markIdx(marks, T.length); if (!ids.length) return null;
+    if (p <= T[ids[0]]) return marks[ids[0]];
+    for (let j = 0; j < ids.length - 1; j++) {
+      const a = ids[j], b = ids[j + 1];
+      if (p <= T[b]) {
+        const s0 = clamp((p - T[a]) / ((T[b] - T[a]) || 1), 0, 1), s = s0 * s0 * (3 - 2 * s0), A = marks[a], B = marks[b];
+        const dr = ((B.r - A.r) % 360 + 540) % 360 - 180;
+        return { x: A.x + (B.x - A.x) * s, z: A.z + (B.z - A.z) * s, r: A.r + dr * s };
+      }
+    }
+    return marks[ids[ids.length - 1]];
+  }
+  function applyBlocking(mv, p) {
+    const bl = blockingOf(mv); if (!bl) return;
+    const T = moveKeyTimes(mv);
+    Object.keys(bl).forEach(k => {
+      const pa = pieceByKey(k), q = pa && markPoseAt(bl[k], T, p), g = pa && placedGroupByUid[pa._uid];
+      if (!q || !g) return;
+      setPosFor(pa, q.x, q.z); setYawFor(pa, q.r);
+      if (isElevatable(pa)) g.position.y = elevationFor(pa, g);
+    });
+  }
+  function blockedPoses(mv) { const bl = blockingOf(mv) || {}; return Object.keys(bl).map(pieceByKey).filter(Boolean).map(pa => [pa, pa.x, pa.z, pa.rotationDeg || 0]); }
+  function restorePoses(list) { list.forEach(([pa, x, z, r]) => { setPosFor(pa, x, z); setYawFor(pa, r); const g = placedGroupByUid[pa._uid]; if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g); }); }
+  // Camera points were inserted (+1 from `at`) or removed (-1 after `at`, marks at `at` dropped).
+  function shiftBlocking(mv, at, d) {
+    const bl = blockingOf(mv); if (!bl) return;
+    Object.keys(bl).forEach(k => {
+      const m = bl[k], out = {};
+      Object.keys(m).forEach(i => { i = +i; if (d < 0 && i === at) return; out[i >= at + (d < 0 ? 1 : 0) ? i + d : i] = m[i]; });
+      if (Object.keys(out).length) bl[k] = out; else delete bl[k];
+    });
+  }
+  function pieceLabel(pa) { const e = catalogEntry(pa.assetId); return pa.role && pa.role.name ? pa.role.name : (e ? e.name.replace(/\s*\(.*\)\s*$/, "") : "Piece"); }
+  function blockingNames(mv) {
+    const bl = blockingOf(mv); if (!bl) return [];
+    return Object.keys(bl).map(pieceByKey).filter(p => p && markIdx(bl[p.key], mv.keys.length).length).map(pieceLabel);
+  }
+  // Inspector: this piece's marks on the active camera's move.
+  function blockingGroupHTML(pa) {
+    const cam = activeCameraPA(), mv = moveOf(cam);
+    if (!mv || mv.keys.length < 2 || pa.assetId === "camera") return "";
+    const marks = ((blockingOf(mv) || {})[pa.key]) || {}, at = mvUI.sel, ids = markIdx(marks, mv.keys.length);
+    const seat = pa.pin && !pa.pin.floor;
+    const chips = mv.keys.map((k, i) => '<button class="bkChip' + (marks[i] ? " on" : "") + (i === at ? " at" : "") + '" data-bk="' + i + '" title="' + (marks[i] ? "Has a mark at " : "No mark at ") + keyLetter(i) + ' — click to put the stage at ' + keyLetter(i) + '">' + keyLetter(i) + '</button>').join("");
+    const L = at >= 0 && at < mv.keys.length ? keyLetter(at) : "";
+    const act = seat ? '<div class="hint">Riding a seat — block the vehicle instead, or unpin it first.</div>'
+      : L ? '<div class="btnRow">' + (marks[at] ? '<button id="bkSet">Update ' + L + ' to here</button><button class="ghost danger" id="bkDel">Remove ' + L + '</button>' : '<button class="primary" id="bkSet">Mark here for ' + L + '</button>') + '</div>'
+      : '<div class="hint">Click a letter to put the camera and everyone at that point of the move, then place this and mark it.</div>';
+    const sum = ids.length ? (ids.length === 1 ? "mark " + keyLetter(ids[0]) : "moves " + ids.map(keyLetter).join("→")) : "still";
+    return grpHTML("block", "Blocking", sum, '<div class="bkChips">' + chips + '</div>' + act +
+      (ids.length > 1 ? '<div class="hint">Walks straight between its marks, timed by when the camera gets to each.</div>' : ""), true);
+  }
+  function wireBlocking() {
+    const body = document.getElementById("inspectorBody");
+    body.querySelectorAll("[data-bk]").forEach(b => b.addEventListener("click", () => { const uid = selected && selected.uid; goMoveKey(+b.dataset.bk); if (uid != null) reselectUid(uid); }));
+    const set = document.getElementById("bkSet"), del = document.getElementById("bkDel");
+    const ctx = () => { const pa = cfgForSelected(), mv = moveOf(activeCameraPA()); return pa && mv && mvUI.sel >= 0 ? { pa: pa, mv: mv, at: mvUI.sel } : null; };
+    if (set) set.addEventListener("click", () => {
+      const c = ctx(); if (!c) return;
+      if (c.pa.pin && c.pa.pin.floor) { delete c.pa.pin; c.pa.noAnchor = true; }   // a blocked piece walks on its own
+      const key = ensureKey(c.pa), bl = c.mv.blocking = c.mv.blocking || {}, m = bl[key] = bl[key] || {};
+      m[c.at] = { x: round2(c.pa.x), z: round2(c.pa.z), r: round2(c.pa.rotationDeg || 0) };
+      movePathsDirty = true; scheduleAutosave(); renderInspector(); renderMovePanel();
+      toast(pieceLabel(c.pa) + " · mark " + keyLetter(c.at) + (markIdx(m, c.mv.keys.length).length === 1 ? " — go to another letter, move them, mark again" : ""));
+    });
+    if (del) del.addEventListener("click", () => {
+      const c = ctx(); if (!c) return;
+      const bl = blockingOf(c.mv), m = bl && bl[c.pa.key]; if (!m) return;
+      delete m[c.at]; if (!Object.keys(m).length) delete bl[c.pa.key];
+      movePathsDirty = true; scheduleAutosave(); renderInspector(); renderMovePanel();
+    });
+  }
+
+  // ---- the move timeline outside the lens (Walk / Plan): watch and block the move from above ------
+  const mbState = { sig: "", shown: false };
+  function syncMoveBar() {
+    const bar = document.getElementById("moveBar"), pa = activeCameraPA(), mv = moveOf(pa);
+    const want = viewCamUid == null && !boardOpen && !!mv && mv.keys.length > 1;
+    if (want !== mbState.shown) { bar.classList.toggle("hidden", !want); mbState.shown = want; mbState.sig = ""; }
+    if (!want) return;
+    const cams = config.placedAssets.filter(p => p.assetId === "camera");
+    const sig = [pa._uid, mv.keys.length, mvUI.sel, mvUI.playing, moveDur(mv), blockingNames(mv).length, mode].join("|");
+    if (sig !== mbState.sig) {
+      mbState.sig = sig;
+      const n = blockingNames(mv);
+      bar.innerHTML = '<span class="mbLbl">CAM ' + (cams.indexOf(pa) + 1) + ' move</span>' +
+        '<span class="mbKeys">' + mv.keys.map((k, i) => '<button class="mpKey' + (i === mvUI.sel ? " on" : "") + '" data-mbk="' + i + '" title="Put the camera' + (n.length ? " and everyone" : "") + ' at ' + keyLetter(i) + '">' + keyLetter(i) + '</button>').join('<span class="mpLeg"></span>') + '</span>' +
+        '<button class="primary" id="mbPlay">' + (mvUI.playing ? '<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Pause' : '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>Play') + '</button>' +
+        '<input type="range" id="mbScrub" min="0" max="1000" aria-label="Scrub through the move"><span id="mbTime"></span>' +
+        '<span class="mbHint">' + (n.length ? escapeHtml(n.slice(0, 3).join(", ") + (n.length > 3 ? " +" + (n.length - 3) : "")) + " blocked" : (mode === "edit" ? "Select a person to give them marks" : "")) + '</span>';
+    }
+    const t = document.getElementById("mbTime"); if (t) t.textContent = (mvUI.pos * moveDur(mv)).toFixed(1) + "s";
+    const sc = document.getElementById("mbScrub"); if (sc && document.activeElement !== sc) sc.value = Math.round(mvUI.pos * 1000);
+  }
+  function wireMoveBar() {
+    const bar = document.getElementById("moveBar");
+    bar.addEventListener("click", e => {
+      const k = e.target.closest("[data-mbk]");
+      if (k) { const uid = selected && selected.uid; goMoveKey(+k.dataset.mbk); if (uid != null) reselectUid(uid); else renderInspector(); mbState.sig = ""; return; }
+      if (e.target.closest("#mbPlay")) { mvUI.playing ? stopMove() : playMove(); mbState.sig = ""; }
+    });
+    bar.addEventListener("input", e => { if (e.target.id === "mbScrub") { scrubMove(e.target.value / 1000); mbState.sig = ""; } });
+    bar.addEventListener("change", e => { if (e.target.id === "mbScrub") { e.target.blur(); renderInspector(); } });
+    bar.addEventListener("keydown", e => e.stopPropagation());
   }
 
   // ---- Lens menu (gamepad Select, viewfinder MENU, or click) ---------------
@@ -7095,6 +7263,15 @@
         out.push('<polyline points="' + pts(path) + '" fill="none" stroke="#d99a00" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>');
         mvp.keys.forEach((k, i) => { const kq = P(k.x, k.z); out.push('<circle cx="' + f2(kq[0]) + '" cy="' + f2(kq[1]) + '" r="3.2" fill="#ffd24a" stroke="' + INK + '" stroke-width="0.6"/>');
           text(kq[0] - 2, kq[1] + 2.2, keyLetter(i), { size: 5, weight: 700 }); });
+        const blp = blockingOf(mvp) || {};
+        Object.keys(blp).forEach(key => {
+          const bp = pieceByKey(key), ids = bp ? markIdx(blp[key], mvp.keys.length) : []; if (!ids.length) return;
+          const col = bp.role && bp.role.color ? bp.role.color : "#8a9096";
+          if (ids.length > 1) out.push('<polyline points="' + pts(ids.map(i => [blp[key][i].x, blp[key][i].z])) + '" fill="none" stroke="' + col + '" stroke-width="1.1" stroke-dasharray="3 2"/>');
+          ids.forEach(i => { const mq2 = P(blp[key][i].x, blp[key][i].z);
+            out.push('<circle cx="' + f2(mq2[0]) + '" cy="' + f2(mq2[1]) + '" r="3" fill="#fff" stroke="' + col + '" stroke-width="1.2"/>');
+            text(mq2[0] - 1.8, mq2[1] + 2, keyLetter(i), { size: 4.6, weight: 700 }); });
+        });
         const mq = P(mvp.keys[mvp.keys.length - 1].x, mvp.keys[mvp.keys.length - 1].z);
         text(mq[0] + 6, mq[1] - 5, moveSummary(mvp, true), { size: 5.5, fill: "#a86f00", halo: true });
       }
@@ -7320,11 +7497,14 @@
       houseLights: houseLightsOn()
     };
   }
-  // Who a figure is playing isn't part of the stage: casting or renaming never makes a "new stage state".
+  // A stage state is how the stage is dressed: who stands where (blocking) and who a figure is playing
+  // (casting) never make a "new stage state". stageSig is the full picture, people included.
   function stateKeyOf(st) {
-    const pas = (st.placedAssets || []).map(p => { if (!p.role) return p; const c = Object.assign({}, p); delete c.role; return c; });
+    const pas = (st.placedAssets || []).filter(p => { const e = catalogEntry(p.assetId); return !(e && e.category === "person"); })
+      .map(p => { if (!p.role) return p; const c = Object.assign({}, p); delete c.role; return c; });
     return hashStr(JSON.stringify([pas, st.rollingWalls, st.ceiling, st.leds, st.environment, st.houseLights]));
   }
+  function stageSig(st) { return hashStr(JSON.stringify([st.placedAssets, st.rollingWalls, st.ceiling, st.leds, st.environment, st.houseLights])); }
   function camSnapshot(pa) { const c = deepClone(pa); delete c._uid; return c; }
   function setupKeyOf(f) {
     const c = f.camera || {}, r = (v, k) => Math.round((+v || 0) / k);
@@ -7351,15 +7531,15 @@
   // A move frame: pose + optics at A, pictures at A and at the last point, cast seen anywhere along it.
   function captureMove(pa) {
     stopMove();
-    const mv = moveOf(pa), keep = poseOf(pa), seen = new Set();
-    setCamPose(pa, mv.keys[0]);
+    const mv = moveOf(pa), keep = poseOf(pa), seen = new Set(), keepB = blockedPoses(mv);
+    setCamPose(pa, mv.keys[0]); applyBlocking(mv, 0);
     const data = frameDataFrom(pa, true), img = captureFrameImage(pa);
     (data.cast || []).forEach(id => seen.add(id));
-    setCamPose(pa, mv.keys[Math.floor((mv.keys.length - 1) / 2)]); castInFrame(pa).forEach(id => seen.add(id));
-    setCamPose(pa, mv.keys[mv.keys.length - 1]);
+    setCamPose(pa, movePoseAtTime(mv, 0.5)); applyBlocking(mv, 0.5); castInFrame(pa).forEach(id => seen.add(id));
+    setCamPose(pa, mv.keys[mv.keys.length - 1]); applyBlocking(mv, 1);
     const imgEnd = captureFrameImage(pa); castInFrame(pa).forEach(id => seen.add(id));
     data.cast = castList().filter(c => seen.has(c.id)).map(c => c.id);
-    setCamPose(pa, keep);
+    setCamPose(pa, keep); restorePoses(keepB);
     return { data: data, img: img, imgEnd: imgEnd };
   }
 
@@ -7526,7 +7706,7 @@
     const f = boardCfg().frames.find(x => x.id === id); if (!f) return;
     if (mode !== "edit") { toast("Switch off view-only mode to revisit a frame."); return; }
     closeBoard(); clearMulti(); deselect();
-    if (stateKeyOf(stageSnapshot()) !== f.stateKey) applyStage(f.stage);
+    if (stageSig(stageSnapshot()) !== stageSig(f.stage)) applyStage(f.stage);
     let pa = activeCameraPA();
     if (!pa) { pa = { assetId: "camera" }; config.placedAssets.push(pa); }
     const keepUid = pa._uid, keepKey = pa.key, keepMove = pa.move;
@@ -10987,6 +11167,8 @@
     updateProbes(performance.now());   // reflections snapshot the stage before the frame is drawn
     if (movePathsDirty) refreshMovePaths();
     if (viewCamUid != null) { if (mvUI.playing) tickMove(performance.now()); else updateCameraFPS(dt); renderCameraView(); return; }
+    if (mvUI.playing) tickMove(performance.now());       // a move plays on the stage too: watch the blocking from above
+    syncMoveBar();
     updateNav(dt);
     syncFootprints();
     renderer.render(scene, viewCam());
