@@ -718,6 +718,96 @@
   body.phone #planSheet .planWrap { flex-direction: row; }
   body.phone #planSheet .planSide { width: 44vw; max-height: none; }
   #modeBadge { color: var(--accent2); font-size: 12px; font-weight: 600; }
+  /* Library pictures, search, shelves */
+  #libFind { width: 100%; margin: 2px 0 8px; }
+  .catItem { flex-wrap: wrap; }
+  .catItem .name { flex: 1 1 110px; }
+  .catItem .row:has(select) { flex-basis: 100%; justify-content: flex-end; }
+  .catItem .thumb { width: 56px; height: 42px; flex-shrink: 0; border-radius: 6px; background: var(--panel2); object-fit: contain; }
+  .shelfHead { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 12px 2px 2px; }
+  .libTools { margin-top: 12px; }
+  #libPreview { position: fixed; z-index: 60; width: 300px; padding: 6px 6px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--panelShadow); pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .15s var(--ease), transform .15s var(--ease); }
+  #libPreview.on { opacity: 1; transform: none; }
+  #libPreview canvas, #pkView, .lmCard .thumb { display: block; background: radial-gradient(ellipse at 50% 38%, #29303a, #121518 75%); }
+  #libPreview canvas { width: 288px; height: 216px; border-radius: 8px; }
+  #libPreview .lpText { padding: 8px 4px 0; }
+  #libPreview b, #pkInfo b { display: block; font-size: 13.5px; font-weight: 600; }
+  #libPreview small, #pkInfo span { color: var(--muted); font-size: 12px; }
+
+  /* Big modal sheets: pack picker, library manager */
+  .modalSheet { position: fixed; inset: 0; z-index: 48; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  .modalSheet .card { width: min(1000px, calc(100% - 32px)); max-height: calc(100% - 32px); display: flex; flex-direction: column; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--panelShadow); overflow: hidden; }
+  .msHead { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 16px 18px 12px; }
+  .msHead h3 { margin: 0 0 4px; font-size: 17px; }
+  .msHead .hint { margin: 0; max-width: 70ch; }
+  .msFoot { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
+  #pkCount { margin-left: auto; color: var(--muted); font-size: 12.5px; text-align: right; }
+  #pkCount.warn { color: var(--salmon); }
+  .pkBody { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 0 18px 14px; min-height: 0; flex: 1; }
+  .pkLeft { display: flex; flex-direction: column; min-height: 0; }
+  .pkBar { display: flex; gap: 4px; padding-bottom: 6px; }
+  .pkList { overflow: auto; min-height: 120px; max-height: calc(100vh - 250px); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+  .pkFolderHead { display: flex; align-items: center; gap: 8px; padding: 10px 8px 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+  .pkFolderHead b { color: var(--text); font-weight: 600; }
+  .pkRow { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px calc(8px + var(--d, 0) * 24px); border-radius: 8px; cursor: pointer; }
+  .pkRow:hover { background: var(--panel2); }
+  .pkRow.focus { background: var(--panel2); box-shadow: inset 0 0 0 1px var(--accent); }
+  .pkRow .thumb { width: 64px; height: 48px; border-radius: 6px; background: var(--panel2); object-fit: contain; flex-shrink: 0; }
+  .pkMain { flex: 1; min-width: 0; }
+  .pkName { width: 100%; background: transparent; border-color: transparent; padding: 3px 6px; }
+  .pkName:hover, .pkName:focus { border-color: var(--line); background: var(--bg); }
+  .pkMain small { display: block; color: var(--muted); font-size: 11.5px; padding-left: 7px; }
+  .pkMain small b { color: var(--text); font-weight: 600; }
+  .pkExp { font-size: 12px; white-space: nowrap; }
+  .pkExp .chev { width: 12px; height: 12px; transition: transform .15s var(--ease); }
+  .pkExp[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  .pkSide { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  #pkView { width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; }
+  .pkField { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
+  .pkCheck { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+  .pkCheck input { margin-top: 1px; flex-shrink: 0; }
+  .pkCheck small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .lmTools { display: flex; gap: 8px; padding: 0 18px 12px; }
+  .lmTools input { flex: 1; }
+  .lmBody { overflow: auto; padding: 0 18px 18px; min-height: 160px; max-height: calc(100vh - 190px); }
+  .lmShelf + .lmShelf { margin-top: 18px; }
+  .lmShelfHead { display: flex; align-items: center; gap: 10px; padding: 6px 0 8px; margin-bottom: 10px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1; }
+  .lmShelfName { font-weight: 600; font-size: 14px; background: transparent; border-color: transparent; padding: 3px 6px; min-width: 0; width: 22ch; }
+  .lmShelfName:hover, .lmShelfName:focus { border-color: var(--line); background: var(--bg); }
+  .lmShelfHead small { color: var(--muted); margin-right: auto; }
+  .lmGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+  .lmCard { display: flex; flex-direction: column; gap: 5px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); min-width: 0; }
+  .lmCard .thumb { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 6px; }
+  .lmCard input { width: 100%; font-size: 12.5px; padding: 4px 7px; background: var(--panel); }
+  .lmCard .lmName { font-weight: 600; }
+  .lmCard small { color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+  .lmCard .btnRow { margin-top: auto; padding-top: 4px; gap: 6px; }
+  @media (max-width: 760px) {
+    .pkBody { grid-template-columns: 1fr; }
+    .pkSide { order: -1; }
+    #pkView { max-height: 180px; }
+    .pkList { max-height: 45vh; }
+    .msFoot { flex-wrap: wrap; }
+  }
+
+  /* Cast */
+  .castChips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .castChip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 7px; border-radius: 999px; font-size: 12.5px; }
+  .castChip i, .bdCast i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+  .castChip[aria-checked="true"] { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); font-weight: 600; }
+  .castList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .castRow { display: grid; grid-template-columns: 20px minmax(0, 1.1fr) minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+  .castDot { width: 18px; height: 18px; min-width: 0; padding: 0; border-radius: 50%; background: var(--c); border: 2px solid rgba(255,255,255,.18); }
+  .castDot:hover { border-color: #fff; }
+  .castRow input { width: 100%; min-width: 0; padding: 5px 7px; }
+  .castRow .castName { font-weight: 600; }
+  .castN { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .castAdd { display: flex; gap: 6px; margin-bottom: 8px; }
+  .castAdd input { flex: 1; min-width: 0; }
+  .bdCast { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 11.5px; font-weight: 600; margin: 0 0 3px; }
+  .bdCast span { display: inline-flex; align-items: center; gap: 5px; }
 </style>
 </head>
 <body>
@@ -838,7 +928,7 @@
         <details class="grp"><summary>Ceiling<svg class="chev"><use href="#i-chev"/></svg></summary>
           <div class="grpBody" id="ceilBody"></div></details>
       </section>
-      <section data-sec="add"><div id="libraryBody"></div></section>
+      <section data-sec="add"><div id="libraryBody"></div><input type="file" id="glbInput" class="hidden" accept=".glb,model/gltf-binary"></section>
       <section data-sec="led"><div id="ledBody"></div></section>
       <section data-sec="camera">
         <div class="subhead">Film camera</div>
@@ -1177,6 +1267,7 @@
         <div class="hint" id="pjExample"></div>
       </section>
       <section class="ppSec"><h4>Script</h4><div id="ppScript"></div></section>
+      <section class="ppSec"><h4>Cast</h4><div id="ppCast"></div></section>
       <section class="ppSec"><h4>The plan</h4><dl class="ppPlan" id="ppPlan"></dl>
         <div class="btnRow"><button class="primary" id="ppBoard"><svg aria-hidden="true"><use href="#i-board"/></svg>Open the board</button></div></section>
       <section class="ppSec"><h4>Deliver</h4>
@@ -1198,6 +1289,39 @@
     </div>
     <div class="ppFoot">Mock &amp; Roll · Lumostage</div>
   </aside>
+
+  <div id="packSheet" class="modalSheet hidden" role="dialog" aria-modal="true" aria-labelledby="pkTitle">
+    <div class="card wide">
+      <div class="msHead"><div><h3 id="pkTitle">Pick pieces</h3><p class="hint" id="pkSub"></p></div><button class="ghost iconBtn" id="pkClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+      <div class="pkBody">
+        <div class="pkLeft">
+          <div class="pkBar"><button class="ghost" id="pkAll">Tick all</button><button class="ghost" id="pkNone">Untick all</button></div>
+          <div class="pkList" id="pkList"></div>
+        </div>
+        <div class="pkSide">
+          <canvas id="pkView" width="640" height="480" aria-label="Preview of the selected piece"></canvas>
+          <div id="pkInfo"></div>
+          <label class="pkField">Shelf in the library<input type="text" id="pkShelf" maxlength="40"></label>
+          <label class="pkField">Texture size<select id="pkTex">
+            <option value="512">Light — up to 512 px · fastest, smallest</option>
+            <option value="1024" selected>Standard — up to 1K</option>
+            <option value="2048">Sharp — up to 2K</option>
+            <option value="0">As in the file · can be very heavy</option></select></label>
+          <label class="pkCheck"><input type="checkbox" id="pkArrange" checked><span>Also place them on the stage as laid out<small>Every copy, where the pack had it, centred where you're looking</small></span></label>
+        </div>
+      </div>
+      <div class="msFoot"><button class="ghost" id="pkWhole" title="Skip the picking: the whole file as one model">Bring it in as one model</button><span id="pkCount"></span><button id="pkCancel">Cancel</button><button class="primary" id="pkGo">Add pieces</button></div>
+    </div>
+  </div>
+
+  <div id="libSheet" class="modalSheet hidden" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
+    <div class="card wide">
+      <div class="msHead"><div><h3 id="lmTitle">Your 3D models</h3><p class="hint" id="lmSub"></p></div><button class="ghost iconBtn" id="lmClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+      <div class="lmTools"><input type="search" id="lmFind" placeholder="Find a model" aria-label="Find a model"><button id="lmImport">Import a .glb…</button></div>
+      <div class="lmBody" id="lmBody"></div>
+      <datalist id="shelfList"></datalist>
+    </div>
+  </div>
 
   <div id="addBoardSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="abTitle">
     <div class="card">
@@ -1400,6 +1524,8 @@
     showFrustums: false,
     // User-imported .glb models (library records only; the file bytes live in IndexedDB).
     customModels: [],
+    // The project's cast: characters (and who plays them). Figures on stage link to one by id.
+    cast: [],
     // One-time data fixes already applied to this layout (see migrateConfig).
     migrations: { ceiling20: true, people2: true, studio202610: true, studio202610b: true },
     // Live reflections on vehicles / imported models / the subway shell (Settings → Reflections).
@@ -2205,12 +2331,25 @@
     if ("roughness" in mt) { mt.roughness = 0.04; mt.metalness = 0.9; }
     mt.userData.reflective = true;
   }
+  // Pieces cut from one pack name their textures "mrpk:<pack>/<image>/<sampler>": the same picture
+  // loaded by several pieces is kept on the graphics card once.
+  const sharedTextures = {};
+  function shareTextures(mt) {
+    Object.keys(mt).forEach(k => {
+      const t = mt[k];
+      if (!t || !t.isTexture || !/^mrpk:/.test(t.name || "")) return;
+      const have = sharedTextures[t.name];
+      if (have && have !== t) { mt[k] = have; t.dispose(); }
+      else sharedTextures[t.name] = t;
+    });
+  }
   function fixModelColors(root) {
     root.traverse(n => {
       if (!n.isMesh) return;
       (Array.isArray(n.material) ? n.material : [n.material]).forEach(mt => {
         if (!mt || mt.userData.lsColorFixed) return;
         mt.userData.lsColorFixed = true;
+        shareTextures(mt);
         ["map", "emissiveMap"].forEach(k => { if (mt[k]) { mt[k].encoding = THREE.LinearEncoding; mt[k].needsUpdate = true; } });
         if (mt.color) mt.color.convertLinearToSRGB();
         if (mt.emissive) mt.emissive.convertLinearToSRGB();
@@ -2363,7 +2502,8 @@
       g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
       g.add(holder);
       g.userData.hasModel = true;
-      attachProbe(g, holder, pa, { cloneMats: true });     // mirror the stage on paint, chrome and glass
+      if (!entry.noProbe) attachProbe(g, holder, pa, { cloneMats: true });     // mirror the stage on paint, chrome and glass
+                                                           // (pieces cut from a pack skip it: dozens of probes cost too much)
     });
     return g;
   }
@@ -2672,35 +2812,753 @@
     });
   }
 
+  // A .glb with several separate pieces (a furnished room, a prop kit) opens the pack picker;
+  // a single model comes straight in.
   function importGlbFile(file) {
     if (!gltfLoader) { toast("Model loader unavailable"); return; }
     if (!/\.glb$/i.test(file.name)) { toast("Use a .glb file (single-file glTF)"); return; }
-    file.arrayBuffer().then(buf => parseGlb(buf).then(sceneObj => {
+    file.arrayBuffer().then(buf => {
+      let an = null;
+      try { an = packAnalyse(buf); } catch (err) { an = null; }
+      if (an && an.pieces >= 3) return openPackSheet(file, buf, an);
+      return ingestWholeGlb(buf, file.name, "Imported");
+    }).catch(err => toast("Import failed: " + (err && err.message ? err.message : err)));
+  }
+
+  // Forget an imported model: its library entry, every placed instance, and the stored file.
+  function removeCustomModel(assetId, quiet) {
+    config.customModels = config.customModels.filter(e => e.assetId !== assetId);
+    config.placedAssets = config.placedAssets.filter(p => p.assetId !== assetId);
+    delete customModelCache[assetId]; delete thumbMem["thumb:" + assetId];
+    modelDbOp("readwrite", s => { s.delete(assetId); s.delete("thumb:" + assetId); }).catch(() => {});
+    if (quiet) return;
+    rebuildPlaced(); buildLibrary(); renderInspector(); scheduleAutosave();
+    toast("Removed imported model");
+  }
+
+  // ==================================================================
+  //  LIBRARY PICTURES: thumbnails + hover preview
+  // ==================================================================
+  // Every library piece gets a small picture, rendered off-screen by the main renderer into a
+  // render target (no second WebGL context), kept in memory and in IndexedDB next to the models
+  // ("thumb:<key>"). Imported models get theirs when they come in. Hovering a library row shows a
+  // larger, slowly turning view of the same piece.
+  const THUMB_VER = 1, TH_W = 160, TH_H = 120;
+  const thumbMem = {};                        // key -> data URL ("" = nothing to show)
+  const thumbPending = {};
+  let thumbStage = null, thumbChain = Promise.resolve();
+  function getThumbStage() {
+    if (thumbStage) return thumbStage;
+    const sc = new THREE.Scene();
+    sc.add(new THREE.HemisphereLight(0xe8eef6, 0x30343c, 1.05));
+    const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(-4, 7, 6); sc.add(key);
+    const rim = new THREE.DirectionalLight(0x9fc4ff, 0.35); rim.position.set(5, 3, -6); sc.add(rim);
+    thumbStage = { scene: sc, cam: new THREE.PerspectiveCamera(26, 4 / 3, 0.01, 5000), rts: {}, px: {}, cv: document.createElement("canvas") };
+    return thumbStage;
+  }
+  // A preview subject keeps out of the live reflection round-robin (its probe would re-render the stage).
+  function dropThumbProbes() {
+    const sc = thumbStage && thumbStage.scene; if (!sc) return;
+    for (let i = probes.length - 1; i >= 0; i--) {
+      let o = probes[i].group; while (o.parent) o = o.parent;
+      if (o !== sc) continue;
+      probes[i].mats.forEach(mt => { mt.envMap = null; mt.needsUpdate = true; });
+      probes[i].rt.dispose(); probes.splice(i, 1);
+    }
+  }
+  // Draw obj from a three-quarter angle (az = turn around it) into the canvas `out`, framed to fit.
+  function renderSubject(obj, az, out) {
+    const ts = getThumbStage(), cam = ts.cam;
+    if (obj.parent !== ts.scene) ts.scene.add(obj);
+    ts.scene.children.forEach(o => { if (!o.isLight) o.visible = o === obj; });
+    dropThumbProbes();
+    obj.updateMatrixWorld(true);
+    const bb = new THREE.Box3().setFromObject(obj);
+    if (bb.isEmpty()) return false;
+    const sph = bb.getBoundingSphere(new THREE.Sphere()), r = Math.max(sph.radius, 1e-3);
+    const w = out.width, h = out.height, s = w < 300 ? 2 : 1, W = w * s, H = h * s;
+    cam.aspect = w / h; cam.fov = 26;
+    const vf = degToRad(cam.fov / 2), hf = Math.atan(Math.tan(vf) * cam.aspect);
+    const dist = r / Math.sin(Math.min(vf, hf)) * 0.94, el = degToRad(20);
+    cam.position.set(sph.center.x + dist * Math.cos(el) * Math.sin(az), sph.center.y + dist * Math.sin(el), sph.center.z + dist * Math.cos(el) * Math.cos(az));
+    cam.near = dist / 50; cam.far = dist * 4; cam.lookAt(sph.center); cam.updateProjectionMatrix();
+    const k = W + "x" + H;
+    const rt = ts.rts[k] || (ts.rts[k] = new THREE.WebGLRenderTarget(W, H, { format: THREE.RGBAFormat }));
+    const px = ts.px[k] || (ts.px[k] = new Uint8Array(W * H * 4));
+    const prevRT = renderer.getRenderTarget(), prevC = renderer.getClearColor(new THREE.Color()), prevA = renderer.getClearAlpha();
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear();
+    renderer.render(ts.scene, cam);
+    renderer.readRenderTargetPixels(rt, 0, 0, W, H, px);
+    renderer.setRenderTarget(prevRT); renderer.setClearColor(prevC, prevA);
+    const cv = ts.cv; if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const cx = cv.getContext("2d"), img = cx.createImageData(W, H), row = W * 4;
+    for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * row, (H - y) * row), y * row);   // GL rows run bottom-up
+    cx.putImageData(img, 0, 0);
+    const oc = out.getContext("2d"); oc.clearRect(0, 0, w, h); oc.drawImage(cv, 0, 0, w, h);
+    return true;
+  }
+  function subjectToThumb(obj) {
+    const c = document.createElement("canvas"); c.width = TH_W; c.height = TH_H;
+    return renderSubject(obj, degToRad(-35), c) ? c.toDataURL("image/webp", 0.86) : "";
+  }
+  function thumbKeyFor(assetId, variant) {
+    const e = catalogEntry(assetId); if (!e) return "";
+    return e.custom ? "thumb:" + assetId : "thumb:b" + THUMB_VER + ":" + assetId + ":" + (variant || "");
+  }
+  function expectsModel(e) { return !!(e.custom || e.category === "person" || e.prepped || e.model || (e.variants && e.variants.some(v => v.model))); }
+  // A throwaway copy of a library piece, handed over once its model (if it has one) has loaded.
+  function makeSubject(assetId, variant) {
+    const e = catalogEntry(assetId); if (!e) return Promise.resolve(null);
+    const pa = { assetId: assetId, x: 0, z: 0, rotationDeg: 0 }; if (variant) pa.variant = variant;
+    let g = null;
+    try { g = buildAssetGroup(pa); } catch (err) { console.warn("Lumostage: no preview for " + assetId, err); }
+    if (!g) return Promise.resolve(null);
+    getThumbStage().scene.add(g);                       // model swaps only land on a parented group
+    g.visible = false;
+    if (!expectsModel(e)) return Promise.resolve(g);
+    return new Promise(res => {
+      const t0 = performance.now();
+      const tick = () => { if (g.userData.hasModel || performance.now() - t0 > 6000) res(g); else setTimeout(tick, 120); };
+      tick();
+    });
+  }
+  function dropSubject(g) { if (!g) return; if (g.parent) g.parent.remove(g); disposeObject3D(g); }
+  function thumbQueue(job) { const p = thumbChain.then(job, job); thumbChain = p.catch(() => {}); return p; }
+  function loadThumb(key, make) {
+    if (key in thumbMem) return Promise.resolve(thumbMem[key]);
+    if (thumbPending[key]) return thumbPending[key];
+    return thumbPending[key] = modelDbOp("readonly", s => s.get(key)).catch(() => null).then(hit => {
+      if (typeof hit === "string") return hit;
+      return thumbQueue(() => make().then(g => {
+        if (!g) return "";
+        const url = subjectToThumb(g); dropSubject(g);
+        if (url) modelDbOp("readwrite", s => s.put(url, key)).catch(() => {});
+        return url;
+      }));
+    }).catch(() => "").then(url => { thumbMem[key] = url; delete thumbPending[key]; return url; });
+  }
+  const thumbIO = "IntersectionObserver" in window
+    ? new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { thumbIO.unobserve(en.target); fillThumb(en.target); } }), { rootMargin: "160px" }) : null;
+  function fillThumb(img) {
+    const key = img.dataset.thumb; if (!key) return;
+    loadThumb(key, () => makeSubject(img.dataset.asset, img.dataset.variant || null)).then(url => {
+      if (img.dataset.thumb !== key) return;
+      if (url) { img.src = url; img.classList.add("ready"); } else img.classList.add("none");
+    });
+  }
+  function setThumb(img, assetId, variant) {
+    const key = thumbKeyFor(assetId, variant);
+    img.dataset.thumb = key; img.dataset.asset = assetId;
+    if (variant) img.dataset.variant = variant; else delete img.dataset.variant;
+    img.classList.remove("ready", "none");
+    if (thumbMem[key]) { img.src = thumbMem[key]; img.classList.add("ready"); return; }
+    img.src = BLANK_IMG;
+    if (thumbIO && !img.isConnected) thumbIO.observe(img); else fillThumb(img);
+  }
+  function thumbImg(assetId, variant) {
+    const img = document.createElement("img"); img.className = "thumb"; img.alt = ""; img.draggable = false;
+    setThumb(img, assetId, variant);
+    return img;
+  }
+
+  // Hover preview: a bigger picture that turns slowly, with the piece's real size.
+  const libPrev = { el: null, cv: null, subj: null, raf: 0, timer: 0, token: 0, own: false };
+  function libPreviewEl() {
+    if (libPrev.el) return libPrev.el;
+    const d = document.createElement("div"); d.id = "libPreview"; d.setAttribute("aria-hidden", "true");
+    d.innerHTML = '<canvas width="576" height="432"></canvas><div class="lpText"><b></b><small></small></div>';
+    document.body.appendChild(d); libPrev.el = d; libPrev.cv = d.querySelector("canvas");
+    return d;
+  }
+  function stopPreviewSubject() {
+    cancelAnimationFrame(libPrev.raf);
+    if (libPrev.subj) { if (libPrev.own) dropSubject(libPrev.subj); else if (libPrev.subj.parent) libPrev.subj.parent.remove(libPrev.subj); }
+    libPrev.subj = null;
+  }
+  function hideLibPreview() {
+    libPrev.token++; clearTimeout(libPrev.timer); stopPreviewSubject();
+    if (libPrev.el) libPrev.el.classList.remove("on");
+  }
+  // anchor: element to sit beside; get(): Promise<{ obj, own, title, meta }>
+  function showLibPreview(anchor, get, delay) {
+    const tok = ++libPrev.token;
+    clearTimeout(libPrev.timer);
+    libPrev.timer = setTimeout(() => get().then(s => {
+      if (tok !== libPrev.token) { if (s && s.own) dropSubject(s.obj); return; }
+      stopPreviewSubject();
+      if (!s || !s.obj) return;
+      libPrev.subj = s.obj; libPrev.own = !!s.own;
+      const d = libPreviewEl();
+      d.querySelector("b").textContent = s.title || "";
+      d.querySelector("small").textContent = s.meta || "";
+      const r = anchor.getBoundingClientRect(), host = anchor.closest("#drawer, .card") || anchor, hr = host.getBoundingClientRect();
+      const pw = 300, ph = 262;
+      let x = hr.right + 10; if (x + pw > innerWidth - 8) x = Math.max(8, hr.left - pw - 10);
+      if (host.classList.contains("card")) x = Math.min(Math.max(8, r.right - pw), innerWidth - pw - 8);
+      d.style.left = x + "px"; d.style.top = Math.min(Math.max(8, r.top + r.height / 2 - ph / 2), innerHeight - ph - 8) + "px";
+      let az = degToRad(-35), last = performance.now();
+      renderSubject(libPrev.subj, az, libPrev.cv);
+      d.classList.add("on");
+      const spin = t => {
+        if (tok !== libPrev.token || !libPrev.subj) return;
+        if (t - last > 50) { az += Math.min(t - last, 200) / 1000 * 0.55; last = t; renderSubject(libPrev.subj, az, libPrev.cv); }
+        libPrev.raf = requestAnimationFrame(spin);
+      };
+      libPrev.raf = requestAnimationFrame(spin);
+    }), delay == null ? 260 : delay);
+  }
+  function sizeLine(obj, unitFt) {
+    const sz = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3()).multiplyScalar(unitFt);
+    return fmtLen(Math.max(sz.x, sz.z)) + " × " + fmtLen(Math.min(sz.x, sz.z)) + " · " + fmtLen(sz.y) + " high";
+  }
+  function previewLibraryPiece(anchor, assetId, variant, title) {
+    showLibPreview(anchor, () => makeSubject(assetId, variant).then(g => {
+      if (!g) return null;
+      g.visible = true;
+      const e = catalogEntry(assetId);
+      return { obj: g, own: true, title: title, meta: sizeLine(g, 1) + (e && e.tris ? " · " + Math.round(e.tris / 1000) + "k triangles" : "") };
+    }));
+  }
+
+  // ==================================================================
+  //  PACKS: pick an environment .glb apart into library pieces
+  // ==================================================================
+  // A glTF "pack" (a whole room, a kit of props) is read straight from the file: its node tree
+  // is shown as pieces with pictures; each ticked piece is cut out of the file as its own small
+  // .glb — the original bytes (meshes, textures) copied, nothing re-encoded — and stored like any
+  // imported model. Ticking a part inside a piece splits it off as its own piece. Identical copies
+  // (six of the same chair) become one library piece; "place as laid out" puts every copy back
+  // where the pack had it, standing on the stage floor.
+  function readGlb(buf) {
+    const dv = new DataView(buf);
+    if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546C67) throw new Error("not a binary glTF (.glb) file");
+    let off = 12, json = null, bin = null;
+    while (off + 8 <= buf.byteLength) {
+      const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true);
+      if (type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, off + 8, len)));
+      else if (type === 0x004E4942) bin = new Uint8Array(buf, off + 8, len);
+      off += 8 + len;
+    }
+    if (!json) throw new Error("the file has no glTF description");
+    return { json: json, bin: bin };
+  }
+  function packAnalyse(buf) {
+    const src = readGlb(buf), J = src.json, N = J.nodes || [];
+    const parent = N.map(() => -1); N.forEach((n, i) => (n.children || []).forEach(c => { parent[c] = i; }));
+    const meshMemo = {};
+    const hasMesh = i => meshMemo[i] != null ? meshMemo[i] : (meshMemo[i] = N[i].mesh != null || (N[i].children || []).some(hasMesh));
+    const local = n => n.matrix ? new THREE.Matrix4().fromArray(n.matrix)
+      : new THREE.Matrix4().compose(new THREE.Vector3().fromArray(n.translation || [0, 0, 0]), new THREE.Quaternion().fromArray(n.rotation || [0, 0, 0, 1]), new THREE.Vector3().fromArray(n.scale || [1, 1, 1]));
+    const world = [], I4 = new THREE.Matrix4();
+    const W = i => world[i] || (world[i] = parent[i] < 0 ? local(N[i]) : W(parent[i]).clone().multiply(local(N[i])));
+    const kids = i => (N[i].children || []).filter(hasMesh);
+    // World pose split into: position, a turn about the vertical (kept for placing it), and the
+    // rest (tilt + scale), which is baked into the cut-out piece so it stands upright at true size.
+    const poseMemo = {};
+    const pose = i => {
+      if (poseMemo[i]) return poseMemo[i];
+      const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+      W(i).decompose(p, q, s);
+      let yaw = 0;
+      if (Math.abs(q.x) < 2e-3 && Math.abs(q.z) < 2e-3) { yaw = 2 * Math.atan2(q.y, q.w); q.set(0, 0, 0, 1); }
+      const bake = new THREE.Matrix4().compose(new THREE.Vector3(), q, s);
+      return poseMemo[i] = { pos: p, yaw: yaw, bake: bake, key: bake.elements.map(v => Math.round(v * 1000)).join(",") };
+    };
+    const sig = (i, ex) => (N[i].mesh != null ? "m" + N[i].mesh : "g") + "[" + kids(i).filter(c => !ex.has(c))
+      .map(c => sig(c, ex) + "@" + local(N[c]).elements.map(v => Math.round(v * 1000)).join(",")).join(";") + "]";
+    const clean = s => String(s || "").replace(/^(SM|S|M|BP)_/i, "").replace(/(_\d+)+$/, "").replace(/_-_/g, " ").replace(/[_]+/g, " ").replace(/\s+/g, " ").replace(/[\s-]+$/, "").trim();
+    const reg = [];
+    const part = (i, depth) => { const it = { id: reg.length, idx: i, name: clean(N[i].name) || "Part " + i, on: false, depth: depth, parts: [] }; reg.push(it); it.parts = kids(i).map(c => part(c, depth + 1)); return it; };
+    const piece = i => { const it = part(i, 0); it.on = true; it.instances = [i]; return it; };
+    const walk = i => {
+      if (!hasMesh(i)) return [];
+      const n = N[i];
+      if (n.mesh == null && local(n).equals(I4)) {                 // an organising empty at the origin = a folder
+        const items = kids(i).flatMap(walk);
+        return items.length > 1 ? [{ folder: true, idx: i, name: clean(n.name) || "Group", items: items }] : items;
+      }
+      return [piece(i)];
+    };
+    const sc = (J.scenes || [])[J.scene || 0] || { nodes: [] };
+    let roots = (sc.nodes || []).flatMap(walk);
+    while (roots.length === 1 && roots[0].folder) roots = roots[0].items;
+    // Identical copies → one row (×N); every copy is still placed when laying the pack out.
+    const seen = {};
+    const dedupe = list => list.filter(it => {
+      if (it.folder) { it.items = dedupe(it.items); return it.items.length > 0; }
+      const k = sig(it.idx, new Set()) + "|" + pose(it.idx).key;
+      if (seen[k]) { seen[k].instances.push(it.idx); return false; }
+      seen[k] = it; return true;
+    });
+    roots = dedupe(roots);
+    let pieces = 0; const count = l => l.forEach(it => it.folder ? count(it.items) : pieces++); count(roots);
+    // Triangle count straight from the file (index or vertex counts), for the weight warning.
+    const meshTris = m => (J.meshes[m].primitives || []).reduce((a, p) => {
+      const mode = p.mode == null ? 4 : p.mode; if (mode !== 4) return a;
+      const ac = J.accessors[p.indices != null ? p.indices : p.attributes.POSITION];
+      return a + (ac ? ac.count / 3 : 0);
+    }, 0);
+    const tris = (i, ex) => (N[i].mesh != null ? meshTris(N[i].mesh) : 0) + kids(i).filter(c => !ex.has(c)).reduce((a, c) => a + tris(c, ex), 0);
+    return { src: src, J: J, N: N, roots: roots, reg: reg, pieces: pieces, hasMesh: hasMesh, kids: kids, pose: pose, sig: sig, tris: tris };
+  }
+
+  // Cut node `root` (minus the nodes in `ex`) out of the pack as a standalone .glb. Mesh, accessor
+  // and image bytes are copied as they are; the root carries `bake` (tilt + scale, no position).
+  function extractGlb(src, root, ex, bake, hasMesh, opts) {
+    opts = opts || {};
+    const J = src.json, bin = src.bin || new Uint8Array(0);
+    const out = { asset: { version: "2.0", generator: "Mock & Roll pack splitter" }, scene: 0, scenes: [{ nodes: [0] }],
+      nodes: [], meshes: [], materials: [], textures: [], images: [], samplers: [], accessors: [], bufferViews: [], buffers: [] };
+    const maps = {}, chunks = []; let len = 0;
+    const take = (kind, i, fix) => {
+      const m = maps[kind] || (maps[kind] = new Map());
+      if (m.has(i)) return m.get(i);
+      const ni = out[kind].length; m.set(i, ni); out[kind].push(null);
+      out[kind][ni] = fix(JSON.parse(JSON.stringify(J[kind][i])));
+      return ni;
+    };
+    const bv = i => take("bufferViews", i, v => {
+      if ((v.buffer || 0) !== 0) throw new Error("external buffers aren't supported");
+      const at = v.byteOffset || 0, pad = (4 - len % 4) % 4;
+      if (pad) { chunks.push(new Uint8Array(pad)); len += pad; }
+      chunks.push(bin.subarray(at, at + v.byteLength));
+      v.buffer = 0; v.byteOffset = len; len += v.byteLength;
+      return v;
+    });
+    const acc = i => take("accessors", i, a => {
+      if (a.bufferView != null) a.bufferView = bv(a.bufferView);
+      if (a.sparse) { a.sparse.indices.bufferView = bv(a.sparse.indices.bufferView); a.sparse.values.bufferView = bv(a.sparse.values.bufferView); }
+      return a;
+    });
+    // Images: the original bytes, or a smaller copy made beforehand (opts.images[i] = { bytes, mime }).
+    const rawView = bytes => {
+      const pad = (4 - len % 4) % 4;
+      if (pad) { chunks.push(new Uint8Array(pad)); len += pad; }
+      chunks.push(bytes); out.bufferViews.push({ buffer: 0, byteOffset: len, byteLength: bytes.length }); len += bytes.length;
+      return out.bufferViews.length - 1;
+    };
+    const img = i => take("images", i, m => {
+      const o = opts.images && opts.images[i];
+      if (o) { m.bufferView = rawView(o.bytes); m.mimeType = o.mime; delete m.uri; }
+      else if (m.bufferView != null) m.bufferView = bv(m.bufferView);
+      return m;
+    });
+    const smp = i => take("samplers", i, s => s);
+    const tex = i => take("textures", i, t => {
+      if (opts.tag) t.name = "mrpk:" + opts.tag + "/" + (t.source != null ? t.source : "x") + "/" + (t.sampler != null ? t.sampler : "d");
+      if (t.source != null) t.source = img(t.source);
+      if (t.sampler != null) t.sampler = smp(t.sampler);
+      if (t.extensions) Object.keys(t.extensions).forEach(k => { const e = t.extensions[k]; if (e && e.source != null) e.source = img(e.source); });
+      return t;
+    });
+    const texRefs = o => Object.keys(o).forEach(k => {
+      const v = o[k];
+      if (!v || typeof v !== "object") return;
+      if (/Texture$/.test(k) && typeof v.index === "number") v.index = tex(v.index);
+      texRefs(v);
+    });
+    const mat = i => take("materials", i, m => { texRefs(m); return m; });
+    const mesh = i => take("meshes", i, m => {
+      m.primitives.forEach(p => {
+        if (p.extensions && p.extensions.KHR_draco_mesh_compression) throw new Error("Draco-compressed meshes can't be read here — re-export without compression");
+        Object.keys(p.attributes).forEach(k => { p.attributes[k] = acc(p.attributes[k]); });
+        if (p.indices != null) p.indices = acc(p.indices);
+        if (p.material != null) p.material = mat(p.material);
+        (p.targets || []).forEach(t => Object.keys(t).forEach(k => { t[k] = acc(t[k]); }));
+      });
+      return m;
+    });
+    const node = (i, isRoot) => {
+      const n = J.nodes[i], ni = out.nodes.length, o = {};
+      out.nodes.push(o);
+      if (n.name) o.name = n.name;
+      if (isRoot) o.matrix = bake.elements.slice();
+      else ["matrix", "translation", "rotation", "scale"].forEach(k => { if (n[k]) o[k] = n[k].slice(); });
+      if (n.mesh != null) o.mesh = mesh(n.mesh);
+      if (n.extras) o.extras = n.extras;
+      const ch = (n.children || []).filter(c => !ex.has(c) && hasMesh(c)).map(c => node(c, false));
+      if (ch.length) o.children = ch;
+      return ni;
+    };
+    node(root, true);
+    out.buffers = [{ byteLength: len }];
+    Object.keys(out).forEach(k => { if (Array.isArray(out[k]) && !out[k].length) delete out[k]; });
+    const text = JSON.stringify(out);
+    ["extensionsUsed", "extensionsRequired"].forEach(k => { const l = (J[k] || []).filter(x => text.indexOf('"' + x + '"') !== -1); if (l.length) out[k] = l; });
+    let js = new TextEncoder().encode(JSON.stringify(out));
+    const jpad = (4 - js.length % 4) % 4, bpad = (4 - len % 4) % 4;
+    const total = 12 + 8 + js.length + jpad + 8 + len + bpad;
+    const glb = new Uint8Array(total), dv = new DataView(glb.buffer);
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+    dv.setUint32(12, js.length + jpad, true); dv.setUint32(16, 0x4E4F534A, true);
+    glb.set(js, 20); glb.fill(0x20, 20 + js.length, 20 + js.length + jpad);
+    let o = 20 + js.length + jpad;
+    dv.setUint32(o, len + bpad, true); dv.setUint32(o + 4, 0x004E4942, true); o += 8;
+    chunks.forEach(c => { glb.set(c, o); o += c.length; });
+    return glb.buffer;
+  }
+
+  let pack = null;      // the pack being picked apart (open sheet)
+  function openPackSheet(file, buf, an) {
+    toast("Reading " + file.name + "…");
+    gltfLoader.parse(buf, "", g => {
+      fixModelColors(g.scene);
+      const obj = [];
+      g.scene.traverse(o => { const a = g.parser.associations.get(o); if (a && a.type === "nodes") obj[a.index] = o; });
+      pack = { file: file, buf: buf, an: an, obj: obj, scene: g.scene, thumbs: {}, open: {} };
+      const sh = document.getElementById("packSheet");
+      document.getElementById("pkTitle").textContent = "Pick pieces from " + file.name.replace(/\.glb$/i, "");
+      document.getElementById("pkSub").textContent = plural(an.pieces, "piece") + " found · " + (buf.byteLength / 1048576).toFixed(1) + " MB file. Untick what you don't need; tick a part to split it off as its own piece.";
+      document.getElementById("pkShelf").value = file.name.replace(/\.glb$/i, "").replace(/[_-]+/g, " ").trim().replace(/^./, c => c.toUpperCase());
+      renderPackList();
+      sh.classList.remove("hidden");
+      packFocus(an.reg.find(it => it.instances) || null);
+      document.getElementById("pkGo").focus();
+    }, err => toast("Couldn't read the pack: " + (err && err.message ? err.message : err)));
+  }
+  function closePackSheet() {
+    document.getElementById("packSheet").classList.add("hidden");
+    hideLibPreview(); packViewStop();
+    // The whole pack was loaded for the pictures: give its GPU memory back.
+    if (pack && pack.scene) pack.scene.traverse(n => {
+      if (n.geometry) n.geometry.dispose();
+      (Array.isArray(n.material) ? n.material : n.material ? [n.material] : []).forEach(mt => {
+        Object.keys(mt).forEach(k => { if (mt[k] && mt[k].isTexture) mt[k].dispose(); });
+        mt.dispose();
+      });
+    });
+    pack = null;
+  }
+  // The nodes ticked inside `it` (as found in instance node `inst`) — cut out of it, kept as their own pieces.
+  function packExcluded(it, inst) {
+    const ex = new Set(), an = pack.an;
+    const scan = (p, node) => p.parts.forEach((sub, k) => { const nd = an.kids(node)[k]; if (nd == null) return; if (sub.on) ex.add(nd); else scan(sub, nd); });
+    scan(it, inst);
+    return ex;
+  }
+  function packSubject(it, inst) {
+    const ex = packExcluded(it, inst), assoc = n => { const i = pack.obj.indexOf(n); return i; };
+    const cut = o => { const c = o.clone(false); o.children.forEach(ch => { const i = assoc(ch); if (i >= 0 && (ex.has(i) || !pack.an.hasMesh(i))) return; c.add(cut(ch)); }); return c; };
+    const c = cut(pack.obj[inst]);
+    c.matrixAutoUpdate = false; c.matrix.copy(pack.an.pose(inst).bake);
+    const holder = new THREE.Group(); holder.add(c); holder.updateMatrixWorld(true);
+    return holder;
+  }
+  function packTris(obj) {
+    let t = 0; obj.traverse(n => { if (n.isMesh && n.geometry) { const i = n.geometry.index, p = n.geometry.attributes.position; t += i ? i.count / 3 : (p ? p.count / 3 : 0); } });
+    return Math.round(t);
+  }
+  function packRowHTML(it, top) {
+    const n = it.instances ? it.instances.length : 1, hasParts = it.parts.length > 0, open = !!pack.open[it.id];
+    return '<div class="pkRow' + (top ? "" : " part") + '" data-id="' + it.id + '" style="--d:' + it.depth + '">' +
+      '<input type="checkbox" data-tick="' + it.id + '"' + (it.on ? " checked" : "") + ' aria-label="Include ' + escapeHtml(it.name) + '">' +
+      '<img class="thumb" alt="" src="' + (pack.thumbs[it.id] || BLANK_IMG) + '" data-pkthumb="' + it.id + '">' +
+      '<div class="pkMain"><input class="pkName" data-name="' + it.id + '" value="' + escapeHtml(it.name) + '" aria-label="Name" maxlength="48">' +
+        '<small>' + (n > 1 ? '<b>×' + n + '</b> · ' : "") + '<span data-size="' + it.id + '"></span>' + (top ? "" : (it.on ? " · its own piece" : " · stays with " + escapeHtml(packParentName(it)))) + '</small></div>' +
+      (hasParts ? '<button class="ghost pkExp" data-exp="' + it.id + '" aria-expanded="' + open + '">' + plural(it.parts.length, "part") + '<svg class="chev"><use href="#i-chev"/></svg></button>' : "") +
+      '</div>' + (hasParts && open ? '<div class="pkKids">' + it.parts.map(p => packRowHTML(p, false)).join("") + '</div>' : "");
+  }
+  function packParentName(it) { const p = pack.an.reg.find(x => x.parts.indexOf(it) !== -1); return p ? p.name : "its parent"; }
+  function renderPackList() {
+    const list = document.getElementById("pkList"), an = pack.an;
+    const folder = f => '<div class="pkFolder"><label class="pkFolderHead"><input type="checkbox" data-folder="' + f.idx + '"' + (folderState(f) === 2 ? " checked" : "") + '> <b>' + escapeHtml(f.name) + '</b> <small>' + plural(folderCount(f), "piece") + '</small></label>' +
+      f.items.map(x => x.folder ? folder(x) : packRowHTML(x, true)).join("") + '</div>';
+    list.innerHTML = an.roots.map(x => x.folder ? folder(x) : packRowHTML(x, true)).join("");
+    list.querySelectorAll("[data-folder]").forEach(cb => { const f = findFolder(an.roots, +cb.dataset.folder); if (f && folderState(f) === 1) cb.indeterminate = true; });
+    list.querySelectorAll("img[data-pkthumb]").forEach(im => { if (!pack.thumbs[im.dataset.pkthumb]) (packIO ? packIO.observe(im) : packThumb(im)); });
+    list.querySelectorAll("[data-size]").forEach(s => { const it = an.reg[+s.dataset.size]; if (it.size) s.textContent = it.size; });
+    syncPackCount();
+  }
+  const packIO = "IntersectionObserver" in window
+    ? new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { packIO.unobserve(en.target); packThumb(en.target); } }), { rootMargin: "200px" }) : null;
+  function packThumb(im) {
+    if (!pack) return;
+    const it = pack.an.reg[+im.dataset.pkthumb], inst = packInst(it);
+    thumbQueue(() => {
+      if (!pack || pack.thumbs[it.id]) return;
+      const s = packSubject(it, inst);
+      pack.thumbs[it.id] = subjectToThumb(s) || BLANK_IMG;
+      it.size = sizeLine(s, FT_PER_M) + " · " + Math.round(packTris(s) / 1000) + "k triangles";
+      s.parent && s.parent.remove(s);
+      document.querySelectorAll('#pkList [data-pkthumb="' + it.id + '"]').forEach(x => { x.src = pack.thumbs[it.id]; });
+      document.querySelectorAll('#pkList [data-size="' + it.id + '"]').forEach(x => { x.textContent = it.size; });
+    });
+  }
+  // The node a row stands for (parts: found by walking down from their piece's first copy).
+  function packInst(it) {
+    if (it.instances) return it.instances[0];
+    const an = pack.an, path = [];
+    let cur = it, par;
+    while ((par = an.reg.find(x => x.parts.indexOf(cur) !== -1))) { path.unshift(par.parts.indexOf(cur)); cur = par; }
+    let node = cur.instances[0];
+    path.forEach(k => { node = an.kids(node)[k]; });
+    return node;
+  }
+  function findFolder(list, idx) { for (const x of list) { if (!x.folder) continue; if (x.idx === idx) return x; const f = findFolder(x.items, idx); if (f) return f; } return null; }
+  function folderPieces(f) { return f.items.flatMap(x => x.folder ? folderPieces(x) : [x]); }
+  function folderCount(f) { return folderPieces(f).length; }
+  function folderState(f) { const p = folderPieces(f), on = p.filter(x => x.on).length; return on === 0 ? 0 : on === p.length ? 2 : 1; }
+  // Every piece the ticks produce, across every copy: { node, ex, it }.
+  function packUnits() {
+    const an = pack.an, units = [];
+    const collect = (it, inst) => {
+      const ex = packExcluded(it, inst);
+      units.push({ node: inst, ex: ex, it: it });
+      const down = (p, node) => p.parts.forEach((sub, k) => { const nd = an.kids(node)[k]; if (nd == null) return; if (sub.on) collect(sub, nd); else down(sub, nd); });
+      down(it, inst);
+    };
+    const visit = (it, inst) => { if (it.on) collect(it, inst); else it.parts.forEach((sub, k) => { const nd = an.kids(inst)[k]; if (nd != null) visit(sub, nd); }); };
+    const all = l => l.forEach(x => x.folder ? all(x.items) : x.instances.forEach(inst => visit(x, inst)));
+    all(an.roots);
+    return units;
+  }
+  function packGroups() {
+    const an = pack.an, groups = new Map();
+    packUnits().forEach(u => {
+      const k = an.sig(u.node, u.ex) + "|" + an.pose(u.node).key;
+      if (!groups.has(k)) groups.set(k, { units: [], it: u.it });
+      groups.get(k).units.push(u);
+    });
+    return [...groups.values()];
+  }
+  const PACK_TRI_WARN = 300000;
+  function syncPackCount() {
+    const gs = packGroups(), copies = gs.reduce((a, g) => a + g.units.length, 0), an = pack.an;
+    const arrange = document.getElementById("pkArrange").checked;
+    const tri = Math.round(gs.reduce((a, g) => a + an.tris(g.units[0].node, g.units[0].ex) * (arrange ? g.units.length : 1), 0));
+    const el = document.getElementById("pkCount"), heavy = arrange && tri > PACK_TRI_WARN;
+    el.textContent = gs.length ? plural(gs.length, "piece") + (arrange && copies > gs.length ? " · " + copies + " placed" : "") + " · " + Math.round(tri / 1000) + "k triangles" + (heavy ? " — heavy: the view will slow down" : "") : "Nothing ticked";
+    el.classList.toggle("warn", heavy);
+    el.title = heavy ? "Untick the pieces you don't need (big sofas and desks are the heaviest), or don't lay them all out at once" : "";
+    document.getElementById("pkGo").disabled = !gs.length;
+    document.getElementById("pkGo").textContent = gs.length ? "Add " + plural(gs.length, "piece") : "Add pieces";
+  }
+  // Big turning view of the focused row.
+  const pkView = { raf: 0, subj: null, az: degToRad(-35) };
+  function packViewStop() { cancelAnimationFrame(pkView.raf); if (pkView.subj && pkView.subj.parent) pkView.subj.parent.remove(pkView.subj); pkView.subj = null; }
+  function packFocus(it) {
+    packViewStop();
+    const cv = document.getElementById("pkView"), info = document.getElementById("pkInfo");
+    if (!it || !pack) { cv.getContext("2d").clearRect(0, 0, cv.width, cv.height); info.textContent = ""; return; }
+    document.querySelectorAll("#pkList .pkRow.focus").forEach(r => r.classList.remove("focus"));
+    const row = document.querySelector('#pkList .pkRow[data-id="' + it.id + '"]'); if (row) row.classList.add("focus");
+    const s = packSubject(it, packInst(it));
+    pkView.subj = s;
+    const n = it.instances ? it.instances.length : 1;
+    info.innerHTML = '<b>' + escapeHtml(it.name) + '</b><span>' + escapeHtml(sizeLine(s, FT_PER_M)) + " · " + Math.round(packTris(s) / 1000) + "k triangles" + (n > 1 ? " · " + n + " copies in the pack" : "") + '</span>';
+    let last = performance.now();
+    renderSubject(s, pkView.az, cv);
+    const spin = t => {
+      if (pkView.subj !== s) return;
+      if (t - last > 50) { pkView.az += Math.min(t - last, 200) / 1000 * 0.5; last = t; renderSubject(s, pkView.az, cv); }
+      pkView.raf = requestAnimationFrame(spin);
+    };
+    pkView.raf = requestAnimationFrame(spin);
+  }
+  function wirePackSheet() {
+    const sh = document.getElementById("packSheet"), list = document.getElementById("pkList");
+    list.addEventListener("change", e => {
+      if (!pack) return;
+      const t = e.target, an = pack.an;
+      if (t.dataset.tick) { an.reg[+t.dataset.tick].on = t.checked; renderPackList(); }
+      else if (t.dataset.folder) { const f = findFolder(an.roots, +t.dataset.folder); if (f) folderPieces(f).forEach(x => { x.on = t.checked; }); renderPackList(); }
+      else if (t.dataset.name) { const it = an.reg[+t.dataset.name]; it.name = t.value.trim().slice(0, 48) || it.name; }
+    });
+    list.addEventListener("click", e => {
+      if (!pack) return;
+      const ex = e.target.closest("[data-exp]");
+      if (ex) { const id = +ex.dataset.exp; pack.open[id] = !pack.open[id]; renderPackList(); return; }
+      const row = e.target.closest(".pkRow");
+      if (row && !e.target.closest("input[type=checkbox]")) packFocus(pack.an.reg[+row.dataset.id]);
+    });
+    list.addEventListener("focusin", e => { const row = e.target.closest(".pkRow"); if (row && pack && e.target.classList.contains("pkName")) packFocus(pack.an.reg[+row.dataset.id]); });
+    document.getElementById("pkAll").addEventListener("click", () => { if (!pack) return; pack.an.reg.forEach(it => { if (it.instances) it.on = true; }); renderPackList(); });
+    document.getElementById("pkNone").addEventListener("click", () => { if (!pack) return; pack.an.reg.forEach(it => { it.on = false; }); renderPackList(); });
+    document.getElementById("pkClose").addEventListener("click", closePackSheet);
+    document.getElementById("pkCancel").addEventListener("click", closePackSheet);
+    document.getElementById("pkWhole").addEventListener("click", () => { if (!pack) return; const p = pack; closePackSheet(); ingestWholeGlb(p.buf, p.file.name, document.getElementById("pkShelf").value.trim()); });
+    document.getElementById("pkGo").addEventListener("click", ingestPack);
+    document.getElementById("pkArrange").addEventListener("change", () => { if (pack) syncPackCount(); });
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { closePackSheet(); e.preventDefault(); } e.stopPropagation(); });
+    sh.addEventListener("keyup", e => e.stopPropagation());
+  }
+  async function ingestPack() {
+    if (!pack) return;
+    const p = pack, an = p.an, go = document.getElementById("pkGo"), shelf = document.getElementById("pkShelf").value.trim() || "Imported";
+    const arrange = document.getElementById("pkArrange").checked, gs = packGroups();
+    if (!gs.length) return;
+    go.disabled = true;
+    const used = {}, made = [], tag = Date.now().toString(36), maxTex = +document.getElementById("pkTex").value || 0;
+    let small = {};
+    try {
+      small = await shrinkPackImages(an.src, maxTex, (k, n) => { go.textContent = "Resizing textures " + k + " of " + n + "…"; });
+      for (let k = 0; k < gs.length; k++) {
+        go.textContent = "Adding " + (k + 1) + " of " + gs.length + "…";
+        await new Promise(r => setTimeout(r, 0));
+        const g = gs[k], u = g.units[0], ps = an.pose(u.node);
+        const glb = extractGlb(an.src, u.node, u.ex, ps.bake, an.hasMesh, { tag: tag, images: small });
+        const s = packSubject(u.it, u.node);
+        const bb = new THREE.Box3().setFromObject(s), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3());
+        if (bb.isEmpty() || sz.x <= 0 || sz.y <= 0 || sz.z <= 0) { s.parent && s.parent.remove(s); continue; }
+        const thumb = subjectToThumb(s), tris = packTris(s);
+        s.parent && s.parent.remove(s);
+        let name = u.it.name; used[name] = (used[name] || 0) + 1; if (used[name] > 1) name += " " + used[name];
+        const assetId = "glb_" + Date.now().toString(36) + k.toString(36);
+        await modelDbOp("readwrite", st => { st.put(glb, assetId); if (thumb) st.put(thumb, "thumb:" + assetId); });
+        if (thumb) thumbMem["thumb:" + assetId] = thumb;
+        const entry = { assetId: assetId, name: name, category: "imported", custom: true, shelf: shelf, noProbe: true, native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: glb.byteLength };
+        config.customModels.push(entry);
+        made.push({ entry: entry, g: g, c: c, minY: bb.min.y });
+      }
+      if (arrange && made.length) packPlace(made, an);
+    } catch (err) {
+      toast("Stopped: " + (err && err.message ? err.message : err));
+    }
+    closePackSheet();
+    buildLibrary(); scheduleAutosave();
+    const mb = made.reduce((a, m) => a + (m.entry.bytes || 0), 0) / 1048576;
+    if (made.length) toast("Added " + plural(made.length, "piece") + " to “" + shelf + "” (" + mb.toFixed(1) + " MB)" + (arrange ? " and laid them out on the stage" : ""), { label: "Library", fn: openLibManager });
+  }
+  // Textures bigger than `max` px (0 = keep) are redrawn smaller once, before the pieces are cut,
+  // in their own format (PNG keeps alpha). Returns { imageIndex: { bytes, mime } }.
+  async function shrinkPackImages(src, max, progress) {
+    const out = {}, J = src.json, ims = J.images || [];
+    if (!max || !src.bin) return out;
+    for (let i = 0; i < ims.length; i++) {
+      const im = ims[i]; if (im.bufferView == null) continue;
+      progress(i + 1, ims.length);
+      const v = J.bufferViews[im.bufferView], at = v.byteOffset || 0, mime = im.mimeType || "image/png";
+      try {
+        const bmp = await createImageBitmap(new Blob([src.bin.subarray(at, at + v.byteLength)], { type: mime }), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
+        const big = Math.max(bmp.width, bmp.height);
+        if (big <= max) { bmp.close(); continue; }
+        const k = max / big, c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+        const cx = c.getContext("2d"); cx.imageSmoothingQuality = "high"; cx.drawImage(bmp, 0, 0, c.width, c.height); bmp.close();
+        const type = mime === "image/jpeg" ? "image/jpeg" : "image/png";
+        const blob = await new Promise(r => c.toBlob(r, type, 0.9));
+        if (blob) out[i] = { bytes: new Uint8Array(await blob.arrayBuffer()), mime: type };
+      } catch (err) { /* unreadable image: keep the original */ }
+    }
+    return out;
+  }
+  // Put every copy back where the pack had it, relative to each other, centred where the view looks.
+  function packPlace(made, an) {
+    const rows = [];
+    made.forEach(m => m.g.units.forEach(u => {
+      const ps = an.pose(u.node), cw = m.c.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), ps.yaw).add(ps.pos);
+      const n = m.entry.native, swap = n.z > n.x;
+      rows.push({ id: m.entry.assetId, x: cw.x * FT_PER_M, z: cw.z * FT_PER_M, minY: (ps.pos.y + m.minY) * FT_PER_M, rot: normDeg(radToDeg(ps.yaw) - (swap ? 90 : 0)) });
+    }));
+    // The floor is the height most pieces stand at (a slab or skirting below it doesn't count).
+    const bins = {}; rows.forEach(r => { const b = Math.round(r.minY * 10); bins[b] = (bins[b] || 0) + 1; });
+    const floorY = +Object.keys(bins).sort((a, b) => bins[b] - bins[a] || a - b)[0] / 10;
+    const cx = rows.reduce((a, r) => a + r.x, 0) / rows.length, cz = rows.reduce((a, r) => a + r.z, 0) / rows.length;
+    const t = viewFocus(), ox = snap(t.x), oz = snap(t.z);
+    rows.forEach(r => {
+      const pa = { assetId: r.id, x: round2(ox + r.x - cx), z: round2(oz + r.z - cz), rotationDeg: Math.round(r.rot * 10) / 10 };
+      const up = r.minY - floorY;
+      if (up > 0.15) pa.elevFt = round2(up);
+      config.placedAssets.push(pa);
+    });
+    rebuildPlaced();
+  }
+  // A single model (or a pack brought in whole): stored as it is, with its picture.
+  function ingestWholeGlb(buf, fileName, shelf) {
+    return parseGlb(buf).then(sceneObj => {
       const bb = new THREE.Box3().setFromObject(sceneObj), sz = bb.getSize(new THREE.Vector3());
       if (bb.isEmpty() || sz.x <= 0 || sz.y <= 0 || sz.z <= 0) throw new Error("model has no visible geometry");
-      let tris = 0;
-      sceneObj.traverse(n => { if (n.isMesh && n.geometry) { const i = n.geometry.index, p = n.geometry.attributes.position; tris += i ? i.count / 3 : (p ? p.count / 3 : 0); } });
+      const tris = packTris(sceneObj);
       const assetId = "glb_" + Date.now().toString(36);
-      return modelDbOp("readwrite", s => s.put(buf, assetId)).then(() => {
+      const holder = new THREE.Group(); holder.add(sceneObj);
+      const thumb = subjectToThumb(holder);
+      holder.remove(sceneObj); if (holder.parent) holder.parent.remove(holder);
+      return modelDbOp("readwrite", s => { s.put(buf, assetId); if (thumb) s.put(thumb, "thumb:" + assetId); }).then(() => {
+        if (thumb) thumbMem["thumb:" + assetId] = thumb;
         customModelCache[assetId] = Promise.resolve(sceneObj);
-        const entry = { assetId: assetId, name: file.name.replace(/\.glb$/i, ""), category: "imported", custom: true,
-          native: { x: sz.x, y: sz.y, z: sz.z }, tris: Math.round(tris) };
+        const entry = { assetId: assetId, name: fileName.replace(/\.glb$/i, ""), category: "imported", custom: true, shelf: shelf || "Imported",
+          native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: buf.byteLength };
         config.customModels.push(entry);
         buildLibrary();
         addToScene(assetId, null);
         toast("Imported " + entry.name + " — set its real length/width/height in the Inspector" + (tris > MODEL_TRI_WARN ? " (heavy: ~" + Math.round(tris / 1000) + "k tris)" : ""));
       });
-    })).catch(err => toast("Import failed: " + (err && err.message ? err.message : err)));
+    }).catch(err => toast("Import failed: " + (err && err.message ? err.message : err)));
   }
 
-  // Forget an imported model: its library entry, every placed instance, and the stored file.
-  function removeCustomModel(assetId) {
-    config.customModels = config.customModels.filter(e => e.assetId !== assetId);
-    config.placedAssets = config.placedAssets.filter(p => p.assetId !== assetId);
-    delete customModelCache[assetId];
-    modelDbOp("readwrite", s => s.delete(assetId)).catch(() => {});
-    rebuildPlaced(); buildLibrary(); renderInspector(); scheduleAutosave();
-    toast("Removed imported model");
+  // ==================================================================
+  //  LIBRARY MANAGER (your imported models: names, shelves, delete)
+  // ==================================================================
+  function shelfOf(e) { return (e.shelf || "Imported").trim() || "Imported"; }
+  function shelves() { const s = []; (config.customModels || []).forEach(e => { const k = shelfOf(e); if (s.indexOf(k) < 0) s.push(k); }); return s.sort((a, b) => a.localeCompare(b)); }
+  const libMan = { q: "", armed: null, armTimer: 0 };
+  function openLibManager() {
+    closeMenus && closeMenus();
+    const sh = document.getElementById("libSheet");
+    renderLibManager();
+    sh.classList.remove("hidden");
+    document.getElementById("lmFind").focus();
+  }
+  function closeLibManager() { document.getElementById("libSheet").classList.add("hidden"); hideLibPreview(); }
+  function renderLibManager() {
+    const models = config.customModels || [], q = libMan.q.trim().toLowerCase(), body = document.getElementById("lmBody");
+    const placed = id => config.placedAssets.filter(p => p.assetId === id).length;
+    const mb = models.reduce((a, e) => a + (e.bytes || 0), 0) / 1048576;
+    document.getElementById("lmSub").textContent = models.length ? plural(models.length, "model") + " on " + plural(shelves().length, "shelf", "shelves") + (mb ? " · " + mb.toFixed(0) + " MB stored in this browser" : "") : "Nothing imported yet.";
+    document.getElementById("shelfList").innerHTML = shelves().map(s => '<option value="' + escapeHtml(s) + '">').join("");
+    const match = e => !q || (e.name + " " + shelfOf(e)).toLowerCase().includes(q);
+    const html = shelves().map(sh => {
+      const list = models.filter(e => shelfOf(e) === sh && match(e)); if (!list.length) return "";
+      return '<section class="lmShelf" data-shelf="' + escapeHtml(sh) + '"><div class="lmShelfHead"><input class="lmShelfName" value="' + escapeHtml(sh) + '" aria-label="Shelf name" maxlength="40"><small>' + plural(list.length, "model") + '</small>' +
+        '<button class="ghost danger" data-delshelf="' + escapeHtml(sh) + '">' + (libMan.armed === "shelf:" + sh ? "Delete all " + list.length + "?" : "Delete shelf") + '</button></div><div class="lmGrid">' +
+        list.map(e => { const n = placed(e.assetId), k = "thumb:" + e.assetId;
+          return '<article class="lmCard" data-aid="' + e.assetId + '"><img class="thumb" alt="" src="' + (thumbMem[k] || BLANK_IMG) + '" data-lmthumb="' + e.assetId + '">' +
+            '<input class="lmName" value="' + escapeHtml(e.name) + '" aria-label="Name" maxlength="48">' +
+            '<input class="lmShelfIn" list="shelfList" value="' + escapeHtml(shelfOf(e)) + '" aria-label="Shelf" maxlength="40">' +
+            '<small>' + escapeHtml(fmtLen(Math.max(e.native.x, e.native.z) * FT_PER_M) + " × " + fmtLen(Math.min(e.native.x, e.native.z) * FT_PER_M) + " · " + fmtLen(e.native.y * FT_PER_M) + " high") + (e.tris ? " · " + Math.round(e.tris / 1000) + "k tris" : "") + (n ? " · " + n + " on stage" : "") + '</small>' +
+            '<div class="btnRow"><button data-add="' + e.assetId + '">Add to stage</button><button class="ghost danger" data-del="' + e.assetId + '">' + (libMan.armed === e.assetId ? "Delete?" : "Delete") + '</button></div></article>'; }).join("") +
+        '</div></section>';
+    }).join("");
+    body.innerHTML = html || '<p class="ppEmpty">' + (models.length ? "No model matches “" + escapeHtml(libMan.q) + "”." : "Import a .glb — a single model, or a pack like a furnished room to pick apart into pieces.") + '</p>';
+    body.querySelectorAll("img[data-lmthumb]").forEach(im => { if (!thumbMem["thumb:" + im.dataset.lmthumb]) loadThumb("thumb:" + im.dataset.lmthumb, () => makeSubject(im.dataset.lmthumb, null)).then(u => { if (u) im.src = u; }); });
+  }
+  function armDelete(key) { libMan.armed = key; clearTimeout(libMan.armTimer); libMan.armTimer = setTimeout(() => { libMan.armed = null; if (!document.getElementById("libSheet").classList.contains("hidden")) renderLibManager(); }, 3500); renderLibManager(); }
+  function wireLibManager() {
+    const sh = document.getElementById("libSheet"), body = document.getElementById("lmBody");
+    document.getElementById("lmClose").addEventListener("click", closeLibManager);
+    document.getElementById("lmFind").addEventListener("input", e => { libMan.q = e.target.value; renderLibManager(); });
+    document.getElementById("lmImport").addEventListener("click", () => document.getElementById("glbInput").click());
+    body.addEventListener("change", e => {
+      const t = e.target, card = t.closest(".lmCard"), e2 = card && (config.customModels || []).find(x => x.assetId === card.dataset.aid);
+      if (t.classList.contains("lmName") && e2) { e2.name = t.value.trim().slice(0, 48) || e2.name; }
+      else if (t.classList.contains("lmShelfIn") && e2) { e2.shelf = t.value.trim().slice(0, 40) || "Imported"; renderLibManager(); }
+      else if (t.classList.contains("lmShelfName")) {
+        const from = t.closest(".lmShelf").dataset.shelf, to = t.value.trim().slice(0, 40) || from;
+        (config.customModels || []).forEach(x => { if (shelfOf(x) === from) x.shelf = to; });
+        renderLibManager();
+      } else return;
+      buildLibrary(); renderInspector(); scheduleAutosave();
+    });
+    body.addEventListener("click", e => {
+      const add = e.target.closest("[data-add]"), del = e.target.closest("[data-del]"), ds = e.target.closest("[data-delshelf]");
+      if (add) { closeLibManager(); addToScene(add.dataset.add, null); }
+      else if (del) { const id = del.dataset.del; if (libMan.armed !== id) { armDelete(id); return; } libMan.armed = null; removeCustomModel(id); renderLibManager(); }
+      else if (ds) {
+        const s = ds.dataset.delshelf, key = "shelf:" + s; if (libMan.armed !== key) { armDelete(key); return; }
+        libMan.armed = null;
+        (config.customModels || []).filter(x => shelfOf(x) === s).map(x => x.assetId).forEach(id => removeCustomModel(id, true));
+        rebuildPlaced(); buildLibrary(); renderInspector(); scheduleAutosave(); renderLibManager(); toast("Deleted the “" + s + "” shelf");
+      }
+    });
+    body.addEventListener("pointerover", e => {
+      const im = e.target.closest("img[data-lmthumb]"); if (!im || e.pointerType === "touch") return;
+      const id = im.dataset.lmthumb, en = catalogEntry(id);
+      previewLibraryPiece(im, id, null, en ? en.name : "");
+    });
+    body.addEventListener("pointerout", e => { if (e.target.closest("img[data-lmthumb]")) hideLibPreview(); });
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { closeLibManager(); e.preventDefault(); } e.stopPropagation(); });
+    sh.addEventListener("keyup", e => e.stopPropagation());
+    sh.addEventListener("pointerdown", e => { if (e.target === sh) closeLibManager(); });
   }
 
   // ==================================================================
@@ -4378,24 +5236,132 @@
                        ["#3cb371", "Green"], ["#9b59d0", "Purple"], ["#f28c28", "Orange"], ["#ff7ec8", "Pink"]];
   function lumaOf(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
   function roleColorName(c) { const rc = ROLE_COLORS.find(r => r[0] === c); return rc ? rc[1] : ""; }
-  function nextRoleColor() {
-    const used = new Set(config.placedAssets.filter(p => p.role).map(p => p.role.color));
-    const free = ROLE_COLORS.find(rc => !used.has(rc[0]));
-    return (free || ROLE_COLORS[0])[0];
+
+  // ==================================================================
+  //  CAST (who the people on stage are)
+  // ==================================================================
+  // The project keeps a cast list: characters, with a colour and (optionally) who plays them.
+  // A figure is cast by linking it to a character; its colour and name tag follow the character,
+  // so a rename or recolour reaches every figure, every stored board state, the plan and exports.
+  function castList() { if (!Array.isArray(config.cast)) config.cast = []; return config.cast; }
+  function castById(id) { return castList().find(c => c.id === id) || null; }
+  function castColorNext() {
+    const used = new Set(castList().map(c => c.color)), free = ROLE_COLORS.find(rc => !used.has(rc[0]));
+    return (free || ROLE_COLORS[castList().length % ROLE_COLORS.length])[0];
   }
-  function nextRoleName() {
-    const used = config.placedAssets.filter(p => p.role && p.role.name).length;
-    return "Hero " + String.fromCharCode(65 + Math.min(25, used));
+  function castFind(name) { const n = name.trim().toLowerCase(); return castList().find(c => c.name.toLowerCase() === n) || null; }
+  function addCast(name) {
+    const nm = name.trim().slice(0, 32); if (!nm) return null;
+    const have = castFind(nm); if (have) return have;
+    const c = { id: newId("c"), name: nm, actor: "", color: castColorNext() };
+    castList().push(c);
+    return c;
+  }
+  function castCount(id) { return config.placedAssets.filter(p => p.role && p.role.castId === id).length; }
+  // Push names/colours onto every linked figure — live and in the board's stored states.
+  function syncCast() {
+    const fix = list => (list || []).forEach(p => {
+      if (!p.role || !p.role.castId) return;
+      const c = castById(p.role.castId);
+      if (!c) { delete p.role; return; }
+      p.role.name = c.name; p.role.color = c.color;
+    });
+    fix(config.placedAssets);
+    boardCfg().frames.forEach(f => { if (f.stage) fix(f.stage.placedAssets); });
+  }
+  function castChanged() {
+    syncCast();
+    const uid = selected && selected.uid;
+    rebuildPlaced(); if (uid != null && mode === "edit") reselectUid(uid);
+    if (projectPanelOpen()) renderCastPanel();
+    if (boardOpen) renderBoard();
+    scheduleAutosave();
+  }
+  function castNames(ids) { return (ids || []).map(castById).filter(Boolean); }
+  // Characters whose figure is inside the camera's frame (behind a wall still counts).
+  function castInFrame(pa) {
+    const g = placedGroupByUid[pa._uid]; if (!g || !g.userData.rig) return [];
+    const o = camOptics(pa), pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
+    g.updateMatrixWorld(true); g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion); pc.updateMatrixWorld(true);
+    const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(pc.projectionMatrix, pc.matrixWorldInverse));
+    const ids = new Set();
+    config.placedAssets.forEach(p => {
+      const id = p.role && p.role.castId, fg = id && placedGroupByUid[p._uid]; if (!fg) return;
+      const bb = new THREE.Box3();
+      fg.traverse(n => { if (n.isMesh && n.geometry) { if (!n.geometry.boundingBox) n.geometry.computeBoundingBox(); bb.union(n.geometry.boundingBox.clone().applyMatrix4(n.matrixWorld)); } });
+      if (!bb.isEmpty() && fr.intersectsBox(bb)) ids.add(id);
+    });
+    return castList().filter(c => ids.has(c.id)).map(c => c.id);
+  }
+  // Speaking characters from the imported script (on-volume scenes when marked), most scenes first.
+  function scriptCharacters() {
+    const sc = scriptCfg(); if (!sc) return [];
+    const vol = sc.scenes.some(x => x.onVolume === true), n = {};
+    sc.scenes.filter(x => !vol || x.onVolume === true).forEach(x => (x.chars || []).forEach(c => { const k = c.trim(); if (k) n[k] = (n[k] || 0) + 1; }));
+    return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b));
+  }
+  function renderCastPanel() {
+    const box = document.getElementById("ppCast"); if (!box) return;
+    const edit = mode === "edit", cast = castList();
+    const fromScript = scriptCharacters().filter(n => !castFind(n));
+    box.innerHTML = (cast.length ? '<div class="castList">' + cast.map(c => {
+        const n = castCount(c.id);
+        return '<div class="castRow" data-cid="' + c.id + '">' +
+          '<button class="castDot" style="--c:' + c.color + '" title="Change colour" aria-label="Colour for ' + escapeHtml(c.name) + ' — ' + escapeHtml(roleColorName(c.color) || "custom") + '"' + (edit ? "" : " disabled") + '></button>' +
+          '<input class="castName" value="' + escapeHtml(c.name) + '" aria-label="Character" maxlength="32"' + (edit ? "" : " readonly") + '>' +
+          '<input class="castActor" value="' + escapeHtml(c.actor || "") + '" placeholder="' + (edit ? "Played by" : "") + '" aria-label="Played by" maxlength="40"' + (edit ? "" : " readonly") + '>' +
+          '<span class="castN">' + (n ? n + " on stage" : "not placed") + '</span>' +
+          (edit ? '<button class="ghost iconBtn castDel" aria-label="Remove ' + escapeHtml(c.name) + ' from the cast"><svg><use href="#i-x"/></svg></button>' : "") + '</div>'; }).join("") + '</div>'
+      : '<p class="ppEmpty">No cast yet. Add the characters, then pick one for each figure on stage — the name and colour follow them onto the plan, the board and every export.</p>') +
+      (edit ? '<div class="castAdd"><input type="text" id="ppCastNew" placeholder="Add a character, e.g. MAYA" maxlength="32" aria-label="New character"><button id="ppCastAdd">Add</button></div>' +
+        (fromScript.length ? '<div class="btnRow"><button class="ghost" id="ppCastScript" title="' + escapeHtml(fromScript.slice(0, 12).join(", ") + (fromScript.length > 12 ? "…" : "")) + '">Add ' + plural(fromScript.length, "speaking part") + ' from the script</button></div>' : "") : "");
+  }
+  function wireCastPanel() {
+    const box = document.getElementById("ppCast");
+    const addNew = () => { const inp = document.getElementById("ppCastNew"); if (!inp || !inp.value.trim()) return; addCast(inp.value); castChanged(); renderCastPanel(); const n = document.getElementById("ppCastNew"); if (n) n.focus(); };
+    box.addEventListener("click", e => {
+      if (mode !== "edit") return;
+      const row = e.target.closest(".castRow"), c = row && castById(row.dataset.cid);
+      if (e.target.closest("#ppCastAdd")) { addNew(); return; }
+      if (e.target.closest("#ppCastScript")) {
+        const add = scriptCharacters().filter(n => !castFind(n));
+        add.forEach(n => addCast(n));
+        castChanged(); renderCastPanel(); toast("Added " + plural(add.length, "character") + " from the script");
+        return;
+      }
+      if (!c) return;
+      if (e.target.closest(".castDot")) {
+        const i = ROLE_COLORS.findIndex(rc => rc[0] === c.color);
+        c.color = ROLE_COLORS[(i + 1) % ROLE_COLORS.length][0];
+        castChanged(); const d = box.querySelector('.castRow[data-cid="' + c.id + '"] .castDot'); if (d) d.focus();
+      } else if (e.target.closest(".castDel")) {
+        const at = castList().indexOf(c), linked = [];
+        const grab = list => (list || []).forEach(p => { if (p.role && p.role.castId === c.id) linked.push([p, Object.assign({}, p.role)]); });
+        grab(config.placedAssets); boardCfg().frames.forEach(f => f.stage && grab(f.stage.placedAssets));
+        castList().splice(at, 1); castChanged();
+        toast("Removed " + c.name + (linked.length ? " — their figures are background now" : ""), { label: "Undo", fn: () => {
+          castList().splice(at, 0, c); linked.forEach(([p, r]) => { p.role = r; }); castChanged(); } });
+      }
+    });
+    box.addEventListener("change", e => {
+      const row = e.target.closest(".castRow"), c = row && castById(row.dataset.cid); if (!c) return;
+      if (e.target.classList.contains("castName")) { const v = e.target.value.trim().slice(0, 32); if (v && v !== c.name) { c.name = v; castChanged(); } else e.target.value = c.name; }
+      else if (e.target.classList.contains("castActor")) { c.actor = e.target.value.trim().slice(0, 40); scheduleAutosave(); }
+    });
+    box.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "ppCastNew") { e.preventDefault(); addNew(); } });
   }
 
-  // Library people: role colour + name tag, figure swap and height, height off the floor, pin.
+  // Library people: who they are (cast), figure swap and height, height off the floor, pin.
   function roleHTML(pa) {
-    const role = pa.role || {}, cur = role.color || "";
-    const opt = (c, name, bg) => '<button class="roleSw" role="radio" data-c="' + c + '" aria-checked="' + (cur === c) + '" aria-label="' + name + '" title="' + name + '"' +
-      ' tabindex="' + (cur === c ? 0 : -1) + '" style="--c:' + bg + ';--k:' + (lumaOf(bg) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>';
-    return '<div class="roles" role="radiogroup" aria-label="Role colour">' + opt("", "Background", "#8a909a") + ROLE_COLORS.map(rc => opt(rc[0], rc[1], rc[0])).join("") + '</div>' +
-      '<div class="roleName">' + (cur ? escapeHtml(roleColorName(cur)) + (role.name ? "" : " · no tag yet") : "Background · no colour, no tag") + '</div>' +
-      '<div class="field"><label for="roleName">Name tag</label><input type="text" id="roleName" placeholder="Type to tag, e.g. Hero A" value="' + escapeHtml(role.name || "") + '" style="width:150px"></div>';
+    const role = pa.role || {}, cid = role.castId || "", c = cid ? castById(cid) : null;
+    const chip = (id, name, col) => '<button class="castChip" role="radio" data-cast="' + id + '" aria-checked="' + (cid === id) + '" tabindex="' + (cid === id ? 0 : -1) + '" style="--c:' + col + '"><i></i>' + escapeHtml(name) + '</button>';
+    const sw = c ? '<div class="roles" role="radiogroup" aria-label="Colour for ' + escapeHtml(c.name) + '">' + ROLE_COLORS.map(rc =>
+        '<button class="roleSw" role="radio" data-c="' + rc[0] + '" aria-checked="' + (c.color === rc[0]) + '" aria-label="' + rc[1] + '" title="' + rc[1] + '" tabindex="' + (c.color === rc[0] ? 0 : -1) + '" style="--c:' + rc[0] + ';--k:' + (lumaOf(rc[0]) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>').join("") + '</div>' : "";
+    return '<div class="castChips" role="radiogroup" aria-label="Who this is">' + chip("", "Background", "#8a909a") + castList().map(x => chip(x.id, x.name, x.color)).join("") + '</div>' +
+      '<div class="field"><label for="castNew">New character</label><input type="text" id="castNew" placeholder="Type a name, Enter" maxlength="32" style="width:150px"></div>' +
+      sw +
+      '<div class="hint">' + (c ? escapeHtml(c.name) + "'s colour and name follow them everywhere. Rename or add who plays them in Project → Cast."
+        : role.color ? "Colour only. Pick a character to name this figure." : "Background. Pick a character, or type a new one — the cast list lives in Project → Cast.") + '</div>';
   }
   function figureHTML(pa) {
     const e = catalogEntry(pa.assetId);
@@ -4434,33 +5400,44 @@
     });
     const pf = $("personFig");
     if (pf) pf.addEventListener("change", () => { const pa = cur(); if (pa) redo(pa, () => { pa.assetId = pf.value; delete pa.heightFt; }); });
-    const setRole = (c, kb) => {
+    // Cast: link the figure to a character (or background); the swatches recolour that character.
+    const setCast = (id, kb) => {
       const pa = cur(); if (!pa) return;
       redo(pa, () => {
+        const c = id && castById(id);
         if (!c) { delete pa.role; return; }
-        pa.role = { color: c, name: (pa.role && pa.role.name) || nextRoleName() };
+        pa.role = { castId: c.id, name: c.name, color: c.color };
       });
-      if (kb) { const b = document.querySelector('.roleSw[data-c="' + c + '"]'); if (b) b.focus(); }
+      if (kb) { const b = document.querySelector('.castChip[data-cast="' + id + '"]'); if (b) b.focus(); }
+    };
+    const arrows = (group, sel, pick) => group.addEventListener("keydown", ev => {
+      const all = [...group.querySelectorAll(sel)], i = all.indexOf(document.activeElement);
+      if (i < 0) return;
+      const k = ev.key, j = k === "ArrowRight" || k === "ArrowDown" ? (i + 1) % all.length : k === "ArrowLeft" || k === "ArrowUp" ? (i - 1 + all.length) % all.length : null;
+      if (j == null) return;
+      ev.preventDefault(); ev.stopPropagation(); pick(all[j]);
+    });
+    const chips = document.querySelector("#inspectorBody .castChips");
+    if (chips) {
+      chips.addEventListener("click", ev => { const b = ev.target.closest(".castChip"); if (b) setCast(b.dataset.cast, false); });
+      arrows(chips, ".castChip", b => setCast(b.dataset.cast, true));
+    }
+    const recolour = (col, kb) => {
+      const pa = cur(), c = pa && pa.role && castById(pa.role.castId); if (!c) return;
+      c.color = col; castChanged();
+      if (kb) { const b = document.querySelector('#inspectorBody .roleSw[data-c="' + col + '"]'); if (b) b.focus(); }
     };
     const roles = document.querySelector("#inspectorBody .roles");
     if (roles) {
-      roles.addEventListener("click", ev => { const b = ev.target.closest(".roleSw"); if (b) setRole(b.dataset.c, false); });
-      roles.addEventListener("keydown", ev => {
-        const all = [...roles.querySelectorAll(".roleSw")], i = all.indexOf(document.activeElement);
-        if (i < 0) return;
-        const k = ev.key;
-        const j = k === "ArrowRight" || k === "ArrowDown" ? (i + 1) % all.length : k === "ArrowLeft" || k === "ArrowUp" ? (i - 1 + all.length) % all.length : null;
-        if (j == null) return;
-        ev.preventDefault(); ev.stopPropagation();
-        setRole(all[j].dataset.c, true);
-      });
+      roles.addEventListener("click", ev => { const b = ev.target.closest(".roleSw"); if (b) recolour(b.dataset.c, false); });
+      arrows(roles, ".roleSw", b => recolour(b.dataset.c, true));
     }
-    const rn = $("roleName");
-    if (rn) rn.addEventListener("change", () => {
-      const pa = cur(); if (!pa) return;
-      const name = rn.value.trim().slice(0, 24);
-      if (!pa.role && !name) return;
-      redo(pa, () => { pa.role = { color: (pa.role && pa.role.color) || nextRoleColor(), name: name }; });
+    const cn = $("castNew");
+    if (cn) cn.addEventListener("keydown", ev => {
+      if (ev.key !== "Enter") return;
+      ev.preventDefault();
+      const c = addCast(cn.value); if (!c) return;
+      setCast(c.id, true);
     });
     const ef = $("elevFt");
     if (ef) ef.addEventListener("change", () => {
@@ -5923,7 +6900,11 @@
       houseLights: houseLightsOn()
     };
   }
-  function stateKeyOf(st) { return hashStr(JSON.stringify([st.placedAssets, st.rollingWalls, st.ceiling, st.leds, st.environment, st.houseLights])); }
+  // Who a figure is playing isn't part of the stage: casting or renaming never makes a "new stage state".
+  function stateKeyOf(st) {
+    const pas = (st.placedAssets || []).map(p => { if (!p.role) return p; const c = Object.assign({}, p); delete c.role; return c; });
+    return hashStr(JSON.stringify([pas, st.rollingWalls, st.ceiling, st.leds, st.environment, st.houseLights]));
+  }
   function camSnapshot(pa) { const c = deepClone(pa); delete c._uid; return c; }
   function setupKeyOf(f) {
     const c = f.camera || {}, r = (v, k) => Math.round((+v || 0) / k);
@@ -5943,7 +6924,7 @@
   }
   function frameDataFrom(pa) {
     const st = stageSnapshot();
-    return { stage: st, stateKey: stateKeyOf(st), camera: camSnapshot(pa), optics: frameOptics(pa), updated: Date.now() };
+    return { stage: st, stateKey: stateKeyOf(st), camera: camSnapshot(pa), optics: frameOptics(pa), cast: castInFrame(pa), updated: Date.now() };
   }
 
   // ---- frame images: IndexedDB (too big for the localStorage autosave) ------------------------
@@ -6027,6 +7008,8 @@
       hint = known ? "Same stage state as " + ix[known.id].code + " (stage " + ix[known.id].state + ")." : (b.frames.length ? "New stage state — the stage has changed since the other frames." : "");
       const sameSetup = b.frames.find(f => setupKeyOf(f) === setupKeyOf(st));
       if (sameSetup) hint += " Same camera setup as " + ix[sameSetup.id].code + ".";
+      const inFrame = castNames(st.cast).map(c => c.name);
+      if (inFrame.length) hint += " In frame: " + inFrame.join(", ") + ".";
     }
     document.getElementById("abHint").textContent = hint.trim();
   }
@@ -6137,7 +7120,7 @@
     document.getElementById("boardBtn").classList.remove("active");
     setNavButtons();
   }
-  const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+  const plural = (n, w, many) => n + " " + (n === 1 ? w : (many || w + "s"));
   function renderBoardHead() {
     const b = boardCfg(), ix = boardIndex(), n = b.frames.length, bd = document.getElementById("board");
     bd.dataset.size = boardUI.size; bd.dataset.group = boardUI.group;
@@ -6155,12 +7138,17 @@
         '<div class="ov top"><span class="code">' + escapeHtml(i.code) + '</span><span class="st" style="--c:' + STATE_COLORS[i.stateNo % STATE_COLORS.length] + '" title="Stage state ' + i.state + '">STAGE ' + i.state + '</span></div>' +
         '<div class="ov bot"><span>SU' + pad2(i.setup) + ' · ' + escapeHtml(o.f + "mm · " + (o.fmt || "")) + '</span><span class="ver">v' + (f.version || 1) + '</span></div>' +
         (edit ? '<span class="go">Go to frame</span>' : "") + '</div>' +
-      '<div class="bdText">' +
+      '<div class="bdText">' + castLineHTML(f) +
         '<textarea class="bdAction" rows="1" placeholder="' + (edit ? "Describe the shot" : "") + '" aria-label="Shot description"' + (edit ? "" : " readonly") + ' data-f="action">' + escapeHtml(f.action || "") + '</textarea>' +
         '<textarea class="bdLine" rows="1" placeholder="' + (edit ? (hasScript ? "Line / action — paste, or pick from the script" : "Line / action — paste from the script") : "") + '" aria-label="Line or action from the script"' + (edit ? "" : " readonly") + ' data-f="line">' + escapeHtml(f.line || "") + '</textarea>' +
         (edit ? '<button class="ghost iconBtn cardMenu" data-act="menu" aria-label="Options for frame ' + escapeHtml(i.code) + '" aria-haspopup="true"><svg><use href="#i-more"/></svg></button>' : "") +
       '</div></article>';
   }
+  function castLineHTML(f) {
+    const cs = castNames(f.cast); if (!cs.length) return "";
+    return '<div class="bdCast" aria-label="In frame">' + cs.map(c => '<span style="--c:' + c.color + '"><i></i>' + escapeHtml(c.name) + '</span>').join("") + '</div>';
+  }
+  const castText = f => castNames(f.cast).map(c => c.name).join(", ");
   function sceneMetaHTML(n) {
     const ss = scriptScene(n); if (!ss) return "";
     const bits = ['p' + (ss.page || "–"), escapeHtml((ss.eighthsStr || "") + " pp")];
@@ -6369,6 +7357,7 @@
     if (sc) rowsP.push(["Pages boarded", escapeHtml(eighthsStr(e8(boardedScript) / 8)) + ' <small>of ' + escapeHtml(eighthsStr(e8(volScenes.length ? volScenes : sc.scenes) / 8)) + (volScenes.length ? " on the volume" : "") + '</small>']);
     const pj = projectCfg(); if (pj.dates && pj.dates.trim()) rowsP.push(["Shooting", escapeHtml(pj.dates)]);
     document.getElementById("ppPlan").innerHTML = rowsP.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join("");
+    renderCastPanel();
   }
   // The project is named in the top bar: it spans the stage, prints, the board and every file.
   function refreshProjectLabels() {
@@ -6409,6 +7398,7 @@
     const pp = document.getElementById("projPanel");
     pp.querySelectorAll("[data-pj]").forEach(inp => inp.addEventListener("input", () => { projectCfg()[inp.dataset.pj] = inp.value; syncProjectExample(); refreshProjectLabels(); renderProjectPanel(); scheduleAutosave(); }));
     document.getElementById("ppClose").addEventListener("click", closeProjectPanel);
+    wireCastPanel();
     pp.addEventListener("keydown", e => { if (e.key === "Escape") { closeProjectPanel(); document.getElementById("projChip").focus(); e.preventDefault(); } e.stopPropagation(); });
     pp.addEventListener("keyup", e => e.stopPropagation());
     pp.addEventListener("click", e => {
@@ -6569,7 +7559,7 @@
       }
       const o = r.f.optics || {};
       html += '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div>' +
-        '<div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + ' · Stage ' + r.i.state + '</div>' +
+        '<div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + ' · Stage ' + r.i.state + (castText(r.f) ? ' · <b>' + xmlEsc(castText(r.f)) + '</b>' : "") + '</div>' +
         (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + (r.f.line ? '<div class="ln">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</div>';
     });
     html += "</div>";
@@ -6580,18 +7570,18 @@
   }
   function exportShotList(rows) {
     const tr = rows.map(r => { const o = r.f.optics || {};
-      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<div style="font-style:italic;white-space:pre-line;margin-top:3px;padding-left:5px;border-left:2px solid #9aa0a6">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</td></tr>'; }).join("");
+      return '<tr><td><b>' + xmlEsc(r.i.code) + '</b></td><td>' + (r.img ? '<img src="' + r.img + '">' : "") + '</td><td>SU' + String(r.i.setup).padStart(2, "0") + '</td><td>' + r.i.state + '</td><td>' + xmlEsc(o.f + "mm") + '</td><td>' + xmlEsc(o.label || "") + '</td><td>' + xmlEsc(fmtLen(o.heightFt || 0)) + '</td><td>' + xmlEsc(castText(r.f)) + '</td><td>' + xmlEsc(r.f.action || "") + (r.f.line ? '<div style="font-style:italic;white-space:pre-line;margin-top:3px;padding-left:5px;border-left:2px solid #9aa0a6">' + xmlEsc(r.f.line.trim()) + '</div>' : "") + '</td></tr>'; }).join("");
     printDoc(projectBase() + "_shot-list_" + todayStamp(),
       'table{width:100%;border-collapse:collapse;font-size:9.5px}th{text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#6b7278;border-bottom:1.5px solid #1d2124;padding:4px}' +
       'td{border-bottom:1px solid #d5d9dc;padding:4px;vertical-align:top}tr{break-inside:avoid}td img{width:96px;display:block}',
-      docHeader("Shot list") + '<table><thead><tr><th>Shot</th><th>Frame</th><th>Setup</th><th>Stage</th><th>Lens</th><th>Camera · frame</th><th>Lens height</th><th>Description · line / action</th></tr></thead><tbody>' + tr + '</tbody></table>');
+      docHeader("Shot list") + '<table><thead><tr><th>Shot</th><th>Frame</th><th>Setup</th><th>Stage</th><th>Lens</th><th>Camera · frame</th><th>Lens height</th><th>Cast</th><th>Description · line / action</th></tr></thead><tbody>' + tr + '</tbody></table>');
   }
   function shotListCSV(rows) {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const head = ["Project", "Episode", "Scene", "Scene title", "Script page", "Scene length", "Approach", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Shot description", "Line / action", "Version", "File"];
+    const head = ["Project", "Episode", "Scene", "Scene title", "Script page", "Scene length", "Approach", "Shot", "Setup", "Stage state", "Lens (mm)", "Frame", "Camera body", "Lens height", "Tilt (deg)", "Cast", "Shot description", "Line / action", "Version", "File"];
     return [head.map(q).join(",")].concat(rows.map(r => { const o = r.f.optics || {};
       const ss = scriptScene(r.sc.number) || {};
-      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title || ss.slug || "", ss.page || "", ss.eighthsStr || "", ss.approach || "", r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
+      return [r.pj.title, r.pj.episode, r.sc.number, r.sc.title || ss.slug || "", ss.page || "", ss.eighthsStr || "", ss.approach || "", r.i.code, "SU" + String(r.i.setup).padStart(2, "0"), r.i.state, o.f, o.fmt, o.body, fmtLen(o.heightFt || 0), o.tiltDeg, castText(r.f), r.f.action, r.f.line, r.f.version || 1, frameFileName(r.f, r.ix, "jpg")].map(q).join(","); })).join("\r\n");
   }
   // One page per stage state: the plan of that state (cameras off, or every setup's camera on), then its frames.
   function exportSetupSheets(rows, withCams) {
@@ -7767,6 +8757,10 @@
     const openNow = {};
     body.querySelectorAll("details.grp").forEach(d => { openNow[d.dataset.k] = d.open; });
     body.innerHTML = "";
+    const find = el("input"); find.type = "search"; find.id = "libFind"; find.placeholder = "Find a piece"; find.setAttribute("aria-label", "Find a piece in the library");
+    find.value = libFindQ; find.addEventListener("input", () => { libFindQ = find.value; applyLibFind(); });
+    find.addEventListener("keydown", e => { if (e.key === "Escape" && find.value) { find.value = ""; libFindQ = ""; applyLibFind(); e.stopPropagation(); } });
+    body.appendChild(find);
     const group = (k, label, count, openDefault) => {
       const d = el("details", "grp"); d.dataset.k = k;
       d.open = openNow[k] != null ? openNow[k] : !!openDefault;
@@ -7777,11 +8771,19 @@
       d.appendChild(s); d.appendChild(gb); body.appendChild(d);
       return gb;
     };
-    const item = (parent, name, sub) => {
+    // A library row: picture (hover for a turning preview), name + size, then its controls.
+    const item = (parent, name, sub, assetId, variant) => {
       const it = el("div", "catItem"), nm = el("div", "name", name);
       if (sub) nm.appendChild(el("small", null, sub));
+      if (assetId) {
+        const th = thumbImg(assetId, variant);
+        it.appendChild(th); it.dataset.asset = assetId; it.dataset.title = name;
+        it.addEventListener("pointerenter", e => { if (e.pointerType !== "touch") previewLibraryPiece(it, it.dataset.asset, th.dataset.variant || null, it.dataset.title); });
+        it.addEventListener("pointerleave", hideLibPreview);
+      }
       const row = el("div", "row");
       it.appendChild(nm); it.appendChild(row); parent.appendChild(it);
+      it.dataset.find = (name + " " + (sub || "")).toLowerCase();
       return row;
     };
     const addBtn = (row, fn, label) => { const b = el("button", null, label || "Add"); b.addEventListener("click", fn); row.appendChild(b); return b; };
@@ -7791,7 +8793,7 @@
     const deckEntry = catalogEntry("stageDeck");
     if (deckEntry) {
       const gb = group("deck", "Stage decking", null, true);
-      const row = item(gb, "Stage deck", fmtLen(2) + " high · resize after placing");
+      const row = item(gb, "Stage deck", fmtLen(2) + " high · resize after placing", "stageDeck");
       const sel = document.createElement("select");
       const co = document.createElement("option"); co.value = "custom"; co.textContent = ftx(deckEntry.defaultLengthFt, deckEntry.defaultWidthFt); sel.appendChild(co);
       (config.stageDeckPresets || []).forEach(p => {
@@ -7818,7 +8820,7 @@
       const gb = group(cat.key, cat.label, entries.length);
       entries.forEach(e => {
         const sub = cat.key === "camera" ? "film camera with lens" : e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
-        const row = item(gb, e.name.replace(/\s*\(.*\)$/, ""), sub);
+        const row = item(gb, e.name.replace(/\s*\(.*\)$/, ""), sub, e.assetId, e.variants ? e.variants[0].variant : null);
         let sel = null;
         if (e.variants) {
           sel = document.createElement("select");
@@ -7826,27 +8828,31 @@
             const o = document.createElement("option"); o.value = v.variant;
             o.textContent = v.variant + (v.lengthFt ? " · " + ftx(v.lengthFt, v.widthFt) : ""); sel.appendChild(o);
           });
+          sel.addEventListener("change", () => { const th = row.parentNode.querySelector("img.thumb"); if (th) setThumb(th, e.assetId, sel.value); });
           row.appendChild(sel);
         }
         addBtn(row, () => addToScene(e.assetId, sel ? sel.value : null));
       });
     });
 
-    // Your own .glb models, scaled from one real dimension.
+    // Your own .glb models, on shelves (a pack lands on its own shelf). Real size comes from the file;
+    // one real dimension typed in the Inspector rescales a copy.
     const models = config.customModels || [];
     const gb = group("imported", "Your 3D models", models.length || null, false);
-    models.forEach(e => {
-      const row = item(gb, e.name, "imported .glb");
-      addBtn(row, () => addToScene(e.assetId, null));
-      const rm = addBtn(row, () => removeCustomModel(e.assetId), "Remove");
-      rm.className = "ghost danger"; rm.title = "Remove this model and every placed copy";
+    shelves().forEach(sh => {
+      const list = models.filter(e => shelfOf(e) === sh);
+      if (shelves().length > 1 || sh !== "Imported") gb.appendChild(el("div", "shelfHead", sh));
+      list.forEach(e => {
+        const n = e.native, sub = fmtLen(Math.max(n.x, n.z) * FT_PER_M) + " × " + fmtLen(Math.min(n.x, n.z) * FT_PER_M) + " · " + fmtLen(n.y * FT_PER_M) + " high";
+        addBtn(item(gb, e.name, sub, e.assetId), () => addToScene(e.assetId, null));
+      });
     });
-    const fi = document.createElement("input"); fi.type = "file"; fi.accept = ".glb,model/gltf-binary"; fi.className = "hidden";
-    fi.addEventListener("change", () => { if (fi.files[0]) importGlbFile(fi.files[0]); fi.value = ""; });
-    const imp = el("button", null, "Import a .glb file…"); imp.style.width = "100%"; imp.style.marginTop = models.length ? "8px" : "0";
-    imp.addEventListener("click", () => fi.click());
-    gb.appendChild(fi); gb.appendChild(imp);
-    gb.appendChild(el("div", "hint", "After importing, select it and type one real dimension (e.g. a pickup's length) — it scales to match."));
+    const tools = el("div", "btnRow libTools");
+    const imp = el("button", null, "Import a .glb…"); imp.addEventListener("click", () => document.getElementById("glbInput").click());
+    const man = el("button", "ghost", "Manage…"); man.addEventListener("click", openLibManager); man.title = "Rename, re-shelve or delete your models";
+    tools.appendChild(imp); if (models.length) tools.appendChild(man);
+    gb.appendChild(tools);
+    gb.appendChild(el("div", "hint", "One model comes straight in. A pack — a furnished room, a prop kit — opens a picker to choose its pieces."));
 
     // More models: free libraries to download a .glb from, then bring in with Import above.
     const mm = group("more", "More models", null, false);
@@ -7860,6 +8866,20 @@
       row.appendChild(a);
     });
     mm.appendChild(el("div", "hint", "Download a model as .glb (or glTF binary), then use “Import a .glb file…” under Your 3D models."));
+    applyLibFind();
+  }
+  // Library search: hides rows that don't match, opens the groups that do.
+  let libFindQ = "";
+  function applyLibFind() {
+    const body = document.getElementById("libraryBody"), q = libFindQ.trim().toLowerCase();
+    body.querySelectorAll("details.grp").forEach(d => {
+      let hits = 0;
+      d.querySelectorAll(".catItem").forEach(it => { const on = !q || (it.dataset.find || "").includes(q); it.classList.toggle("hidden", !on); if (on) hits++; });
+      d.querySelectorAll(".shelfHead").forEach(h => { let n = h.nextElementSibling, any = false; while (n && n.classList.contains("catItem")) { if (!n.classList.contains("hidden")) any = true; n = n.nextElementSibling; } h.classList.toggle("hidden", !!q && !any); });
+      d.classList.toggle("hidden", !!q && !hits);
+      if (q && hits) { if (d.dataset.wasOpen == null) d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; }
+      else if (!q && d.dataset.wasOpen != null) { d.open = !!d.dataset.wasOpen; delete d.dataset.wasOpen; }
+    });
   }
 
   function freeSpawnSpot() {
@@ -9169,6 +10189,18 @@
       (cfg.rollingWalls || []).forEach(rw => { if (Math.abs(Math.abs(rw.x) - 18.8) < 1e-6 && rw.z === 8 && (rw.rotationDeg === 0 || rw.rotationDeg === 180)) rw.x = Math.sign(rw.x) * 19; });
       cfg.migrations.studio202610 = true;
     }
+    // Cast: name tags typed before the cast list existed become characters (same name = same one),
+    // in the layout and in every stored board state.
+    if (!Array.isArray(cfg.cast)) cfg.cast = [];
+    const linkRole = p => {
+      if (!p.role || p.role.castId || !p.role.name || !String(p.role.name).trim()) return;
+      const nm = String(p.role.name).trim();
+      let c = cfg.cast.find(x => x.name.toLowerCase() === nm.toLowerCase());
+      if (!c) cfg.cast.push(c = { id: newId("c"), name: nm, actor: "", color: p.role.color || ROLE_COLORS[cfg.cast.length % ROLE_COLORS.length][0] });
+      p.role = { castId: c.id, name: c.name, color: c.color };
+    };
+    (cfg.placedAssets || []).forEach(linkRole);
+    ((cfg.board && cfg.board.frames) || []).forEach(f => { if (f.stage) { (f.stage.placedAssets || []).forEach(linkRole); f.stateKey = stateKeyOf(f.stage); } });
     // placedAssets hygiene: drop any duplicate vehicle seat key.
     const seenKeys = {};
     (cfg.placedAssets || []).forEach(p => { if (p.key) { if (seenKeys[p.key]) delete p.key; else seenKeys[p.key] = 1; } });
@@ -9347,6 +10379,8 @@
     document.getElementById("helpBtn").addEventListener("click", () => setHelp(true));
     document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
     wireBoard();
+    wirePackSheet(); wireLibManager();
+    document.getElementById("glbInput").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importGlbFile(f); });
     wireScriptSide();
     applyHouseLights();
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));
