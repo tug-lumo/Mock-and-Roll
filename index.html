@@ -631,26 +631,80 @@
   #vf .thirds i:nth-child(3) { top: 33.333%; left: 0; right: 0; height: 1px; }
   #vf .thirds i:nth-child(4) { top: 66.667%; left: 0; right: 0; height: 1px; }
   #vf .safe.hidden, #vf .thirds.hidden { display: none; }
-  #lensBar select { max-width: 150px; }
-  #lensBar #lbStop { width: 74px; }
-  #lensBar #lbDof.on { background: #2a2410; border-color: #ffd24a; color: #ffd24a; }
-  #vfGuides { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 19; min-width: 240px;
-    background: rgba(20,22,26,.96); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
-  #vfGuides.hidden { display: none; }
+  /* Viewfinder bar: tool buttons, icon over a live value */
+  #lensBar { gap: 2px; padding: 5px 6px; align-items: stretch; }
+  #lensBar .tb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 54px; height: auto; padding: 7px 8px 6px;
+    background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text); font-size: 11px; font-weight: 600; line-height: 1; }
+  #lensBar .tb svg { width: 20px; height: 20px; flex: none; }
+  #lensBar .tb:hover { background: rgba(255,255,255,.07); }
+  #lensBar .tb.active, #lensBar .tb[aria-expanded="true"] { background: #2a2410; border-color: rgba(255,210,74,.55); color: #ffd24a; }
+  #lensBar .tv { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #lensBar #lbLens { min-width: 64px; } #lensBar #lbFocus { min-width: 92px; }
+  #lensBar .tbSep { width: 1px; background: var(--line); margin: 6px 4px; }
+  /* Pop-ups above the bar */
+  .vfPop { position: absolute; z-index: 26; bottom: 84px; left: 50%; transform: translateX(-50%); background: rgba(18,20,24,.97); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--panelShadow); padding: 12px 14px; color: var(--text); font-size: 13px; }
+  .vfPop.hidden { display: none; }
+  .popHead { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 10px; }
+  .popHead b { font-size: 13px; } .popHead span { color: var(--muted); font-size: 12px; }
+  /* Focus & iris: a lens barrel with two rings */
+  #fiPanel { width: 380px; }
+  .barrel { display: grid; grid-template-columns: 40px 300px; align-items: center; gap: 4px 8px; padding: 10px 10px 8px 6px; border-radius: 10px;
+    background: linear-gradient(#24272d, #16181c); border: 1px solid #30343b; }
+  .rLbl { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; }
+  .ring { position: relative; width: 300px; height: 40px; overflow: hidden; border-radius: 5px; cursor: grab; touch-action: none; outline: none;
+    background: #121418; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -1px 0 rgba(0,0,0,.6); }
+  .ring.grab { cursor: grabbing; }
+  .ring:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+  .ring .strip { position: absolute; left: 0; top: 0; height: 40px; will-change: transform;
+    background: repeating-linear-gradient(90deg, #3b4048 0 2px, #1d2025 2px 5px) top / 100% 13px no-repeat; }
+  .ring .strip svg { display: block; font: 600 11px "Segoe UI", system-ui, sans-serif; fill: #e8eaee; }
+  .ring::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, rgba(0,0,0,.8), rgba(0,0,0,0) 24%, rgba(0,0,0,0) 76%, rgba(0,0,0,.8)); }
+  .ring::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 2; background: #ffd24a; box-shadow: 0 0 4px rgba(255,210,74,.6); }
+  .dofBand { position: relative; width: 300px; height: 8px; }
+  .dofBand i { position: absolute; top: 2px; height: 4px; border-radius: 2px; background: rgba(255,210,74,.55); border-left: 2px solid #ffd24a; border-right: 2px solid #ffd24a; box-sizing: border-box; }
+  .dofLbl { font-size: 9px; }
+  .fiRow { display: flex; align-items: center; gap: 12px; margin: 10px 0 6px; }
+  .fiRow label { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+  .fiRow input { width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+  .fiRow #fiN { width: 60px; }
+  .fiRow .iconBtn { margin-left: auto; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .fiRow .iconBtn svg { width: 18px; height: 18px; }
+  .fiRow .iconBtn.on { background: #2a2410; border-color: #ffd24a; color: #ffd24a; }
+  .fiInfo { font-size: 12px; color: var(--text); margin-bottom: 4px; min-height: 16px; }
+  #fiPanel .hint kbd { font-size: 10px; }
+  /* Camera menu */
+  #camMenu { width: min(720px, calc(100vw - var(--rail) - 32px)); }
+  .cmCols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .cmCols h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .cmCols h4 svg { width: 15px; height: 15px; }
+  .cmCols .field { flex-direction: column; align-items: stretch; gap: 3px; margin-bottom: 8px; }
+  .cmCols .field select { width: 100%; max-width: none; }
+  .cmRead { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  /* Overlay readouts open their controls */
+  #vf [data-pop] { pointer-events: auto; cursor: pointer; }
+  #vf [data-pop]:hover { outline: 1px solid rgba(255,210,74,.9); outline-offset: 2px; }
   #vf .tc, #vf .brx { bottom: 11%; } #vf .blx { bottom: 11%; }
   /* Looking through the lens: give it the whole window (panels come back on exit). */
   body.camview #inspector, body.camview #welcome { display: none !important; }
 
   /* Lens menu (Select on the gamepad / MENU in the viewfinder) */
-  #lensMenu { position: absolute; z-index: 25; left: 50%; top: 50%; transform: translate(-50%,-50%); min-width: 260px;
+  #lensMenu { position: absolute; z-index: 26; left: 50%; bottom: 84px; transform: translateX(-50%); min-width: 230px; max-height: calc(100% - 140px); overflow-y: auto; box-shadow: var(--panelShadow);
     background: rgba(18,20,24,.94); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
   #lensMenu h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
-  #lensMenu .row { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 6px; font-size: 15px; cursor: pointer; }
+  #lensMenu .lmGrid { display: grid; grid-template-columns: repeat(5, 54px); gap: 4px; }
+  #lensMenu .row { display: flex; flex-direction: column; align-items: center; padding: 7px 2px 6px; border-radius: 7px; font-size: 16px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.03); font-variant-numeric: tabular-nums; }
+  #lensMenu .row small { font-size: 9px; font-weight: 600; color: var(--muted); margin-top: -1px; }
+  #lensMenu .row:hover { border-color: #5b6270; }
   #lensMenu .row.cur { background: var(--accentFill); color: #fff; }
-  #lensMenu .row.on::after { content: "●"; font-size: 10px; margin-left: 10px; color: #ffd24a; }
-  #lensMenu .row span { color: var(--muted); font-size: 12px; }
+  #lensMenu .row.on { border-color: #ffd24a; box-shadow: inset 0 0 0 1px #ffd24a; }
+  #lensMenu .row span { color: var(--muted); font-size: 10.5px; font-weight: 500; margin-top: 2px; }
   #lensMenu .row.cur span { color: #e6eefc; }
   #lensMenu .foot { font-size: 11px; color: var(--muted); margin-top: 8px; text-align: center; }
+  #lensMenu .lmOther { display: flex; align-items: center; gap: 6px; padding: 8px 12px 2px; border-top: 1px solid var(--line); margin-top: 6px; color: var(--muted); font-size: 12px; }
+  #lensMenu .lmOther input { width: 70px; text-align: right; }
   #lensMenu.hidden { display: none; }
 
   /* ---- Phone view (read-only viewer; see isPhone) ---- */
@@ -722,6 +776,9 @@
   body.phone.drawerOpen #joy, body.camview #touchBar { display: none; }
   body.phone #lensBar { bottom: 8px; max-width: calc(100% - var(--rail) - 16px); flex-wrap: wrap; justify-content: center; padding: 4px; gap: 4px; }
   body.phone #lensBar button, body.phone #lensBar select { min-height: 36px; padding: 0 10px; font-size: 13px; }
+  body.phone #lensBar .tb { min-width: 46px; padding: 5px 6px; font-size: 10.5px; }
+  body.phone #fiPanel { width: calc(100vw - 24px); } body.phone .barrel { grid-template-columns: 34px 1fr; }
+  body.phone .cmCols { grid-template-columns: 1fr; }
   body.phone #camHud { top: 50px; font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
   body.phone #camHud .keys { display: none; }
   body.phone #toast { bottom: 70px; max-width: 90vw; }
@@ -914,6 +971,12 @@
       <symbol id="i-open" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14"/></g></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></g></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></g></symbol>
+      <symbol id="i-glass" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M9.2 9.6a3.4 3.4 0 0 1 3-1.7" stroke-linecap="round"/></g></symbol>
+      <symbol id="i-rings" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2.5 9h3v6h-3z"/><rect x="5.5" y="6" width="7" height="12" rx="1"/><rect x="12.5" y="7.5" width="5" height="9" rx="1"/><path d="M17.5 9.5h4v5h-4"/></g><g stroke="currentColor" stroke-width="1" opacity=".7"><path d="M7.5 6v12M9 6v12M10.5 6v12M14.5 7.5v9"/></g></symbol>
+      <symbol id="i-path" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="17.5" r="2.2"/><circle cx="19" cy="6.5" r="2.2"/><path d="M7 16c3-6 7.5-1.5 10-7.6" stroke-dasharray="2.2 2.4"/></g></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6.5 3.5h11v17L12 16.2l-5.5 4.3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-6.2-5.6-6.2-10.6a6.2 6.2 0 0 1 12.4 0C18.2 15.4 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.2"/></g></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/></g></symbol>
       <symbol id="i-print" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3.5h10V8"/><rect x="3.5" y="8" width="17" height="8.5" rx="1.5"/><path d="M7 14h10v6.5H7z"/></g></symbol>
     </defs>
   </svg>
@@ -1071,7 +1134,7 @@
     <div class="trx"></div>
     <div class="tc">00:00:00:00</div>
     <div class="blx"></div>
-    <div class="brx" title="Lens menu (gamepad: Select)">MENU ☰</div>
+    <div class="brx" data-pop="menu" title="Camera menu (M)">MENU ☰</div>
   </div>
   <div id="lensMenu" class="hidden"></div>
   <div id="navHud"></div>
@@ -1080,17 +1143,19 @@
 
   <!-- Viewfinder actions (shown only while looking through the camera) -->
   <div id="lensBar" class="hidden">
-    <button id="lbLens" title="Lens menu (L)">Lens</button>
-    <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
-    <select id="lbStop" title="Stop: sets how much is in focus" aria-label="Stop"></select>
-    <button id="lbDof" title="Depth of field: blur what's out of focus, as this lens and stop would">Focus blur</button>
-    <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
-    <button id="lbMove" title="Plan a camera move: A, B, C… points played over a set time">Move</button>
-    <button class="editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
-    <button class="editOnly" id="lbMark" title="Save position and aim only">Save mark</button>
-    <button id="lbPrint" title="Image with the viewfinder frame, stage plan and camera info">Print shot</button>
-    <button class="ghost" id="lbExit" title="Back to walking (Esc)">Exit viewfinder</button>
+    <button class="tb" id="lbLens" title="Lens (L)" aria-haspopup="dialog" aria-expanded="false"><svg><use href="#i-glass"/></svg><span class="tv" id="lbLensV">Lens</span></button>
+    <button class="tb" id="lbFocus" title="Focus &amp; iris: roll the rings or type (I)" aria-haspopup="dialog" aria-expanded="false"><svg><use href="#i-rings"/></svg><span class="tv" id="lbFocusV">Focus</span></button>
+    <i class="tbSep" aria-hidden="true"></i>
+    <button class="tb" id="lbMove" title="Plan a camera move: A, B, C… points played over a set time"><svg><use href="#i-path"/></svg><span class="tv">Move</span></button>
+    <button class="tb editOnly" id="lbShot" title="Save shot: position, aim and lens"><svg><use href="#i-bookmark"/></svg><span class="tv">Shot</span></button>
+    <button class="tb editOnly" id="lbMark" title="Save mark: position and aim only"><svg><use href="#i-pin"/></svg><span class="tv">Mark</span></button>
+    <button class="tb" id="lbPrint" title="Print shot: the frame, a stage plan and the camera info"><svg><use href="#i-print"/></svg><span class="tv">Print</span></button>
+    <i class="tbSep" aria-hidden="true"></i>
+    <button class="tb" id="lbMenu" title="Camera menu: body, frame lines, monitor guides (M)" aria-haspopup="dialog" aria-expanded="false"><svg><use href="#i-sliders"/></svg><span class="tv">Menu</span></button>
+    <button class="tb" id="lbExit" title="Exit the viewfinder (Esc)"><svg><use href="#i-x"/></svg><span class="tv">Exit</span></button>
   </div>
+  <div id="fiPanel" class="vfPop hidden" role="dialog" aria-label="Focus and iris"></div>
+  <div id="camMenu" class="vfPop hidden" role="dialog" aria-label="Camera menu"></div>
 
   <!-- Shot strip: the scene being boarded, above the lens bar while looking through the camera -->
   <div id="shotStrip" class="hidden" aria-label="Storyboard for this scene">
@@ -1127,12 +1192,6 @@
     <div class="btnRow mpBtns"><button class="editOnly" id="mpBoard" title="A board frame that holds the whole move">Add move to board</button><button id="mpRec" title="Plays the move and saves it as a video clip">Record clip</button><button class="ghost danger editOnly" id="mpClear">Clear</button></div>
   </div>
 
-  <div id="vfGuides" class="hidden" role="group" aria-label="Viewfinder guides">
-    <label class="setToggle"><input type="checkbox" id="vgFull"><span>Show the whole sensor around the frame</span></label>
-    <div class="field" style="margin:4px 0"><label for="vgShade">Shade outside frame</label><select id="vgShade"><option value="0">None</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="0.92">Matte</option></select></div>
-    <label class="setToggle"><input type="checkbox" id="vgSafe"><span>Action / title safe</span></label>
-    <label class="setToggle"><input type="checkbox" id="vgThirds"><span>Rule of thirds</span></label>
-  </div>
 
   <!-- First run: three things to know, then out of the way -->
   <div id="welcome" class="hidden" role="note">
@@ -1180,10 +1239,13 @@
           <h3>Viewfinder</h3><dl>
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · drag</dt><dd>Move / aim the camera</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
-          <dt><kbd>L</kbd></dt><dd>Lens menu</dd>
+          <dt><kbd>L</kbd></dt><dd>Lens</dd>
+          <dt><kbd>I</kbd></dt><dd>Focus &amp; iris rings</dd>
+          <dt><kbd>[</kbd> <kbd>]</kbd> · double-click</dt><dd>Pull focus closer / further · focus on what you click</dd>
+          <dt><kbd>M</kbd></dt><dd>Camera menu: body, frame lines, monitor guides</dd>
           <dt><kbd>F</kbd> / <kbd>Shift</kbd> <kbd>F</kbd></dt><dd>Next / previous frame (2.39, 16:9, 9:16…)</dd>
           <dt><kbd>B</kbd></dt><dd>Add this frame to the storyboard (pick its scene and lines from the script)</dd>
-          <dt><kbd>Esc</kbd></dt><dd>Exit</dd></dl></div>
+          <dt><kbd>Esc</kbd></dt><dd>Close a menu, then exit</dd></dl></div>
         <div><h3>Gamepad</h3><dl>
           <dt>Left stick</dt><dd>Move</dd>
           <dt>Right stick</dt><dd>Look (invert in Settings)</dd>
@@ -4721,6 +4783,11 @@
     const ae = document.activeElement;
     if (ae && ae !== document.body && ae !== renderer.domElement && ae.blur) ae.blur();
     if (viewCamUid != null) {
+      if (fiPick) {
+        fiPick = false; fiPickT = performance.now(); focusAtPoint(e);
+        const pb = document.getElementById("fiPick"); if (pb) { pb.classList.remove("on"); pb.setAttribute("aria-pressed", "false"); }
+        e.stopImmediatePropagation(); e.preventDefault(); return;
+      }
       camLook = { x: e.clientX, y: e.clientY };
       try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
       renderer.domElement.style.cursor = "grabbing";
@@ -6050,7 +6117,7 @@
     closeBoard();
     pa = pa || activeCameraPA();
     if (!pa || !pa._uid) { toast("Place a camera first (Piece Library → Camera)."); return; }
-    viewCamUid = pa._uid; activeCamUid = pa._uid; refreshCamPicker();
+    viewCamUid = pa._uid; activeCamUid = pa._uid; refreshCamPicker(); syncMoveBar();
     yawDrag = null; nav.enabled = false; nav.look = null;
     Object.keys(navKeys).forEach(k => delete navKeys[k]);
     document.getElementById("navHud").classList.add("hidden");
@@ -6082,7 +6149,7 @@
     document.getElementById("camViewBtn").classList.remove("active");
     document.getElementById("lensBar").classList.add("hidden");
     document.getElementById("shotStrip").classList.add("hidden");
-    document.getElementById("vfGuides").classList.add("hidden");
+    closeVfPop();
     stopMove(); finishRecording(); document.getElementById("movePanel").classList.add("hidden");
     closeLensMenu();
     if (isTouch) setTimeout(updateTouchBar, 0);
@@ -6179,8 +6246,8 @@
     const allCams = config.placedAssets.filter(p => p.assetId === "camera");
     const set = (sel, html) => { const el = vf.querySelector(sel); if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; } };
     set(".cam", escapeHtml(camLabel(pa)));
-    set(".trx", '<span class="bx fill">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx">' + o.sq + '× ANA</span>' : "") +
-      '<span class="bx">' + o.f + 'mm</span><span class="bx">' + stopLabel(camStop(pa)) + '</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
+    set(".trx", '<span class="bx fill" data-pop="menu" title="Camera body (menu)">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx" data-pop="menu" title="Lens type (menu)">' + o.sq + '× ANA</span>' : "") +
+      '<span class="bx" data-pop="lens" title="Lens">' + o.f + 'mm</span><span class="bx" data-pop="focus" title="Focus &amp; iris">' + stopLabel(camStop(pa)) + '</span><span class="bx" data-pop="menu" title="Frame lines (menu)">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
     { const w = cameraPlaceWarning(pa), el = vf.querySelector(".vfWarn"); if (el.dataset.h !== w) { el.dataset.h = w; el.textContent = w; el.classList.toggle("hidden", !w); } }
     // Frame lines: the delivery frame (and protect) as a share of the image shown.
     const vp = vfPrefs(), full = vp.full, fl = vf.querySelector(".fl"), pl = vf.querySelector(".pl");
@@ -6203,7 +6270,9 @@
       } else pl.classList.add("hidden");
     }
     const lw = lensWallText(pa, o);
-    set(".blx", "focus " + fmtLen(camVal(pa, "focusFt")) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, o) + (lw ? "<br>" + lw : "") +
+    syncVfBar(pa);
+    if (vfPop === "focus" && performance.now() - lensWall.t > 150) syncFocusPanel(pa);
+    set(".blx", "<span data-pop='focus' title='Focus &amp; iris'>focus " + fmtFocus(camVal(pa, "focusFt")) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, o) + "</span>" + (lw ? "<br>" + lw : "") +
       "<br>lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "° · x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°" +
       (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · double-click or [ ] focus · Esc exit</span>"));
     const fr = Math.floor((performance.now() - vfStart) / 1000 * VF_FPS), p2 = n => String(n).padStart(2, "0");
@@ -6342,40 +6411,14 @@
     config.vf = Object.assign({ full: true, shade: 0.75, safe: false, thirds: false, dof: true }, config.vf || {});
     return config.vf;
   }
+  // The bar's readouts and whichever pop-up is open follow the camera.
   function refreshVfBar() {
-    const pa = activeCameraPA(), sel = document.getElementById("lbFormat"); if (!sel) return;
-    const cur = pa ? frameFormat(camVal(pa, "format")).id : "full";
-    sel.innerHTML = FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === cur ? " selected" : "") + '>Frame · ' + escapeHtml(f.short === "OPEN" ? "full sensor" : f.short) + '</option>').join("");
-    const vp = vfPrefs();
-    document.getElementById("lbStop").innerHTML = pa ? stopOptionsHTML(camStop(pa)) : "";
-    document.getElementById("lbDof").classList.toggle("on", dofOn());
-    document.getElementById("lbDof").setAttribute("aria-pressed", dofOn() ? "true" : "false");
-    document.getElementById("vgFull").checked = !!vp.full;
-    document.getElementById("vgShade").value = String(vp.shade);
-    document.getElementById("vgSafe").checked = !!vp.safe;
-    document.getElementById("vgThirds").checked = !!vp.thirds;
+    const pa = activeCameraPA(); if (!pa) return;
+    syncVfBar(pa);
+    if (vfPop === "menu") renderCamMenu(pa);
+    if (vfPop === "focus") syncFocusPanel(pa);
   }
-  function wireVfBar() {
-    document.getElementById("lbFormat").addEventListener("change", e => {
-      const pa = activeCameraPA(); if (!pa) return;
-      pa.format = e.target.value; camDirty = true;
-      refreshCamPicker(); if (mode === "edit") scheduleAutosave();
-      e.target.blur();                                      // keys go back to driving the camera
-    });
-    document.getElementById("lbStop").addEventListener("change", e => {
-      const pa = activeCameraPA(); if (!pa) return;
-      pa.stop = parseFloat(e.target.value) || 2.8; lensWall.t = 0;
-      refreshCamPicker(); if (mode === "edit") scheduleAutosave();
-      e.target.blur();
-    });
-    document.getElementById("lbDof").addEventListener("click", e => { vfPrefs().dof = !dofOn(); refreshVfBar(); scheduleAutosave(); e.currentTarget.blur(); });
-    document.getElementById("lbGuides").addEventListener("click", () => { document.getElementById("vfGuides").classList.toggle("hidden"); refreshVfBar(); });
-    const upd = (id, fn) => document.getElementById(id).addEventListener("change", e => { fn(vfPrefs(), e.target); scheduleAutosave(); });
-    upd("vgFull", (v, el) => { v.full = el.checked; });
-    upd("vgShade", (v, el) => { v.shade = parseFloat(el.value); });
-    upd("vgSafe", (v, el) => { v.safe = el.checked; });
-    upd("vgThirds", (v, el) => { v.thirds = el.checked; });
-  }
+  function wireVfBar() { wireVfControls(); }
 
 
   // ==================================================================
@@ -6463,7 +6506,7 @@
   function refreshMoveBtn() {
     const b = document.getElementById("lbMove"); if (!b) return;
     const mv = moveOf(activeCameraPA());
-    b.textContent = mv ? "Move · " + keyLetter(0) + "–" + keyLetter(mv.keys.length - 1) : "Move";
+    b.querySelector(".tv").textContent = mv ? keyLetter(0) + "–" + keyLetter(mv.keys.length - 1) : "Move";
     b.classList.toggle("active", mvUI.open);
   }
   function renderMovePanel() {
@@ -6811,6 +6854,212 @@
     bar.addEventListener("keydown", e => e.stopPropagation());
   }
 
+  // ==================================================================
+  //  VIEWFINDER CONTROLS: bar, Focus & iris rings, Camera menu
+  // ==================================================================
+  // One pop-up at a time above the bar: "lens" (the lens menu), "focus" (focus & iris rings) or
+  // "menu" (camera body, frame lines, monitor guides). The overlay's readouts open the same pop-ups.
+  let vfPop = null, fiPick = false, fiPickT = 0;
+  const VF_POP_BTN = { lens: "lbLens", focus: "lbFocus", menu: "lbMenu" };
+  function placeVfPop(el, kind) {
+    const btn = document.getElementById(VF_POP_BTN[kind]), bar = document.getElementById("lensBar"), host = el.offsetParent || document.body;
+    if (!btn || !bar || bar.classList.contains("hidden")) return;
+    const r = btn.getBoundingClientRect(), br = bar.getBoundingClientRect(), hr = host.getBoundingClientRect();
+    const left = clamp(r.left + r.width / 2 - el.offsetWidth / 2 - hr.left, 8, Math.max(8, hr.width - el.offsetWidth - 8));
+    el.style.left = left + "px"; el.style.bottom = (hr.bottom - br.top + 8) + "px"; el.style.transform = "none";
+  }
+  function setVfPopBtns() { Object.keys(VF_POP_BTN).forEach(k => { const b = document.getElementById(VF_POP_BTN[k]); if (b) b.setAttribute("aria-expanded", vfPop === k ? "true" : "false"); }); }
+  function openVfPop(kind) {
+    const pa = activeCameraPA(); if (!pa) return;
+    closeVfPop();
+    if (kind === "lens") { openLensMenu(); return; }
+    vfPop = kind;
+    const el = document.getElementById(kind === "focus" ? "fiPanel" : "camMenu");
+    if (kind === "focus") renderFocusPanel(pa); else renderCamMenu(pa);
+    el.classList.remove("hidden");
+    placeVfPop(el, kind); setVfPopBtns();
+  }
+  function closeVfPop() {
+    if (lensMenu.open) closeLensMenu();
+    ["fiPanel", "camMenu"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    vfPop = null; fiPick = false; setVfPopBtns();
+  }
+  function toggleVfPop(kind) { if (vfPop === kind || (kind === "lens" && lensMenu.open)) closeVfPop(); else openVfPop(kind); }
+
+  // ---- Focus & iris: two lens rings you roll (drag / scroll / arrow keys) or type into ----------
+  // Focus scale: logarithmic like a cine lens (close distances spread out), squeezing up to ∞ past 120′.
+  const FI_K = 95, FI_D1 = 120, FI_INF = 500, FI_TAIL = 46, FI_STOP_PX = 34;
+  const FI_THIRDS = [1, 1.1, 1.3, 1.4, 1.6, 1.8, 2, 2.2, 2.5, 2.8, 3.2, 3.5, 4, 4.5, 5, 5.6, 6.3, 7.1, 8, 9, 10, 11, 13, 14, 16, 18, 20, 22];
+  function fiPosF(d) {
+    d = clamp(d, 0.5, FI_INF);
+    if (d <= FI_D1) return FI_K * Math.log(d / 0.5);
+    return FI_K * Math.log(FI_D1 / 0.5) + FI_TAIL * (1 - FI_D1 / d) / (1 - FI_D1 / FI_INF);
+  }
+  function fiValF(p) {
+    const p1 = FI_K * Math.log(FI_D1 / 0.5);
+    if (p <= p1) return 0.5 * Math.exp(Math.max(0, p) / FI_K);
+    const t = Math.min(1, (p - p1) / FI_TAIL) * (1 - FI_D1 / FI_INF);
+    return FI_D1 / (1 - t);
+  }
+  function fiPosI(n) { return 2 * Math.log2(clamp(n, 1, 22)) * FI_STOP_PX; }
+  function fiValI(p) {                                         // snaps to the nearest third of a stop
+    const k = Math.round(clamp(p / FI_STOP_PX, 0, 2 * Math.log2(22)) * 3);
+    return FI_THIRDS[clamp(k, 0, FI_THIRDS.length - 1)];
+  }
+  function fmtFocus(ft) { return ft >= 300 ? "∞" : fmtLen(ft); }
+  // An engraved scale: ticks + numbers, `pad` px of blank either side so the ends can reach the index.
+  function fiScaleSVG(kind, pad) {
+    const out = [], P = kind === "focus" ? fiPosF : fiPosI, L = kind === "focus" ? fiPosF(FI_INF) : fiPosI(22);
+    const W = L + 2 * pad, tick = (v, major, label) => {
+      const x = (pad + P(v)).toFixed(1);
+      out.push('<line x1="' + x + '" x2="' + x + '" y1="' + (major ? 17 : 19) + '" y2="24" stroke="' + (major ? "#e8eaee" : "#8b919b") + '" stroke-width="1"/>');
+      if (label) out.push('<text x="' + x + '" y="35" text-anchor="middle">' + label + '</text>');
+    };
+    if (kind === "focus") {
+      const m = displayUnit === "m", u = m ? FT_PER_M : 1;
+      (m ? [0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10, 20] : [1, 1.5, 2, 3, 4, 5, 7, 10, 15, 20, 30, 50, 100]).forEach(v => tick(v * u, true, String(v)));
+      (m ? [0.25, 0.4, 0.6, 0.9, 1.25, 1.75, 2.5, 4, 7, 15, 30] : [0.6, 0.7, 0.8, 0.9, 1.25, 1.75, 2.5, 3.5, 4.5, 6, 8, 9, 12, 25, 40, 70]).forEach(v => tick(v * u, false));
+      tick(FI_INF, true, "∞");
+    } else {
+      FI_THIRDS.forEach(n => tick(n, [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22].indexOf(n) !== -1, [1, 1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22].indexOf(n) !== -1 ? String(n) : ""));
+    }
+    return '<svg width="' + W.toFixed(0) + '" height="40" viewBox="0 0 ' + W.toFixed(0) + ' 40">' + out.join("") + '</svg>';
+  }
+  const FI_RING_W = 300;
+  function renderFocusPanel(pa) {
+    const o = camOptics(pa), el = document.getElementById("fiPanel"), m = displayUnit === "m";
+    el.innerHTML =
+      '<div class="popHead"><b>Focus &amp; iris</b><span>' + o.f + 'mm · ' + escapeHtml(o.S.short || o.S.name) + '</span></div>' +
+      '<div class="barrel">' +
+        '<span class="rLbl">Focus</span><div class="ring" id="ringF" tabindex="0" role="slider" aria-label="Focus distance"><div class="strip">' + fiScaleSVG("focus", FI_RING_W / 2) + '</div></div>' +
+        '<span class="rLbl dofLbl" title="Depth of field: what stays acceptably sharp">DOF</span><div class="dofBand"><i id="dofBr"></i></div>' +
+        '<span class="rLbl">Iris</span><div class="ring" id="ringI" tabindex="0" role="slider" aria-label="Stop"><div class="strip">' + fiScaleSVG("iris", FI_RING_W / 2) + '</div></div>' +
+      '</div>' +
+      '<div class="fiRow">' +
+        '<label>Focus<input type="number" id="fiF" min="' + (m ? 0.15 : 0.5) + '" max="' + (m ? 152 : 500) + '" step="' + (m ? 0.05 : 0.25) + '"><span>' + displayUnit + '</span></label>' +
+        '<label>Stop<span>T</span><input type="number" id="fiN" min="1" max="22" step="0.1"></label>' +
+        '<button class="iconBtn" id="fiPick" title="Focus on… then click something in the frame" aria-pressed="false"><svg><use href="#i-target"/></svg></button>' +
+      '</div>' +
+      '<div class="fiInfo" id="fiInfo"></div>' +
+      '<label class="setToggle"><input type="checkbox" id="fiDof"' + (dofOn() ? " checked" : "") + '><span>Show focus blur in the viewfinder</span></label>' +
+      '<div class="hint">Drag or scroll a ring, or type. Double-click in the frame to focus there · <kbd>[</kbd> <kbd>]</kbd> nudge focus.</div>';
+    wireRing("ringF", "focus"); wireRing("ringI", "iris");
+    const f = document.getElementById("fiF"), n = document.getElementById("fiN");
+    f.addEventListener("change", () => { const v = parseFloat(f.value); if (!isNaN(v)) setCamFocus(activeCameraPA(), fromDisplay(v)); });
+    n.addEventListener("change", () => { const v = parseFloat(n.value); if (!isNaN(v)) setCamStop(activeCameraPA(), v); });
+    [f, n].forEach(i => i.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") i.blur(); if (e.key === "Escape") { i.blur(); closeVfPop(); } }));
+    document.getElementById("fiPick").addEventListener("click", e => { fiPick = !fiPick; e.currentTarget.setAttribute("aria-pressed", fiPick ? "true" : "false"); e.currentTarget.classList.toggle("on", fiPick); });
+    document.getElementById("fiDof").addEventListener("change", e => { vfPrefs().dof = e.target.checked; scheduleAutosave(); });
+    syncFocusPanel(pa);
+  }
+  function syncFocusPanel(pa) {
+    if (vfPop !== "focus" || !pa) return;
+    const fd = camVal(pa, "focusFt"), N = camStop(pa), o = camOptics(pa), c = FI_RING_W / 2;
+    const sf = document.querySelector("#ringF .strip"), si = document.querySelector("#ringI .strip");
+    if (sf) sf.style.transform = "translateX(" + (-fiPosF(fd)).toFixed(1) + "px)";
+    if (si) si.style.transform = "translateX(" + (-fiPosI(N)).toFixed(1) + "px)";
+    const r = dofRange(pa, o), a = clamp(c + fiPosF(r.near) - fiPosF(fd), 0, FI_RING_W), b = clamp(c + fiPosF(Math.min(r.far, FI_INF)) - fiPosF(fd), 0, FI_RING_W);
+    const br = document.getElementById("dofBr"); if (br) { br.style.left = a + "px"; br.style.width = Math.max(2, b - a) + "px"; }
+    const f = document.getElementById("fiF"), n = document.getElementById("fiN");
+    if (f && document.activeElement !== f) f.value = displayUnit === "m" ? Math.round(toDisplay(fd) * 100) / 100 : Math.round(fd * 10) / 10;
+    if (n && document.activeElement !== n) n.value = N;
+    const lw = lensWallText(pa, o), info = document.getElementById("fiInfo");
+    if (info) info.innerHTML = "Sharp " + dofRangeText(pa, o) + (lw ? " · " + lw : "");
+  }
+  function wireRing(id, kind) {
+    const ring = document.getElementById(id); if (!ring) return;
+    const P = kind === "focus" ? fiPosF : fiPosI, V = kind === "focus" ? fiValF : fiValI;
+    const cur = () => { const pa = activeCameraPA(); return kind === "focus" ? camVal(pa, "focusFt") : camStop(pa); };
+    const set = v => { const pa = activeCameraPA(); if (!pa) return; if (kind === "focus") setCamFocus(pa, v, true); else setCamStop(pa, v); };
+    let drag = null;
+    ring.addEventListener("pointerdown", e => { drag = { x: e.clientX, p: P(cur()) }; ring.setPointerCapture(e.pointerId); ring.classList.add("grab"); e.preventDefault(); });
+    ring.addEventListener("pointermove", e => { if (drag) set(V(drag.p - (e.clientX - drag.x))); });
+    const end = () => { drag = null; ring.classList.remove("grab"); };
+    ring.addEventListener("pointerup", end); ring.addEventListener("pointercancel", end);
+    ring.addEventListener("wheel", e => {
+      e.preventDefault();
+      const d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY);
+      set(kind === "focus" ? V(P(cur()) + d * 0.25) : V(P(cur()) + Math.sign(d) * FI_STOP_PX / 3));
+    }, { passive: false });
+    ring.addEventListener("keydown", e => {
+      const k = e.key, step = kind === "focus" ? (e.shiftKey ? 2 : 10) : FI_STOP_PX / 3;
+      if (k === "ArrowLeft" || k === "ArrowDown") set(V(P(cur()) - step));
+      else if (k === "ArrowRight" || k === "ArrowUp") set(V(P(cur()) + step));
+      else if (k === "Escape") closeVfPop();
+      else return;
+      e.preventDefault(); e.stopPropagation();
+    });
+  }
+  function setCamStop(pa, n) {
+    if (!pa) return;
+    pa.stop = clamp(Math.round(n * 10) / 10, 1, 22); lensWall.t = 0;
+    if (mode === "edit") scheduleAutosave();
+    syncFocusPanel(pa);
+  }
+
+  // ---- Camera menu: what you set once per setup, not every frame ----------------------------------
+  function renderCamMenu(pa) {
+    const o = camOptics(pa), vp = vfPrefs(), prot = camVal(pa, "protect") || "";
+    const protOpts = '<option value="">None</option>' + FRAME_FORMATS.filter(f => f.aspect).map(f => '<option value="' + f.id + '"' + (f.id === prot ? " selected" : "") + '>' + escapeHtml(f.name) + '</option>').join("");
+    const shade = [["0", "None"], ["0.5", "50%"], ["0.75", "75%"], ["0.92", "Matte"]].map(s => '<option value="' + s[0] + '"' + (String(vp.shade) === s[0] ? " selected" : "") + '>' + s[1] + '</option>').join("");
+    const tog = (id, on, label) => '<label class="setToggle"><input type="checkbox" id="' + id + '"' + (on ? " checked" : "") + '><span>' + label + '</span></label>';
+    document.getElementById("camMenu").innerHTML =
+      '<div class="popHead"><b>Camera menu</b><span>' + escapeHtml(camLabel(pa)) + '</span></div>' +
+      '<div class="cmCols">' +
+        '<section><h4><svg><use href="#i-camera"/></svg>Camera</h4>' +
+          '<div class="field"><label for="cmBody">Body</label><select id="cmBody" class="wideSel">' + bodyOptionsHTML(o.S.id) + '</select></div>' +
+          '<div class="field"><label for="cmSq">Lens type</label><select id="cmSq">' + squeezeOptionsHTML(o.sq) + '</select></div>' +
+          '<div class="cmRead">Sensor ' + o.S.widthMm + ' × ' + o.S.heightMm + ' mm' + (o.sq > 1 ? ' · ' + o.sq + '× squeeze' : '') + '</div></section>' +
+        '<section><h4><svg><use href="#i-lens"/></svg>Frame lines</h4>' +
+          '<div class="field"><label for="cmFrame">Frame</label><select id="cmFrame" class="wideSel">' + frameOptionsHTML(o.fmt.id) + '</select></div>' +
+          '<div class="field"><label for="cmProt">Protect for</label><select id="cmProt" class="wideSel">' + protOpts + '</select></div>' +
+          '<div class="cmRead">' + o.frameW.toFixed(1) + ' × ' + o.frameH.toFixed(1) + ' mm · ' + o.aspect.toFixed(2) + ':1 · ' + o.hFov.toFixed(1) + '° H</div></section>' +
+        '<section><h4><svg><use href="#i-eye"/></svg>Monitor</h4>' +
+          tog("cmFull", vp.full, "Whole sensor around the frame") +
+          '<div class="field"><label for="cmShade">Outside the frame</label><select id="cmShade">' + shade + '</select></div>' +
+          tog("cmSafe", vp.safe, "Action / title safe") + tog("cmThirds", vp.thirds, "Rule of thirds") + tog("cmDof", dofOn(), "Focus blur") + '</section>' +
+      '</div>';
+  }
+  function wireCamMenu() {
+    const el = document.getElementById("camMenu");
+    el.addEventListener("change", e => {
+      const pa = activeCameraPA(); if (!pa) return;
+      const t = e.target, vp = vfPrefs();
+      if (t.id === "cmBody") applyCamChange(pa, { sensor: t.value });
+      else if (t.id === "cmSq") applyCamChange(pa, { squeeze: parseFloat(t.value) || 1 });
+      else if (t.id === "cmFrame") applyCamChange(pa, { format: t.value });
+      else if (t.id === "cmProt") applyCamChange(pa, { protect: t.value });
+      else if (t.id === "cmFull") vp.full = t.checked;
+      else if (t.id === "cmShade") vp.shade = parseFloat(t.value);
+      else if (t.id === "cmSafe") vp.safe = t.checked;
+      else if (t.id === "cmThirds") vp.thirds = t.checked;
+      else if (t.id === "cmDof") vp.dof = t.checked;
+      scheduleAutosave();
+      renderCamMenu(pa); placeVfPop(el, "menu");
+    });
+    el.addEventListener("keydown", e => { if (e.key === "Escape") closeVfPop(); e.stopPropagation(); });
+  }
+  function wireVfControls() {
+    document.getElementById("lbLens").addEventListener("click", () => toggleVfPop("lens"));
+    document.getElementById("lbFocus").addEventListener("click", () => toggleVfPop("focus"));
+    document.getElementById("lbMenu").addEventListener("click", () => toggleVfPop("menu"));
+    document.getElementById("vf").addEventListener("click", e => { const t = e.target.closest("[data-pop]"); if (t) toggleVfPop(t.dataset.pop); });
+    wireCamMenu();
+    document.addEventListener("pointerdown", e => {
+      if (!vfPop && !lensMenu.open) return;
+      if (fiPick || performance.now() - fiPickT < 400) return;      // picking a focus point keeps the panel up
+      if (!e.target.closest(".vfPop, #lensMenu, #lensBar, #vf [data-pop]")) closeVfPop();
+    });
+    window.addEventListener("resize", () => { if (vfPop) placeVfPop(document.getElementById(vfPop === "focus" ? "fiPanel" : "camMenu"), vfPop); });
+  }
+  // Bar readouts follow the camera however it changed (rings, keys, inspector, a recalled shot).
+  function syncVfBar(pa) {
+    const lv = document.getElementById("lbLensV"), fv = document.getElementById("lbFocusV"); if (!lv || !pa) return;
+    const a = camVal(pa, "focalMm") + "mm", b = fmtFocus(camVal(pa, "focusFt")) + " · " + stopLabel(camStop(pa));
+    if (lv.textContent !== a) lv.textContent = a;
+    if (fv.textContent !== b) fv.textContent = b;
+  }
+
   // ---- Lens menu (gamepad Select, viewfinder MENU, or click) ---------------
   // ↑/↓ picks a focal length, ←/→ switches sensor, A / Select applies, B closes. Changes apply
   // live to the active camera so you see the framing change as you scroll.
@@ -6836,23 +7085,31 @@
   function openLensMenu() {
     const pa = activeCameraPA();
     if (!pa) { toast("Place a camera first (Piece Library → Camera)."); return; }
+    if (vfPop) closeVfPop();
     lensMenu.open = true;
     lensMenu.idx = Math.max(0, lensList().indexOf(camVal(pa, "focalMm")));
     renderLensMenu();
+    const b = document.getElementById("lbLens"); if (b) b.setAttribute("aria-expanded", "true");
   }
-  function closeLensMenu() { lensMenu.open = false; document.getElementById("lensMenu").classList.add("hidden"); }
+  function closeLensMenu() { lensMenu.open = false; document.getElementById("lensMenu").classList.add("hidden"); const b = document.getElementById("lbLens"); if (b) b.setAttribute("aria-expanded", "false"); }
   function renderLensMenu() {
     const pa = activeCameraPA(); if (!pa) { closeLensMenu(); return; }
     const el = document.getElementById("lensMenu"), list = lensList(), S = sensorById(camVal(pa, "sensor")), cur = camVal(pa, "focalMm");
-    el.innerHTML = '<h3><span>Lens</span><span>◀ ' + escapeHtml(S.name) + ' ▶</span></h3>' +
-      list.map((mm, i) => {
+    el.innerHTML = '<h3><span>Lens</span><span>' + escapeHtml(S.short || S.name) + '</span></h3>' +
+      '<div class="lmGrid">' + list.map((mm, i) => {
         const hf = camOptics(Object.assign({}, pa, { focalMm: mm })).hFov;
-        return '<div class="row' + (i === lensMenu.idx ? " cur" : "") + (mm === cur ? " on" : "") + '" data-i="' + i + '">' + mm + 'mm <span>' + hf.toFixed(1) + '° H</span></div>';
-      }).join("") +
-      '<div class="foot">' + (pad.connected ? "D-pad ↑↓ lens · ←→ sensor · A / Select done · B close" : "Click a lens · click the sensor name to switch") + '</div>';
+        return '<div class="row' + (i === lensMenu.idx ? " cur" : "") + (mm === cur ? " on" : "") + '" data-i="' + i + '" title="' + mm + 'mm · ' + hf.toFixed(1) + '° horizontal">' + mm + '<small>mm</small><span>' + hf.toFixed(0) + '°</span></div>';
+      }).join("") + '</div>' +
+      '<label class="lmOther">Other<input type="number" id="lmMm" min="4" max="1200" step="0.5" placeholder="mm" aria-label="Other focal length (mm)">mm</label>' +
+      (pad.connected ? '<div class="foot">D-pad ↑↓ lens · A / Select done · B close</div>' : "");
+    const wasHidden = el.classList.contains("hidden");
     el.classList.remove("hidden");
+    if (wasHidden) placeVfPop(el, "lens");
     el.querySelectorAll(".row").forEach(row => row.addEventListener("click", () => { lensMenu.idx = +row.dataset.i; lensMenuPick(); closeLensMenu(); }));
-    el.querySelector("h3 span:last-child").addEventListener("click", () => lensMenuSensor(1));
+    const mm = el.querySelector("#lmMm");
+    mm.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") mm.blur(); if (e.key === "Escape") closeLensMenu(); });
+    mm.addEventListener("change", () => { const v = parseFloat(mm.value), pa = activeCameraPA(); if (pa && v >= 4 && v <= 1200) { setCamLens(pa, Math.round(v * 2) / 2, null); closeLensMenu(); } });
+    const curRow = el.querySelector(".row.cur"); if (curRow && curRow.scrollIntoView) curRow.scrollIntoView({ block: "nearest" });
   }
   function lensMenuPick() { const pa = activeCameraPA(), mm = lensList()[lensMenu.idx]; if (pa && mm) setCamLens(pa, mm, null); }
   function lensMenuMove(d) {
@@ -7088,10 +7345,12 @@
     shotCam.getWorldDirection(_lwDir);
     setCamFocus(pa, hit.point.clone().sub(shotCam.position).dot(_lwDir));
   }
-  function setCamFocus(pa, ft) {
+  function setCamFocus(pa, ft, quiet) {
+    if (!pa) return;
     pa.focusFt = clamp(round2(ft), 0.5, 500); camDirty = true; lensWall.t = 0;
     if (mode === "edit") scheduleAutosave();
-    toast("Focus " + fmtLen(pa.focusFt) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, camOptics(pa)));
+    if (vfPop === "focus") syncFocusPanel(pa);
+    else if (!quiet) toast("Focus " + fmtFocus(pa.focusFt) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, camOptics(pa)));
   }
 
   const brandLogo = new Image();          // primary logo (negative) for the printed-shot header
@@ -10559,8 +10818,6 @@
     if (lensMenu.open) {                                    // the lens menu owns the buttons while it's up
       if (down(PAD_BTN.UP)) lensMenuMove(-1);
       if (down(PAD_BTN.DOWN)) lensMenuMove(1);
-      if (down(PAD_BTN.LEFT)) lensMenuSensor(-1);
-      if (down(PAD_BTN.RIGHT)) lensMenuSensor(1);
       if (down(PAD_BTN.A) || down(PAD_BTN.BACK) || down(PAD_BTN.B)) { closeLensMenu(); padRumble(gp, 0.1, 0.3, 40); }
       pad.prev = b;
       driveSticks(lx, ly, rx, lookY(ry), lift, mul, dt);
@@ -11306,7 +11563,6 @@
     document.getElementById("camAddBtn").addEventListener("click", () => addCameraWithSetup(!config.placedAssets.some(p => p.assetId === "camera")));
     document.getElementById("frustChk").addEventListener("change", e => setShowFrustums(e.target.checked));
     // Lens view bar
-    document.getElementById("lbLens").addEventListener("click", () => lensMenu.open ? closeLensMenu() : openLensMenu());
     document.getElementById("lbShot").addEventListener("click", () => saveShot("shot"));
     document.getElementById("lbMark").addEventListener("click", () => saveShot("mark"));
     document.getElementById("lbPrint").addEventListener("click", printShot);
@@ -11348,7 +11604,7 @@
     window.addEventListener("blur", () => { Object.keys(camKeys).forEach(k => delete camKeys[k]); Object.keys(navKeys).forEach(k => delete navKeys[k]); });
     window.addEventListener("keyup", (e) => { delete camKeys[e.code]; delete navKeys[e.code]; });
 
-    document.querySelector("#vf .brx").addEventListener("click", () => lensMenu.open ? closeLensMenu() : openLensMenu());
+
     document.getElementById("shotPrint").addEventListener("click", printShot);
 
     window.addEventListener("keydown", (e) => {
@@ -11372,11 +11628,10 @@
         if (k === "a" && mode === "edit" && viewCamUid == null) { selectAllPeople(); e.preventDefault(); return; }
       }
       if (!typing && NAV_KEYS.indexOf(e.code) !== -1) { const h = document.getElementById("navHud"); if (h && !pad.connected) { clearTimeout(hudFadeTimer); hudFadeTimer = setTimeout(() => h.classList.add("faded"), 1500); } }
-      // Lens menu: L toggles; while open, ↑/↓ lens, ←/→ sensor, Enter/Esc close.
+      // Lens menu: L toggles; while open, ↑/↓ lens, Enter/Esc close.
       if (!typing && lensMenu.open) {
         const k = e.key;
         if (k === "ArrowUp") lensMenuMove(-1); else if (k === "ArrowDown") lensMenuMove(1);
-        else if (k === "ArrowLeft") lensMenuSensor(-1); else if (k === "ArrowRight") lensMenuSensor(1);
         else if (k === "Escape" || k === "Enter" || k === "l" || k === "L") closeLensMenu();
         else return;
         e.preventDefault(); e.stopPropagation(); return;
@@ -11385,8 +11640,10 @@
       if (!typing && (e.key === "h" || e.key === "H") && !e.ctrlKey && !e.metaKey && !e.altKey) { setHouseLights(!houseLightsOn()); e.preventDefault(); return; }
       if (viewCamUid != null) {
         // FPS controls: WASD move (A/D strafe), Q/E height, arrows look, Shift = fast.
-        if (e.key === "Escape") { exitCameraView(); return; }
+        if (e.key === "Escape") { if (vfPop) { closeVfPop(); e.preventDefault(); return; } exitCameraView(); return; }
         if (typing) return;
+        if ((e.key === "m" || e.key === "M") && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleVfPop("menu"); e.preventDefault(); return; }
+        if ((e.key === "i" || e.key === "I") && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleVfPop("focus"); e.preventDefault(); return; }
         if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey) {      // F / Shift+F: next / previous frame
           const pa = getPlacedByUid(viewCamUid), i = FRAME_FORMATS.findIndex(f => f.id === frameFormat(camVal(pa, "format")).id), n = FRAME_FORMATS.length;
           pa.format = FRAME_FORMATS[(i + (e.shiftKey ? -1 : 1) + n) % n].id; camDirty = true;

@@ -359,3 +359,13 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - The viewfinder bar has a "Focus blur" toggle (`config.vf.dof`, default on). Double-clicking in the viewfinder focuses on the surface under the cursor; `[` / `]` nudge focus (Shift for finer steps).
 - The overlay shows focus, stop, the in-focus range (frame diagonal/1500 circle of confusion), and the LED surface down the lens axis with its sharpness: sharp (moiré risk), just soft or soft.
 - Board frames, move end frames and printed shots use the same pass, and clips get it from the screen.
+
+## As built — Viewfinder controls overhaul (Oct 2026)
+- Bar buttons, each an icon over a live value: Lens (mm) · Focus & iris (focus · stop) | Move · Shot · Mark · Print | Menu · Exit. Frame, Stop, Focus blur and Guides moved off the bar.
+- **Lens** (L, gamepad Select, or the overlay's mm box): lens only, as a grid of the lens set with horizontal FOV, plus an "Other" mm box. Body switching is gone from it.
+- **Focus & iris** (I, the overlay's T box or focus line): a lens barrel with focus and iris rings. Drag, scroll or arrow-key a ring, or type a value.
+  - The focus scale is logarithmic and ends at ∞; the iris snaps to third-stops.
+  - A depth-of-field bracket sits under the focus index.
+  - The pick-focus button makes the next click in the frame set focus. The panel also shows the sharp range, the LED readout and the focus-blur toggle.
+- **Camera menu** (M, MENU, or the overlay's body/frame boxes): Camera (body, lens type), Frame lines (frame, protect), Monitor (whole sensor, shade, safe, thirds, focus blur).
+- One pop-up at a time. Esc or a click elsewhere closes it.
