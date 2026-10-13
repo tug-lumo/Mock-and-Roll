@@ -352,3 +352,10 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - **Add**: no Cameras group (added from the Camera section's "Add a camera"). One Lumo library: an upload whose shelf is named Set walls, Glass walls, Set pieces, Vehicles or People sits in that group, marked "Yours"; any other shelf is its own group. Import and Manage uploads sit at the top.
 - **360° world**: "Horizon height" (`environment.lift`, ft) raises or lowers the projection eyepoint, so the horizon moves up or down the walls. Tilt is only shown when a layout already has one. `lift` is stored in frame snapshots only when non-zero.
 - **Camera names**: `pa.camName`, else "CAM n". Set in the setup pop-up, the Camera section or the Inspector. Shown in the picker, the Plan pick list, a floating tag on stage, plan sheets, the viewfinder, the move bar, clips and printed shots.
+
+## As built — Depth of field (Oct 2026)
+- Each camera has a stop (`pa.stop`, default T2.8). It can be set in the Camera tab, the setup pop-up, the Inspector's Lens group and the viewfinder bar. Saved shots keep it.
+- Blur follows real lens maths: c = f²/(N(s−f))·|d−s|/d, converted to pixels by the sensor height the image covers. The lens renders into a multisampled target with a depth texture (WebGL2; plain target on WebGL1), then a 64-tap golden-spiral gather pass blurs it (32 taps on touch devices). Blur radius is capped at 3% of image height. There's no pass at all when nothing would blur.
+- The viewfinder bar has a "Focus blur" toggle (`config.vf.dof`, default on). Double-clicking in the viewfinder focuses on the surface under the cursor; `[` / `]` nudge focus (Shift for finer steps).
+- The overlay shows focus, stop, the in-focus range (frame diagonal/1500 circle of confusion), and the LED surface down the lens axis with its sharpness: sharp (moiré risk), just soft or soft.
+- Board frames, move end frames and printed shots use the same pass, and clips get it from the screen.

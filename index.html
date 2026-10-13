@@ -632,6 +632,8 @@
   #vf .thirds i:nth-child(4) { top: 66.667%; left: 0; right: 0; height: 1px; }
   #vf .safe.hidden, #vf .thirds.hidden { display: none; }
   #lensBar select { max-width: 150px; }
+  #lensBar #lbStop { width: 74px; }
+  #lensBar #lbDof.on { background: #2a2410; border-color: #ffd24a; color: #ffd24a; }
   #vfGuides { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 19; min-width: 240px;
     background: rgba(20,22,26,.96); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
   #vfGuides.hidden { display: none; }
@@ -1080,6 +1082,8 @@
   <div id="lensBar" class="hidden">
     <button id="lbLens" title="Lens menu (L)">Lens</button>
     <select id="lbFormat" title="Delivery frame (frame lines)" aria-label="Frame"></select>
+    <select id="lbStop" title="Stop: sets how much is in focus" aria-label="Stop"></select>
+    <button id="lbDof" title="Depth of field: blur what's out of focus, as this lens and stop would">Focus blur</button>
     <button id="lbGuides" title="Frame-line guides: shading, safe areas, thirds">Guides</button>
     <button id="lbMove" title="Plan a camera move: A, B, C… points played over a set time">Move</button>
     <button class="editOnly" id="lbShot" title="Save position, aim and lens">Save shot</button>
@@ -1642,7 +1646,7 @@
       // Camera object: 0° yaw faces -Z (toward the volume's deepest point). Height/tilt/lens
       // are per-instance fields; dragging still only moves on the floor and turns (yaw).
       { assetId: "camera", name: "Camera (lens / FOV)", category: "camera", heightFt: 5,
-        defaults: { heightFt: 5, tiltDeg: 0, focalMm: 35, sensor: "s35", focusFt: 12, format: "full", squeeze: 1, protect: "" } },
+        defaults: { heightFt: 5, tiltDeg: 0, focalMm: 35, sensor: "s35", focusFt: 12, stop: 2.8, format: "full", squeeze: 1, protect: "" } },
       // Stage decking: modular 2ft platform, CUSTOM length×width, spawn multiple. Station
       // platform / rooftop are just presets of this piece, not separate objects.
       { assetId: "stageDeck", name: "Stage Deck", category: "stage-deck", heightFt: 2, defaultLengthFt: 8, defaultWidthFt: 8, model: "assets/stage_deck.glb",
@@ -5333,10 +5337,12 @@
     const sqOpts = SQUEEZES.map(v => '<option value="' + v + '"' + (v === sq ? " selected" : "") + '>' + (v === 1 ? "Spherical (1×)" : v + "× anamorphic") + '</option>').join("");
     const fd = camVal(cur, "focusFt");
     return '<div class="btnRow" style="margin:2px 0 6px"><button id="camLook" class="primary">Open viewfinder</button></div>' +
-      grpHTML("lens", "Lens", fl + "mm · " + o.hFov.toFixed(1) + "° H",
+      grpHTML("lens", "Lens", fl + "mm · " + stopLabel(camStop(cur)) + " · " + o.hFov.toFixed(1) + "° H",
         '<div class="field"><label for="camLens">Focal length</label><div class="inl"><select id="camLens">' + lensOpts + '</select>' +
           '<input type="number" id="camLensMm" min="4" max="1200" step="0.5" value="' + fl + '" class="' + ((config.lensSetMm || DEFAULT_CONFIG.lensSetMm).indexOf(fl) === -1 ? "" : "hidden") + '" style="width:64px" aria-label="Custom focal length (mm)"></div></div>' +
-        fieldHTML("camFocus", "Focus distance", toDisplay(fd)), true) +
+        '<div class="field"><label for="camStopSel">Stop</label><select id="camStopSel">' + stopOptionsHTML(camStop(cur)) + '</select></div>' +
+        fieldHTML("camFocus", "Focus distance", toDisplay(fd)) +
+        '<div class="hint">Sharp from ' + dofRangeText(cur, o) + '. In the viewfinder, double-click something to focus on it.</div>', true) +
       grpHTML("format", "Format", escapeHtml(formatLabel(o)),
         '<div class="field"><label for="camSensor">Camera</label><select id="camSensor" style="max-width:170px">' + sensOpts + '</select></div>' +
         '<div class="field"><label for="camSqueeze">Lens type</label><select id="camSqueeze">' + sqOpts + '</select></div>' +
@@ -5948,11 +5954,12 @@
       cfg.heightFt = clamp(round2(fromDisplay(numOr(h.value, camVal(cfg, "heightFt")))), 0.5, 40);
       cfg.tiltDeg = clamp(numOr(tilt.value, 0), -90, 90);
       cfg.focusFt = clamp(round2(fromDisplay(numOr(focus.value, camVal(cfg, "focusFt")))), 0.5, 500);
+      const stEl = document.getElementById("camStopSel"); if (stEl) cfg.stop = parseFloat(stEl.value) || 2.8;
       rebuildPlaced();
       reselectUid(uid);
       scheduleAutosave();
     };
-    [lens, sensor, h, tilt, focus, document.getElementById("camSqueeze"), document.getElementById("camFormat"), document.getElementById("camProtect"), document.getElementById("camLensMm")].forEach(el => el && el.addEventListener("change", apply));
+    [lens, sensor, h, tilt, focus, document.getElementById("camSqueeze"), document.getElementById("camFormat"), document.getElementById("camProtect"), document.getElementById("camLensMm"), document.getElementById("camStopSel")].forEach(el => el && el.addEventListener("change", apply));
     if (mark) mark.addEventListener("change", () => {
       if (!mark.value) return;
       const parts = mark.value.split("|");
@@ -6146,8 +6153,11 @@
     g.visible = false; // the camera's own body would sit inside its near plane
     if (movePaths) movePaths.visible = false;              // the planned path is for the stage view, not the lens
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.clear();
-    renderer.setScissorTest(true); renderer.setScissor(vx, vy, vw, vh); renderer.setViewport(vx, vy, vw, vh);
-    renderer.render(scene, shotCam);
+    const pr = renderer.getPixelRatio();
+    if (!renderDof(shotCam, pa, full ? o.sensorH : o.frameH, Math.max(1, Math.round(vw * pr)), Math.max(1, Math.round(vh * pr)), null, [vx, vy, vw, vh])) {
+      renderer.setScissorTest(true); renderer.setScissor(vx, vy, vw, vh); renderer.setViewport(vx, vy, vw, vh);
+      renderer.render(scene, shotCam);
+    }
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
     if (mvUI.rec) captureRecFrame(vx, vy, vw, vh);
     g.visible = true;
@@ -6170,7 +6180,7 @@
     const set = (sel, html) => { const el = vf.querySelector(sel); if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; } };
     set(".cam", escapeHtml(camLabel(pa)));
     set(".trx", '<span class="bx fill">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx">' + o.sq + '× ANA</span>' : "") +
-      '<span class="bx">' + o.f + 'mm</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
+      '<span class="bx">' + o.f + 'mm</span><span class="bx">' + stopLabel(camStop(pa)) + '</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
     { const w = cameraPlaceWarning(pa), el = vf.querySelector(".vfWarn"); if (el.dataset.h !== w) { el.dataset.h = w; el.textContent = w; el.classList.toggle("hidden", !w); } }
     // Frame lines: the delivery frame (and protect) as a share of the image shown.
     const vp = vfPrefs(), full = vp.full, fl = vf.querySelector(".fl"), pl = vf.querySelector(".pl");
@@ -6192,9 +6202,10 @@
         pl.querySelector(".lbl").textContent = "protect " + o.protect.short;
       } else pl.classList.add("hidden");
     }
-    set(".blx", "focus " + fmtLen(camVal(pa, "focusFt")) + " · lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°" +
-      "<br>x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°" +
-      (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · Esc exit</span>"));
+    const lw = lensWallText(pa, o);
+    set(".blx", "focus " + fmtLen(camVal(pa, "focusFt")) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, o) + (lw ? "<br>" + lw : "") +
+      "<br>lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "° · x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°" +
+      (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · double-click or [ ] focus · Esc exit</span>"));
     const fr = Math.floor((performance.now() - vfStart) / 1000 * VF_FPS), p2 = n => String(n).padStart(2, "0");
     set(".tc", p2(Math.floor(fr / (VF_FPS * 3600))) + ":" + p2(Math.floor(fr / (VF_FPS * 60)) % 60) + ":" + p2(Math.floor(fr / VF_FPS) % 60) + ":" + p2(fr % VF_FPS));
   }
@@ -6219,13 +6230,14 @@
     const fl = camVal(pa, "focalMm"), o = camOptics(pa), list = (config.lensSetMm || DEFAULT_CONFIG.lensSetMm);
     return '<div class="field"><label for="' + pfx + 'Lens">Lens</label><div class="inl"><select id="' + pfx + 'Lens">' + lensOptionsHTML(fl) + '</select>' +
         '<input type="number" id="' + pfx + 'LensMm" min="4" max="1200" step="0.5" value="' + fl + '" class="' + (list.indexOf(fl) === -1 ? "" : "hidden") + '" style="width:64px" aria-label="Custom focal length (mm)"></div></div>' +
+      '<div class="field"><label for="' + pfx + 'Stop">Stop</label><select id="' + pfx + 'Stop">' + stopOptionsHTML(camStop(pa)) + '</select></div>' +
       '<div class="field"><label for="' + pfx + 'Body">Body</label><select id="' + pfx + 'Body" class="wideSel">' + bodyOptionsHTML(o.S.id) + '</select></div>' +
       '<div class="field"><label for="' + pfx + 'Squeeze">Lens type</label><select id="' + pfx + 'Squeeze">' + squeezeOptionsHTML(o.sq) + '</select></div>' +
       '<div class="field"><label for="' + pfx + 'Frame">Frame</label><select id="' + pfx + 'Frame" class="wideSel">' + frameOptionsHTML(o.fmt.id) + '</select></div>';
   }
   function camReadout(pa) {
     const o = camOptics(pa), fd = camVal(pa, "focusFt");
-    return o.f + "mm · " + escapeHtml(formatLabel(o)) + "<br>" + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V · frames " + fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH) + " at " + fmtLen(fd);
+    return o.f + "mm · " + stopLabel(camStop(pa)) + " · " + escapeHtml(formatLabel(o)) + "<br>" + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V · frames " + fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH) + " at " + fmtLen(fd);
   }
   // Apply a change to a camera wherever it came from (tab, pop-up, viewfinder).
   function applyCamChange(pa, patch) {
@@ -6245,6 +6257,7 @@
       mm.classList.add("hidden"); done({ focalMm: parseFloat(lens.value) });
     });
     mm.addEventListener("change", () => { const v = clamp(round2(parseFloat(mm.value) || 35), 4, 1200); mm.value = v; done({ focalMm: v }); });
+    $("Stop").addEventListener("change", e => done({ stop: parseFloat(e.target.value) || 2.8 }));
     $("Body").addEventListener("change", e => done({ sensor: e.target.value }));
     $("Squeeze").addEventListener("change", e => done({ squeeze: parseFloat(e.target.value) || 1 }));
     $("Frame").addEventListener("change", e => done({ format: e.target.value }));
@@ -6326,7 +6339,7 @@
 
   // ---- Viewfinder guides + frame picker (bar under the viewfinder) ---------------------
   function vfPrefs() {
-    config.vf = Object.assign({ full: true, shade: 0.75, safe: false, thirds: false }, config.vf || {});
+    config.vf = Object.assign({ full: true, shade: 0.75, safe: false, thirds: false, dof: true }, config.vf || {});
     return config.vf;
   }
   function refreshVfBar() {
@@ -6334,6 +6347,9 @@
     const cur = pa ? frameFormat(camVal(pa, "format")).id : "full";
     sel.innerHTML = FRAME_FORMATS.map(f => '<option value="' + f.id + '"' + (f.id === cur ? " selected" : "") + '>Frame · ' + escapeHtml(f.short === "OPEN" ? "full sensor" : f.short) + '</option>').join("");
     const vp = vfPrefs();
+    document.getElementById("lbStop").innerHTML = pa ? stopOptionsHTML(camStop(pa)) : "";
+    document.getElementById("lbDof").classList.toggle("on", dofOn());
+    document.getElementById("lbDof").setAttribute("aria-pressed", dofOn() ? "true" : "false");
     document.getElementById("vgFull").checked = !!vp.full;
     document.getElementById("vgShade").value = String(vp.shade);
     document.getElementById("vgSafe").checked = !!vp.safe;
@@ -6346,6 +6362,13 @@
       refreshCamPicker(); if (mode === "edit") scheduleAutosave();
       e.target.blur();                                      // keys go back to driving the camera
     });
+    document.getElementById("lbStop").addEventListener("change", e => {
+      const pa = activeCameraPA(); if (!pa) return;
+      pa.stop = parseFloat(e.target.value) || 2.8; lensWall.t = 0;
+      refreshCamPicker(); if (mode === "edit") scheduleAutosave();
+      e.target.blur();
+    });
+    document.getElementById("lbDof").addEventListener("click", e => { vfPrefs().dof = !dofOn(); refreshVfBar(); scheduleAutosave(); e.currentTarget.blur(); });
     document.getElementById("lbGuides").addEventListener("click", () => { document.getElementById("vfGuides").classList.toggle("hidden"); refreshVfBar(); });
     const upd = (id, fn) => document.getElementById(id).addEventListener("change", e => { fn(vfPrefs(), e.target); scheduleAutosave(); });
     upd("vgFull", (v, el) => { v.full = el.checked; });
@@ -6886,7 +6909,7 @@
       kind: kind, sequence: seq, name: name, x: pa.x, z: pa.z, rotationDeg: pa.rotationDeg || 0,
       heightFt: camVal(pa, "heightFt"), tiltDeg: camVal(pa, "tiltDeg")
     };
-    if (kind === "shot") { entry.focalMm = camVal(pa, "focalMm"); entry.sensor = camVal(pa, "sensor"); entry.focusFt = camVal(pa, "focusFt");
+    if (kind === "shot") { entry.focalMm = camVal(pa, "focalMm"); entry.sensor = camVal(pa, "sensor"); entry.focusFt = camVal(pa, "focusFt"); entry.stop = camStop(pa);
       entry.format = camVal(pa, "format"); entry.squeeze = camVal(pa, "squeeze"); entry.protect = camVal(pa, "protect"); }
     let idx = config.shots.findIndex(s => s.name === name && (s.sequence || "") === seq && (s.kind || "shot") === kind);
     if (idx >= 0) config.shots[idx] = entry; else { config.shots.push(entry); idx = config.shots.length - 1; }
@@ -6906,7 +6929,7 @@
     }
     pa.x = s.x; pa.z = s.z; pa.rotationDeg = s.rotationDeg; pa.heightFt = s.heightFt; pa.tiltDeg = s.tiltDeg;
     // A mark leaves the lens alone; a shot restores lens/sensor/focus too.
-    if ((s.kind || "shot") !== "mark") { pa.focalMm = s.focalMm; pa.sensor = s.sensor; pa.focusFt = s.focusFt;
+    if ((s.kind || "shot") !== "mark") { pa.focalMm = s.focalMm; pa.sensor = s.sensor; pa.focusFt = s.focusFt; if (s.stop) pa.stop = s.stop;
       if (s.format) { pa.format = s.format; pa.squeeze = s.squeeze || 1; pa.protect = s.protect || ""; } }
     rebuildPlaced();
     if (mode === "edit") { reselectUid(pa._uid); scheduleAutosave(); }
@@ -6918,7 +6941,8 @@
   // One PNG: the lens view (left), a top-down plan of the stage with the camera and its field of
   // view (right), and the camera report under the plan. Rendered off-screen at 2x and scaled down,
   // so it doesn't depend on the window size and the viewfinder/HUD never appear in it.
-  function renderOffscreen(cam, w, h, hideList) {
+  // dofPa: render through that camera's lens with depth of field (when it's on).
+  function renderOffscreen(cam, w, h, hideList, dofPa) {
     const ss = Math.min(2, renderer.capabilities.maxTextureSize / Math.max(w, h));
     const W = Math.round(w * ss), H = Math.round(h * ss);
     const rt = new THREE.WebGLRenderTarget(W, H);
@@ -6926,7 +6950,7 @@
     hideList.forEach(o => { if (o) o.visible = false; });
     const prevScissor = renderer.getScissorTest();
     renderer.setScissorTest(false);
-    renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, cam);
+    if (!(dofPa && renderDof(cam, dofPa, camOptics(dofPa).frameH, W, H, rt))) { renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, cam); }
     const px = new Uint8Array(W * H * 4);
     renderer.readRenderTargetPixels(rt, 0, 0, W, H, px);
     renderer.setRenderTarget(null); renderer.setScissorTest(prevScissor);
@@ -6939,6 +6963,135 @@
     const out = document.createElement("canvas"); out.width = w; out.height = h;
     const o2 = out.getContext("2d"); o2.imageSmoothingQuality = "high"; o2.drawImage(big, 0, 0, w, h);
     return out;
+  }
+
+  // ==================================================================
+  //  DEPTH OF FIELD (viewfinder, board frames, printed shots, clips)
+  // ==================================================================
+  // Real lens maths. The blur circle on the sensor is c = f² / (N (s − f)) · |d − s| / d, where
+  // f = focal length, N = stop, s = focus distance and d = subject distance, all in mm. It becomes
+  // pixels through the sensor height the image covers. The lens renders once into a target that keeps
+  // depth; one gather pass then blurs each pixel by its own circle (golden-angle spiral). A sharp
+  // subject isn't smeared by the soft wall behind it; a soft foreground does spill over what's behind.
+  const T_STOPS = [1.3, 1.4, 1.8, 2, 2.8, 4, 5.6, 8, 11, 16, 22];
+  function camStop(pa) { return parseFloat(camVal(pa, "stop")) || 2.8; }
+  function stopLabel(n) { return "T" + (n % 1 ? String(Math.round(n * 10) / 10) : String(n)); }
+  function stopOptionsHTML(n) {
+    const l = T_STOPS.indexOf(n) === -1 ? T_STOPS.concat([n]).sort((a, b) => a - b) : T_STOPS;
+    return l.map(v => '<option value="' + v + '"' + (v === n ? " selected" : "") + '>' + stopLabel(v) + '</option>').join("");
+  }
+  function dofOn() { return vfPrefs().dof !== false; }
+  // Acceptable blur circle: frame diagonal / 1500 (about 0.025 mm on Super 35). Anamorphic: the real sensor width.
+  function cocLimitMm(o) { return Math.hypot(o.frameW / o.sq, o.frameH) / 1500; }
+  function dofCocMm(pa, dFt) {
+    const f = camVal(pa, "focalMm") || 35, s = Math.max(camVal(pa, "focusFt"), 0.1) * 304.8, d = Math.max(dFt, 0.01) * 304.8;
+    return f * f / (camStop(pa) * Math.max(s - f, 1)) * Math.abs(d - s) / d;
+  }
+  // Near / far limits of acceptable sharpness (ft); far is Infinity at or past the hyperfocal distance.
+  function dofRange(pa, o) {
+    const f = camVal(pa, "focalMm") || 35, c = cocLimitMm(o), s = Math.max(camVal(pa, "focusFt"), 0.1) * 304.8, H = f * f / (camStop(pa) * c) + f;
+    return { near: s * (H - f) / (H + s - 2 * f) / 304.8, far: s >= H ? Infinity : s * (H - f) / (H - s) / 304.8 };
+  }
+  function dofRangeText(pa, o) { const r = dofRange(pa, o); return fmtLen(r.near) + " – " + (r.far === Infinity ? "∞" : fmtLen(r.far)); }
+
+  const dof = { rt: null, w: 0, h: 0, mat: null, scene: null, cam: null };
+  function dofTarget(w, h) {
+    if (dof.rt && dof.w === w && dof.h === h) return dof.rt;
+    if (dof.rt) { dof.rt.depthTexture.dispose(); dof.rt.dispose(); }
+    const opt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
+    // WebGL2: a multisampled target keeps the viewfinder's antialiasing (depth resolves with it).
+    const rt = renderer.capabilities.isWebGL2 ? new THREE.WebGLMultisampleRenderTarget(w, h, opt) : new THREE.WebGLRenderTarget(w, h, opt);
+    rt.depthTexture = new THREE.DepthTexture(w, h); rt.depthTexture.type = THREE.UnsignedIntType;
+    dof.rt = rt; dof.w = w; dof.h = h;
+    return rt;
+  }
+  function dofMaterial() {
+    if (dof.mat) return dof.mat;
+    dof.mat = new THREE.ShaderMaterial({
+      defines: { TAPS: isTouch ? 32 : 64 },
+      uniforms: { tColor: { value: null }, tDepth: { value: null }, texel: { value: new THREE.Vector2() }, near: { value: 0.1 }, far: { value: 5000 },
+        sMm: { value: 3000 }, coef: { value: 0 }, maxR: { value: 0 } },
+      vertexShader: "varying vec2 vUv;\nvoid main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+      fragmentShader: [
+        "uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 texel;",
+        "uniform float near; uniform float far; uniform float sMm; uniform float coef; uniform float maxR;",
+        "varying vec2 vUv;",
+        "float distMm(vec2 uv) { float d = texture2D(tDepth, uv).x; return -((near * far) / ((far - near) * d - far)) * 304.8; }",
+        "float radius(float z) { return min(coef * abs(z - sMm) / z, maxR); }",       // blur radius in pixels
+        "void main() {",
+        "  float z0 = distMm(vUv), r0 = radius(z0);",
+        "  vec3 acc = texture2D(tColor, vUv).rgb; float tot = 1.0;",
+        "  float sp = 0.5 * maxR / sqrt(float(TAPS));",
+        "  for (int i = 0; i < TAPS; i++) {",
+        "    float rr = maxR * sqrt((float(i) + 0.5) / float(TAPS)), a = float(i) * 2.39996323;",
+        "    vec2 uv = vUv + vec2(cos(a), sin(a)) * rr * texel;",
+        "    float z = distMm(uv), r = radius(z);",
+        "    if (z > z0) r = min(r, r0 * 2.0);",                          // what's behind can't smear a sharper subject
+        "    float m = smoothstep(rr - sp, rr + sp, r);",                 // does that sample's own blur reach this pixel?
+        "    acc += mix(acc / tot, texture2D(tColor, uv).rgb, m); tot += 1.0;",
+        "  }",
+        "  gl_FragColor = vec4(acc / tot, 1.0);",
+        "}"].join("\n"),
+      depthTest: false, depthWrite: false
+    });
+    dof.scene = new THREE.Scene();
+    dof.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), dof.mat); q.frustumCulled = false; dof.scene.add(q);
+    return dof.mat;
+  }
+  // Render `cam` (looking through camera `pa`) with depth of field: W × H pixels, into `out` or, with
+  // out = null, the screen viewport vp = [x, y, w, h] (CSS px). hMm = the sensor height the image spans.
+  // Returns false when it's off or nothing would blur, so the caller renders plainly.
+  function renderDof(cam, pa, hMm, W, H, out, vp) {
+    if (!dofOn() || !pa) return false;
+    const f = camVal(pa, "focalMm") || 35, s = Math.max(camVal(pa, "focusFt"), 0.1) * 304.8;
+    const coef = 0.5 * f * f / (camStop(pa) * Math.max(s - f, 1)) * H / hMm;      // radius at infinity, px
+    const maxR = Math.min(coef, H * 0.03);
+    if (maxR < 0.6) return false;                                                 // deep focus: nothing to blur
+    const rt = dofTarget(W, H), u = dofMaterial().uniforms, sc = renderer.getScissorTest();
+    renderer.setScissorTest(false);
+    renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, cam);
+    u.tColor.value = rt.texture; u.tDepth.value = rt.depthTexture; u.texel.value.set(1 / W, 1 / H);
+    u.near.value = cam.near; u.far.value = cam.far; u.sMm.value = s; u.coef.value = coef; u.maxR.value = maxR;
+    renderer.setRenderTarget(out || null);
+    if (vp) { renderer.setScissorTest(true); renderer.setScissor(vp[0], vp[1], vp[2], vp[3]); renderer.setViewport(vp[0], vp[1], vp[2], vp[3]); }
+    renderer.render(dof.scene, dof.cam);
+    renderer.setScissorTest(sc);
+    return true;
+  }
+
+  // What the lens sees of the LED: the first LED surface straight down the lens axis, and how sharp it is.
+  const lensWall = { t: 0, txt: "" };
+  function lensWallText(pa, o) {
+    const now = performance.now(); if (now - lensWall.t < 200) return lensWall.txt;
+    lensWall.t = now;
+    const leds = [mainWallMesh].concat(ceilingGroup && ceilingGroup.visible ? [ceilingMesh] : [])
+      .concat(selectableObjects.filter(g => g.userData.kind === "rollingWall" && g.visible && g.userData.ledMesh).map(g => g.userData.ledMesh)).filter(Boolean);
+    shotCam.getWorldDirection(_lwDir);
+    raycaster.set(shotCam.position, _lwDir);
+    const h = raycaster.intersectObjects(leds, false)[0];
+    if (!h) { lensWall.txt = ""; return ""; }
+    const k = dofCocMm(pa, h.distance) / cocLimitMm(o);
+    lensWall.txt = "LED " + fmtLen(h.distance) + " · " + (k < 1 ? "<span class='warnTxt'>sharp — moiré risk</span>" : k < 3 ? "just soft" : "soft");
+    return lensWall.txt;
+  }
+  const _lwDir = new THREE.Vector3();
+  // Double-click in the viewfinder: focus on whatever is under the cursor.
+  function focusAtPoint(e) {
+    const pa = getPlacedByUid(viewCamUid), g = pa && placedGroupByUid[pa._uid]; if (!g) return;
+    const r = document.getElementById("vf").getBoundingClientRect();
+    _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(_ndc, shotCam);
+    const shown = o => { for (let p = o; p; p = p.parent) { if (!p.visible || p === g) return false; } return true; };
+    const hit = raycaster.intersectObjects(scene.children, true).find(h => h.object.isMesh && !h.object.userData.tag && shown(h.object));
+    if (!hit) { toast("Nothing there to focus on"); return; }
+    shotCam.getWorldDirection(_lwDir);
+    setCamFocus(pa, hit.point.clone().sub(shotCam.position).dot(_lwDir));
+  }
+  function setCamFocus(pa, ft) {
+    pa.focusFt = clamp(round2(ft), 0.5, 500); camDirty = true; lensWall.t = 0;
+    if (mode === "edit") scheduleAutosave();
+    toast("Focus " + fmtLen(pa.focusFt) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, camOptics(pa)));
   }
 
   const brandLogo = new Image();          // primary logo (negative) for the printed-shot header
@@ -6957,7 +7110,7 @@
       const pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
       g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion);
       pc.updateMatrixWorld(true);
-      const shotImg = renderOffscreen(pc, SHOT_W, SHOT_H, hideCommon.concat([g]));
+      const shotImg = renderOffscreen(pc, SHOT_W, SHOT_H, hideCommon.concat([g]), pa);
 
       // Top-down plan over the studio footprint (screen-up = -Z, the main wall at the top)
       const s = config.studio || { xMin: -40, xMax: 40, zBack: -30, zFrontOpen: 40 }, M = 3;
@@ -7030,7 +7183,7 @@
         ["Format", o.fmt.name + (o.sq > 1 ? " · " + o.sq + "× anamorphic" : " · spherical") + (o.protect ? " · protect " + o.protect.name : "") +
           "  (frame " + o.frameW.toFixed(1) + " × " + o.frameH.toFixed(1) + " mm" + (o.sq > 1 ? " de-squeezed" : "") + ")"],
         ["Field of view", o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V"],
-        ["Focus", fmtLen(fd)],
+        ["Focus", fmtLen(fd) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, o) + (dofOn() ? "" : "  (shown without depth of field)")],
         ["Frame at focus", fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH)],
         ["Lens height", fmtLen(camVal(pa, "heightFt"))],
         ["Tilt", Math.round(camVal(pa, "tiltDeg")) + "°"],
@@ -7638,7 +7791,7 @@
     g.updateMatrixWorld(true);
     const pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
     g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion); pc.updateMatrixWorld(true);
-    return renderOffscreen(pc, W, H, [yawRing, collOutline, g]).toDataURL("image/jpeg", 0.84);
+    return renderOffscreen(pc, W, H, [yawRing, collOutline, g], pa).toDataURL("image/jpeg", 0.84);
   }
   // A still keeps the camera's pose only; a move frame (asMove) also keeps its A, B, C… points.
   function frameDataFrom(pa, asMove) {
@@ -11178,7 +11331,8 @@
     renderer.domElement.addEventListener("pointerdown", onCanvasDownCapture, true);
     // Double-click a grouped piece: pick it out of its group to edit it on its own.
     renderer.domElement.addEventListener("dblclick", e => {
-      if (mode !== "edit" || viewCamUid != null) return;
+      if (viewCamUid != null) { focusAtPoint(e); return; }
+      if (mode !== "edit") return;
       const hit = pickAt(e); if (!hit || !hit.obj || hit.obj.userData.kind !== "placed") return;
       const pa = getPlacedByUid(hit.obj.userData.uid); if (!pa || groupUids(pa).length < 2) return;
       clearMulti(); pierce = pa._uid; selectObject(hit.obj);
@@ -11238,6 +11392,10 @@
           pa.format = FRAME_FORMATS[(i + (e.shiftKey ? -1 : 1) + n) % n].id; camDirty = true;
           refreshCamPicker(); refreshVfBar(); toast("Frame · " + frameFormat(pa.format).name); if (mode === "edit") scheduleAutosave();
           e.preventDefault(); return;
+        }
+        if ((e.key === "[" || e.key === "]" || e.key === "{" || e.key === "}") && !e.ctrlKey && !e.metaKey) {   // focus closer / further (Shift = fine)
+          const pa = getPlacedByUid(viewCamUid), k = e.shiftKey ? 1.02 : 1.08;
+          setCamFocus(pa, camVal(pa, "focusFt") * (e.key === "]" || e.key === "}" ? k : 1 / k)); e.preventDefault(); return;
         }
         if ((e.key === "b" || e.key === "B") && !e.ctrlKey && !e.metaKey && mode === "edit") { openAddToBoard(); e.preventDefault(); return; }
         if ((e.key === "k" || e.key === "K") && !e.ctrlKey && !e.metaKey && mode === "edit") { if (!mvUI.open) openMovePanel(); addMoveKey(); e.preventDefault(); return; }
