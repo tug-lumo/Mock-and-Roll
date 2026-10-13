@@ -369,3 +369,5 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
   - The pick-focus button makes the next click in the frame set focus. The panel also shows the sharp range, the LED readout and the focus-blur toggle.
 - **Camera menu** (M, MENU, or the overlay's body/frame boxes): Camera (body, lens type), Frame lines (frame, protect), Monitor (whole sensor, shade, safe, thirds, focus blur).
 - One pop-up at a time. Esc or a click elsewhere closes it.
+
+- **Other cameras through a lens (as built).** In the viewfinder, other cameras (bodies, frustums, name tags) are hidden by default; Camera menu → Monitor → "Show other cameras" (`config.vf.otherCams`) brings them back. Board frames and printed shots follow the same setting.

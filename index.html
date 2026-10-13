@@ -6203,6 +6203,11 @@
   }
 
   // Render through the camera object, letterboxed to the sensor's aspect ratio.
+  // Other cameras (bodies, frustums, name tags) through a lens: hidden unless the Camera menu shows them.
+  function otherCamGroups(pa) {
+    if (vfPrefs().otherCams) return [];
+    return config.placedAssets.filter(p => p.assetId === "camera" && p !== pa).map(p => placedGroupByUid[p._uid]).filter(g => g && g.visible);
+  }
   function renderCameraView() {
     const pa = getPlacedByUid(viewCamUid), g = placedGroupByUid[viewCamUid];
     if (!pa || !g || !g.userData.rig) { exitCameraView(); return; }
@@ -6218,6 +6223,7 @@
     if (vh > H) { vh = H; vw = H * vAsp; }
     const vx = (W - vw) / 2, vy = (H - vh) / 2;
     g.visible = false; // the camera's own body would sit inside its near plane
+    const others = otherCamGroups(pa); others.forEach(c => { c.visible = false; });
     if (movePaths) movePaths.visible = false;              // the planned path is for the stage view, not the lens
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.clear();
     const pr = renderer.getPixelRatio();
@@ -6227,7 +6233,7 @@
     }
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
     if (mvUI.rec) captureRecFrame(vx, vy, vw, vh);
-    g.visible = true;
+    g.visible = true; others.forEach(c => { c.visible = true; });
     if (movePaths) movePaths.visible = true;
     updateViewfinder(pa, o, vx, vy, vw, vh);
   }
@@ -7017,7 +7023,7 @@
         '<section><h4><svg><use href="#i-eye"/></svg>Monitor</h4>' +
           tog("cmFull", vp.full, "Whole sensor around the frame") +
           '<div class="field"><label for="cmShade">Outside the frame</label><select id="cmShade">' + shade + '</select></div>' +
-          tog("cmSafe", vp.safe, "Action / title safe") + tog("cmThirds", vp.thirds, "Rule of thirds") + tog("cmDof", dofOn(), "Focus blur") + '</section>' +
+          tog("cmSafe", vp.safe, "Action / title safe") + tog("cmThirds", vp.thirds, "Rule of thirds") + tog("cmDof", dofOn(), "Focus blur") + tog("cmOther", !!vp.otherCams, "Show other cameras") + '</section>' +
       '</div>';
   }
   function wireCamMenu() {
@@ -7034,6 +7040,7 @@
       else if (t.id === "cmSafe") vp.safe = t.checked;
       else if (t.id === "cmThirds") vp.thirds = t.checked;
       else if (t.id === "cmDof") vp.dof = t.checked;
+      else if (t.id === "cmOther") vp.otherCams = t.checked;
       scheduleAutosave();
       renderCamMenu(pa); placeVfPop(el, "menu");
     });
@@ -7369,7 +7376,7 @@
       const pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
       g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion);
       pc.updateMatrixWorld(true);
-      const shotImg = renderOffscreen(pc, SHOT_W, SHOT_H, hideCommon.concat([g]), pa);
+      const shotImg = renderOffscreen(pc, SHOT_W, SHOT_H, hideCommon.concat([g], otherCamGroups(pa)), pa);
 
       // Top-down plan over the studio footprint (screen-up = -Z, the main wall at the top)
       const s = config.studio || { xMin: -40, xMax: 40, zBack: -30, zFrontOpen: 40 }, M = 3;
@@ -8050,7 +8057,7 @@
     g.updateMatrixWorld(true);
     const pc = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
     g.userData.rig.getWorldPosition(pc.position); g.userData.rig.getWorldQuaternion(pc.quaternion); pc.updateMatrixWorld(true);
-    return renderOffscreen(pc, W, H, [yawRing, collOutline, g], pa).toDataURL("image/jpeg", 0.84);
+    return renderOffscreen(pc, W, H, [yawRing, collOutline, g].concat(otherCamGroups(pa)), pa).toDataURL("image/jpeg", 0.84);
   }
   // A still keeps the camera's pose only; a move frame (asMove) also keeps its A, B, C… points.
   function frameDataFrom(pa, asMove) {
