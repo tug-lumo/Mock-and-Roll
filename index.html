@@ -5018,16 +5018,53 @@
     settleMulti("All facing " + Math.round(deg * 10) / 10 + "°", true);
   }
   function multiTurnEach(delta) { multiMovers().forEach(pa => setYawFor(pa, (pa.rotationDeg || 0) + delta)); settleMulti("Turned each " + (delta > 0 ? "+" : "") + delta + "°", true); }
-  function multiRotateGroup(delta) {
-    const movers = multiMovers(); if (!movers.length) return;
-    const cx = movers.reduce((a, pa) => a + pa.x, 0) / movers.length, cz = movers.reduce((a, pa) => a + pa.z, 0) / movers.length;
-    const t = degToRad(delta), c = Math.cos(t), sn = Math.sin(t);
+  // Rotate the selection as one rigid body around a single axis: the centre of the box around all
+  // their footprints. Every step is applied to the poses from the start of the turn (by the total
+  // angle), so repeated nudges or a long twist never drift the layout, and the axis stays put
+  // until something else moves a piece.
+  let grpRot = null;                                   // { sig, base: [[pa, x, z, rot]], cx, cz, total }
+  function poseSig(movers) { return movers.map(pa => pa._uid + ":" + pa.x + "," + pa.z + "," + normDeg(pa.rotationDeg || 0)).join("|"); }
+  function groupPivot(movers) {
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     movers.forEach(pa => {
-      const x = pa.x - cx, z = pa.z - cz;
-      setPosFor(pa, cx + x * c + z * sn, cz - x * sn + z * c);   // same sense as a piece's own turn
-      setYawFor(pa, (pa.rotationDeg || 0) + delta);
+      const g = placedGroupByUid[pa._uid], fp = (g && footprintOf(g)) || [[pa.x, pa.z]];
+      fp.forEach(p => { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); });
     });
-    settleMulti("Rotated the group " + (delta > 0 ? "+" : "") + delta + "°");
+    return { x: (x0 + x1) / 2, z: (z0 + z1) / 2 };
+  }
+  // live = mid-gesture (touch twist): skip the settle until the fingers lift.
+  function multiRotateGroup(delta, live) {
+    const movers = multiMovers(); if (!movers.length || !delta) return;
+    if (!grpRot || grpRot.sig !== poseSig(movers)) {
+      const c = groupPivot(movers);
+      grpRot = { base: movers.map(pa => [pa, pa.x, pa.z, pa.rotationDeg || 0]), cx: c.x, cz: c.z, total: 0 };
+    }
+    const R = grpRot; R.total = normDeg(R.total + delta);
+    const t = degToRad(R.total), c = Math.cos(t), sn = Math.sin(t);
+    R.base.forEach(([pa, bx, bz, br]) => {
+      const x = bx - R.cx, z = bz - R.cz;
+      setPosFor(pa, R.cx + x * c + z * sn, R.cz - x * sn + z * c);   // same sense as a piece's own turn
+      setYawFor(pa, br + R.total);
+    });
+    showPivot(R.cx, R.cz);
+    if (live) scheduleAutosave();
+    else settleMulti("Rotated the group " + (delta > 0 ? "+" : "") + Math.round(delta * 10) / 10 + "°");
+    R.sig = poseSig(movers);
+  }
+  function settleGroupTurn() { settleMulti(null); if (grpRot) grpRot.sig = poseSig(multiMovers()); }
+  // The group's axis, shown on the floor for a moment after each turn.
+  let pivotMark = null, pivotTimer = 0;
+  function showPivot(x, z) {
+    if (!pivotMark) {
+      pivotMark = new THREE.Group();
+      const m = new THREE.MeshBasicMaterial({ color: 0x00efea, depthTest: false, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 40), m), bar = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.07), m), bar2 = bar.clone();
+      ring.rotation.x = bar.rotation.x = bar2.rotation.x = -Math.PI / 2; bar2.rotation.z = Math.PI / 2;
+      [ring, bar, bar2].forEach(o => { o.renderOrder = 999; o.raycast = function () {}; pivotMark.add(o); });
+      scene.add(pivotMark);
+    }
+    pivotMark.position.set(x, 0.05, z); pivotMark.visible = true;
+    clearTimeout(pivotTimer); pivotTimer = setTimeout(() => { pivotMark.visible = false; }, 1600);
   }
   function multiRemove() {
     const all = multiPAs(), n = all.length, gone = [];
@@ -5055,10 +5092,12 @@
       grpHTML("mMove", "Move all", "", '<div class="field"><label for="mDx">Left / right by</label><input type="number" id="mDx" step="0.25" value="0"></div>' +
         '<div class="field"><label for="mDz">Front / back by</label><input type="number" id="mDz" step="0.25" value="0"></div>' +
         '<div class="btnRow"><button id="mMoveGo">Move</button></div>', true) +
-      grpHTML("mTurn", "Turn", "", '<div class="field"><label for="mFace">Face all to</label><div class="inl"><input type="number" id="mFace" step="1" placeholder="°"><button id="mFaceGo">Set</button></div></div>' +
+      grpHTML("mTurn", "Rotate", "", '<div class="subhead">Rotate as one, around the group\'s centre</div><div class="stepRow">' + rotBtns + '</div>' +
+        '<div class="field" style="margin-top:8px"><label for="mRotBy">Rotate by</label><div class="inl"><input type="number" id="mRotBy" step="1" placeholder="°"><button id="mRotGo">Rotate</button></div></div>' +
+        '<div class="hint">Keeps the layout: everything swings around one axis. Shift+←/→, a two-finger twist and the turn buttons do this too.</div>' +
         '<div class="subhead">Turn each in place</div><div class="stepRow">' + turnBtns + '</div>' +
         '<div class="field" style="margin-top:8px"><label for="mTurnBy">Turn each by</label><div class="inl"><input type="number" id="mTurnBy" step="1" placeholder="°"><button id="mTurnGo">Turn</button></div></div>' +
-        '<div class="subhead">Rotate the group around its centre</div><div class="stepRow">' + rotBtns + '</div>' +
+        '<div class="field"><label for="mFace">Face all to</label><div class="inl"><input type="number" id="mFace" step="1" placeholder="°"><button id="mFaceGo">Set</button></div></div>' +
         '<div class="hint">0° faces the main wall. People riding a selected car or set turn with it.</div>', true) +
       '<div class="foot"><button id="mClear">Clear selection</button><button id="mRemove" class="danger">Remove all</button></div>';
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
@@ -5071,6 +5110,8 @@
     document.getElementById("mFace").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("mFaceGo").click(); });
     document.getElementById("mTurnGo").addEventListener("click", () => { const v = num("mTurnBy"); if (v) multiTurnEach(v); });
     document.getElementById("mTurnBy").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("mTurnGo").click(); });
+    document.getElementById("mRotGo").addEventListener("click", () => { const v = num("mRotBy"); if (v) multiRotateGroup(v); });
+    document.getElementById("mRotBy").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("mRotGo").click(); });
     body.querySelectorAll("[data-turn]").forEach(b => b.addEventListener("click", () => multiTurnEach(+b.dataset.turn)));
     body.querySelectorAll("[data-rot]").forEach(b => b.addEventListener("click", () => multiRotateGroup(+b.dataset.rot)));
     document.getElementById("mClear").addEventListener("click", () => { clearMulti(); deselect(); });
@@ -10308,7 +10349,7 @@
     if (e.ctrlKey || e.metaKey) {
       if (!arrow[0]) return true;                            // Ctrl+↑/↓: nothing, but don't pan either
       const d = (arrow[0] < 0 ? 1 : -1) * (e.shiftKey ? 1 : ROT_SNAP_DEG);   // ← = counter-clockwise from above
-      if (group) multiTurnEach(d); else setSelectedYaw((cfg.rotationDeg || 0) + d);
+      if (group) multiRotateGroup(d); else setSelectedYaw((cfg.rotationDeg || 0) + d);
       return true;
     }
     const step = e.shiftKey ? (displayUnit === "m" ? 0.01 * FT_PER_M : 1 / 12) : snapIncrement;   // screen up = north… = -Z in plan
@@ -10961,7 +11002,7 @@
       if (!touch.pts[e.pointerId]) return;
       delete touch.pts[e.pointerId]; touch.n = Object.keys(touch.pts).length; touch.pinch = null;
       if (touch.n < 2) {
-        if (touch.gest === "turn") { if (multi.length > 1) settleMulti(null, true); else scheduleAutosave(); }
+        if (touch.gest === "turn") { if (multi.length > 1) settleGroupTurn(); else scheduleAutosave(); }
         touch.gest = null; touch.acc = null; nav.look = null; camLook = null;
       }
     };
@@ -11046,7 +11087,7 @@
     if (!inGroup && selectedObject !== g) { clearMulti(); selectPiece(g); }
     const inG = multi.length > 1 && multi.indexOf(uid) !== -1;
     const items = inG
-      ? [multiIsOneGroup() ? ["Ungroup", ungroupSelection] : ["Group these", groupSelection], ["Turn all −90°", () => multiTurnEach(90)], ["Turn all +90°", () => multiTurnEach(-90)], ["Clear selection", () => { clearMulti(); deselect(); }], ["Remove all", multiRemove, true]]
+      ? [multiIsOneGroup() ? ["Ungroup", ungroupSelection] : ["Group these", groupSelection], ["Rotate −90°", () => multiRotateGroup(90)], ["Rotate +90°", () => multiRotateGroup(-90)], ["Clear selection", () => { clearMulti(); deselect(); }], ["Remove all", multiRemove, true]]
       : [["Duplicate", duplicateSelected], ["Turn −90°", () => setSelectedYaw((pa.rotationDeg || 0) + 90)], ["Turn +90°", () => setSelectedYaw((pa.rotationDeg || 0) - 90)],
          ["Select multiple", () => { touchSelectMode = true; multi = [uid]; updateTouchBar(); toast("Tap more pieces to add them"); }]]
         .concat(pa.pin ? [["Unpin", () => { delete pa.pin; pa.noAnchor = true; pa.x = snap(pa.x + 1.5); rebuildPlaced(); reselectUid(uid); scheduleAutosave(); }]] : [])
@@ -11060,7 +11101,7 @@
     m.style.top = Math.max(56, Math.min(window.innerHeight - r.height - 8, y - r.height - 16)) + "px";
   }
   function turnSelectionBy(d) {
-    if (multi.length > 1) { multiMovers().forEach(pa => setYawFor(pa, (pa.rotationDeg || 0) + d)); scheduleAutosave(); return; }
+    if (multi.length > 1) { multiRotateGroup(d, true); return; }
     const cfg = cfgForSelected(); if (cfg) setSelectedYaw((cfg.rotationDeg || 0) + d);
   }
   function updateTouchBar() {
@@ -11078,8 +11119,8 @@
       if (touchSelectMode && selected && selected.kind === "placed" && !multi.length) multi = [selected.uid];
       updateTouchBar(); toast(touchSelectMode ? "Select multiple: tap pieces to add or drop them" : "Select multiple off");
     });
-    document.getElementById("tbTurnL").addEventListener("click", () => { if (multi.length > 1) multiTurnEach(15); else turnSelectionBy(15); });
-    document.getElementById("tbTurnR").addEventListener("click", () => { if (multi.length > 1) multiTurnEach(-15); else turnSelectionBy(-15); });
+    document.getElementById("tbTurnL").addEventListener("click", () => { if (multi.length > 1) multiRotateGroup(15); else turnSelectionBy(15); });
+    document.getElementById("tbTurnR").addEventListener("click", () => { if (multi.length > 1) multiRotateGroup(-15); else turnSelectionBy(-15); });
     document.getElementById("tbRemove").addEventListener("click", () => { if (multi.length > 1) multiRemove(); else removeSelected(); });
     window.addEventListener("pointerdown", e => { const m = document.getElementById("lpMenu"); if (!m.classList.contains("hidden") && !m.contains(e.target)) closeLpMenu(); }, true);
     updateTouchBar();
@@ -11674,7 +11715,7 @@
       const rotNudge = mode === "edit" && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && (selected || multi.length > 1);
       if (!e.ctrlKey && !e.metaKey && !e.altKey && !rotNudge && NAV_KEYS.indexOf(e.code) !== -1) { navKeys[e.code] = true; e.preventDefault(); }
       if (mode !== "edit") return;
-      if (rotNudge && multi.length > 1) { multiTurnEach((e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG)); e.preventDefault(); }
+      if (rotNudge && multi.length > 1) { multiRotateGroup((e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG)); e.preventDefault(); }
       else if (rotNudge) {
         // Keyboard turn: Shift+arrows = 15°, Shift+Alt+arrows = 1°. Left = counter-clockwise from above.
         const cfg = cfgForSelected();

@@ -371,3 +371,4 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - One pop-up at a time. Esc or a click elsewhere closes it.
 
 - **Other cameras through a lens (as built).** In the viewfinder, other cameras (bodies, frustums, name tags) are hidden by default; Camera menu → Monitor → "Show other cameras" (`config.vf.otherCams`) brings them back. Board frames and printed shots follow the same setting.
+- **Group rotation (as built).** Every quick turn of a group or multi-selection (Shift+←/→, Ctrl+←/→ in Plan, two-finger twist, touch-bar turn buttons, long-press Rotate ±90°, Inspector Rotate) swings the pieces as one rigid body around a single axis: the centre of the box around their footprints. Turns are applied from the poses at the start of the turn by the total angle, so repeated nudges never drift; a cyan pivot mark shows the axis for a moment. "Turn each in place" and "Face all to" remain in the Inspector.
