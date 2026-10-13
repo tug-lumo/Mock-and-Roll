@@ -189,6 +189,17 @@
   body.phone #houseBtn svg { width: 20px; height: 20px; }
   body.phone #houseBtn[aria-pressed="true"] svg { color: #f2bf1b; }
   .dial { margin: 2px 0 12px; }
+  .dial.off { opacity: .45; }
+  .ceilRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px 10px; font-size: 13px; cursor: pointer; }
+  .swt { position: relative; display: inline-block; width: 34px; height: 20px; flex: none; }
+  .swt input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .swt i { position: absolute; inset: 0; border-radius: 10px; background: var(--line); transition: background .15s; pointer-events: none; }
+  .swt i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .swt input:checked + i { background: var(--accent); }
+  .swt input:checked + i::after { transform: translateX(14px); }
+  .swt input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #ceilTip { position: fixed; z-index: 40; transform: translate(14px, -28px); padding: 3px 8px; border-radius: 6px; background: rgba(20,22,26,.94); border: 1px solid var(--line); font-size: 12px; font-variant-numeric: tabular-nums; pointer-events: none; }
+  #ceilTip.hidden { display: none; }
   .dial .dialTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .dial .dialTop label { color: var(--muted); font-size: 12.5px; }
   .dial input[type="number"] { width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
@@ -725,7 +736,9 @@
   .catItem .row:has(select) { flex-basis: 100%; justify-content: flex-end; }
   .catItem .thumb { width: 56px; height: 42px; flex-shrink: 0; border-radius: 6px; background: var(--panel2); object-fit: contain; }
   .shelfHead { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 12px 2px 2px; }
-  .libTools { margin-top: 12px; }
+  .libTools { margin: 0 0 8px; }
+  .catItem.mine .name small { color: var(--accent); }
+  .lmHint { margin: 0 0 10px; }
   #libPreview { position: fixed; z-index: 60; width: 300px; padding: 6px 6px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
     box-shadow: var(--panelShadow); pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .15s var(--ease), transform .15s var(--ease); }
   #libPreview.on { opacity: 1; transform: none; }
@@ -966,7 +979,7 @@
 
   <!-- Sections: one opens at a time beside the rail -->
   <nav id="rail" aria-label="Sections">
-    <button data-sec="stage" class="editOnly" title="The fixed volume, ceiling and pre-built sets"><svg><use href="#i-stage"/></svg>Stage</button>
+    <button data-sec="stage" class="editOnly" title="The LED ceiling over the volume"><svg><use href="#i-stage"/></svg>Stage</button>
     <button data-sec="add" class="editOnly" title="Add decks, glass walls, vehicles, people and your own models"><svg><use href="#i-add"/></svg>Add</button>
     <button data-sec="led" class="editOnly" title="Put images or video on the LED walls and ceiling"><svg><use href="#i-led"/></svg>LED</button>
     <button data-sec="camera" title="Film camera, lens, saved shots and prints"><svg><use href="#i-camera"/></svg>Camera</button>
@@ -979,9 +992,7 @@
     </div>
     <div class="paneBody">
       <section data-sec="stage">
-        <details class="grp" open><summary>Sets<span class="count">load in / out</span><svg class="chev"><use href="#i-chev"/></svg></summary>
-          <div class="grpBody" id="setsBody"></div></details>
-        <details class="grp"><summary>Ceiling<svg class="chev"><use href="#i-chev"/></svg></summary>
+        <details class="grp" open><summary>Ceiling<svg class="chev"><use href="#i-chev"/></svg></summary>
           <div class="grpBody" id="ceilBody"></div></details>
       </section>
       <section data-sec="add"><div id="libraryBody"></div><input type="file" id="glbInput" class="hidden" accept=".glb,model/gltf-binary"></section>
@@ -989,6 +1000,8 @@
       <section data-sec="camera">
         <div class="subhead">Film camera</div>
         <div class="field"><span>Camera</span><select id="camPick" title="The camera the Viewfinder, saved shots and prints act on"></select></div>
+        <div class="field editOnly"><span>Name</span><input id="camNameTab" type="text" maxlength="32" autocomplete="off" style="width:150px" title="Shown on the stage, in Plan, the viewfinder, the board and prints"></div>
+        <div class="btnRow editOnly" style="margin-top:0"><button id="camAddBtn" title="Place another film camera and set its lens">Add a camera</button></div>
         <div id="camChoices"></div>
         <div class="fmtReadout" id="camTabReadout"></div>
         <button id="lensBtn" class="hidden" aria-hidden="true">—</button>
@@ -1088,6 +1101,7 @@
   </div>
 
   <div id="moveBar" class="hidden" role="region" aria-label="Camera move timeline"></div>
+  <div id="ceilTip" class="hidden" aria-hidden="true"></div>
 
   <!-- Camera move: A, B, C… points on this camera, played over a set time -->
   <div id="movePanel" class="hidden" role="region" aria-label="Camera move">
@@ -1268,7 +1282,7 @@
   <div id="camSetup" class="hidden" role="dialog" aria-modal="true" aria-labelledby="csTitle">
     <div class="card">
       <h3 id="csTitle">Set up the camera</h3>
-      <p>Pick the lens, camera body and the frame you're delivering. You can change any of these later in the Camera tab.</p>
+      <p>Name it, then pick the lens, camera body and the frame you're delivering. You can change any of these later in the Camera tab.</p>
       <div id="camSetupBody"></div>
       <div class="fmtReadout" id="camSetupReadout"></div>
       <div class="btnRow"><button id="csLook">Open viewfinder</button><button class="primary" id="csDone">Done</button></div>
@@ -1395,8 +1409,9 @@
 
   <div id="libSheet" class="modalSheet hidden" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
     <div class="card wide">
-      <div class="msHead"><div><h3 id="lmTitle">Your 3D models</h3><p class="hint" id="lmSub"></p></div><button class="ghost iconBtn" id="lmClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+      <div class="msHead"><div><h3 id="lmTitle">Your uploads</h3><p class="hint" id="lmSub"></p></div><button class="ghost iconBtn" id="lmClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
       <div class="lmTools"><input type="search" id="lmFind" placeholder="Find a model" aria-label="Find a model"><button id="lmImport">Import a .glb…</button></div>
+      <p class="hint lmHint">A shelf named Set walls, Glass walls, Set pieces, Vehicles or People files the model with those Lumo pieces in Add. Any other name makes its own group.</p>
       <div class="lmBody" id="lmBody"></div>
       <datalist id="shelfList"></datalist>
     </div>
@@ -3570,6 +3585,16 @@
   //  LIBRARY MANAGER (your imported models: names, shelves, delete)
   // ==================================================================
   function shelfOf(e) { return (e.shelf || "Imported").trim() || "Imported"; }
+  // The Lumo library's groups (Add). An upload on a shelf with one of these names sits in that group
+  // beside the Lumo pieces; any other shelf is a group of its own.
+  const LIB_CATS = [
+    { key: "set-wall", label: "Set walls" },
+    { key: "glass-wall", label: "Glass walls" },
+    { key: "set-piece", label: "Set pieces", also: ["set"] },
+    { key: "vehicle", label: "Vehicles" },
+    { key: "human", label: "People", also: ["person"] }
+  ];
+  function libCatOf(e) { const sh = shelfOf(e).toLowerCase(); return LIB_CATS.find(c => c.label.toLowerCase() === sh) || null; }
   function shelves() { const s = []; (config.customModels || []).forEach(e => { const k = shelfOf(e); if (s.indexOf(k) < 0) s.push(k); }); return s.sort((a, b) => a.localeCompare(b)); }
   const libMan = { q: "", armed: null, armTimer: 0 };
   function openLibManager() {
@@ -3585,7 +3610,7 @@
     const placed = id => config.placedAssets.filter(p => p.assetId === id).length;
     const mb = models.reduce((a, e) => a + (e.bytes || 0), 0) / 1048576;
     document.getElementById("lmSub").textContent = models.length ? plural(models.length, "model") + " on " + plural(shelves().length, "shelf", "shelves") + (mb ? " · " + mb.toFixed(0) + " MB stored in this browser" : "") : "Nothing imported yet.";
-    document.getElementById("shelfList").innerHTML = shelves().map(s => '<option value="' + escapeHtml(s) + '">').join("");
+    document.getElementById("shelfList").innerHTML = LIB_CATS.map(c => c.label).concat(shelves().filter(s => !libCatOf({ shelf: s }))).map(s => '<option value="' + escapeHtml(s) + '">').join("");
     const match = e => !q || (e.name + " " + shelfOf(e)).toLowerCase().includes(q);
     const html = shelves().map(sh => {
       const list = models.filter(e => shelfOf(e) === sh && match(e)); if (!list.length) return "";
@@ -4330,6 +4355,7 @@
       rig.add(ls);
     });
     g.userData.rig = rig;
+    camTag(g, pa);
     return g;
   }
 
@@ -4640,6 +4666,51 @@
 
   // Capture-phase pointerdown: Camera View look-drag, or the start of a ring drag.
   let hoverEv = null, hoverRaf = 0;
+  // ---- Ceiling: grab it from underneath in the 3D view and drag it straight up or down ----------
+  // Only in the walk (fly) view: in Plan the ceiling is hidden and can't be picked. The panel is a
+  // one-sided plane facing the floor, so only a ray from below can catch it.
+  let ceilDrag = null;
+  const _ceilPlane = new THREE.Plane(), _ceilN = new THREE.Vector3(), _ceilP = new THREE.Vector3();
+  function ceilingHitAt(e) {
+    if (!ceilingGroup || !ceilingGroup.visible || nav.mode !== "fly" || viewCamUid != null || mode !== "edit") return null;
+    const r = renderer.domElement.getBoundingClientRect();
+    _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    camera.updateMatrixWorld(true);
+    raycaster.setFromCamera(_ndc, camera);
+    const h = raycaster.intersectObject(ceilingGroup, true).filter(x => x.object.isMesh)[0];
+    return h ? { point: h.point.clone(), distance: h.distance } : null;
+  }
+  // The ceiling under the cursor, unless a piece is in front of it.
+  function ceilingGrabAt(e) {
+    const c = ceilingHitAt(e); if (!c) return null;
+    const hit = pickAt(e);
+    return !hit || hit.point.distanceTo(camera.position) > c.distance ? c : null;
+  }
+  function startCeilDrag(c) {
+    const ceil = config.fixedElements.find(x => x.id === "ceiling"); if (!ceil) return;
+    _ceilN.set(-Math.sin(nav.yaw), 0, -Math.cos(nav.yaw));          // a wall facing you, through the grab point
+    _ceilPlane.setFromNormalAndCoplanarPoint(_ceilN, c.point);
+    ceilDrag = { y0: c.point.y, h0: ceil.heightFt };
+    nav.enabled = false;
+  }
+  function dragCeilingTo(e) {
+    const r = renderer.domElement.getBoundingClientRect();
+    _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(_ndc, camera);
+    const p = raycaster.ray.intersectPlane(_ceilPlane, _ceilP); if (!p) return;
+    const step = e.shiftKey ? 0.05 : 0.25;
+    const h = setCeilingHeight(Math.round((ceilDrag.h0 + p.y - ceilDrag.y0) / step) * step, true);
+    ceilDrag.moved = true;
+    const tip = document.getElementById("ceilTip");
+    tip.textContent = "Ceiling " + fmtLen(h); tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; tip.classList.remove("hidden");
+  }
+  function endCeilDrag() {
+    if (!ceilDrag) return;
+    if (ceilDrag.moved) scheduleAutosave();
+    ceilDrag = null; nav.enabled = true;
+    document.getElementById("ceilTip").classList.add("hidden");
+  }
+
   function onCanvasDownCapture(e) {
     if (e.button !== 0) return;
     if (nav.mode === "top" && viewCamUid == null) { const gp = groundPoint(e); planHere = gp ? { x: gp.x, z: gp.z } : null; }   // for Pieces → "Under your last click"
@@ -4660,6 +4731,13 @@
     } else {
       // Grab a piece by its body: select it and drag it along the floor.
       if (mode !== "edit") return;
+      const cg = e.pointerType !== "touch" && !e.ctrlKey && !e.metaKey && ceilingGrabAt(e);
+      if (cg) {
+        startCeilDrag(cg);
+        try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
+        renderer.domElement.style.cursor = "ns-resize";
+        e.stopImmediatePropagation(); e.preventDefault(); return;
+      }
       const hit = pickAt(e); if (!hit) return;
       const hitPlaced = hit.obj && hit.obj.userData.kind === "placed", touchy = e.pointerType === "touch";
       if (touchy && !e.isPrimary) return;                       // a second finger is a gesture, not a grab
@@ -4994,6 +5072,8 @@
       let yaw = yawDrag.startYaw + radToDeg(yawDrag.acc);
       const step = e.shiftKey ? 1 : ROT_SNAP_DEG;
       setSelectedYaw(Math.round(yaw / step) * step);
+    } else if (ceilDrag) {
+      dragCeilingTo(e);
     } else if (bodyDrag) {
       dragBodyTo(e);
     } else if (camLook) {
@@ -5010,7 +5090,7 @@
       if (!hoverRaf) hoverRaf = requestAnimationFrame(() => {
         hoverRaf = 0;
         if (!hoverEv || bodyDrag || yawDrag || viewCamUid != null) return;
-        renderer.domElement.style.cursor = (overYawRing(hoverEv) || pickAt(hoverEv)) ? "grab" : "";
+        renderer.domElement.style.cursor = (overYawRing(hoverEv) || pickAt(hoverEv)) ? (ceilingGrabAt(hoverEv) ? "ns-resize" : "grab") : (ceilingHitAt(hoverEv) ? "ns-resize" : "");
       });
     }
   }
@@ -5025,6 +5105,7 @@
   }
   function onWindowPointerUp() {
     if (yawDrag) { yawDrag = null; if (viewCamUid == null) nav.enabled = true; }
+    endCeilDrag();
     finishBodyDrag();
     camLook = null; nav.look = null;
     renderer.domElement.style.cursor = "";
@@ -5113,7 +5194,7 @@
     const isCamera = selected.kind === "placed" && cur.assetId === "camera";
     if (isCamera) {
       const o = camOptics(cur), fd = camVal(cur, "focusFt");
-      name = "Camera";
+      name = escapeHtml(camLabel(cur));
       dims = o.f + "mm · " + escapeHtml(formatLabel(o)) + " → " + o.hFov.toFixed(1) + "° H × " + o.vFov.toFixed(1) + "° V" +
         "<br>Frames " + fmtLen(2 * fd * o.halfW) + " × " + fmtLen(2 * fd * o.halfH) + " at " + fmtLen(fd) + " focus";
       const cw = cameraPlaceWarning(cur); if (cw) dims += '<br><span class="warnTxt">' + escapeHtml(cw) + '</span>';
@@ -5142,6 +5223,7 @@
     panel.classList.toggle("wide", !!spots);
     const castN = spots ? castOf(cur).length : 0;
     body.innerHTML =
+      (isCamera ? '<div class="field"><label for="camNameIn">Name</label><input id="camNameIn" type="text" maxlength="32" autocomplete="off" placeholder="' + escapeHtml("CAM " + camNo(cur)) + '" value="' + escapeHtml(cur.camName || "") + '"></div>' : "") +
       '<div class="dims" style="margin-top:0">' + dims + '</div>' +
       grpHTML("pos", "Position", "", (isPerson && cur.pin ? pinnedHTML(cur) : "") +
         fieldHTML("posX", "Left / right", toDisplay(cur.x)) +
@@ -5833,6 +5915,7 @@
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
     wireBlocking();
+    wireCamName("camNameIn", cfgForSelected);
     const sg = document.getElementById("selGrp"), lg = document.getElementById("leaveGrp");
     if (sg) sg.addEventListener("click", () => { pierce = null; const g = selectedObject; if (g) selectPiece(g); });
     if (lg) lg.addEventListener("click", () => { const pa = cfgForSelected(); if (!pa) return; delete pa.grp; pierce = null; scheduleAutosave(); renderInspector(); toast("Taken out of the group"); });
@@ -5922,6 +6005,8 @@
     if (fc) fc.checked = !!config.showFrustums;
     ["lensBtn", "lookBtn", "shotPrint", "shotSave", "shotSaveMark"].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !cams.length; });
     if (lb) lb.textContent = act ? camVal(act, "focalMm") + "mm · " + formatLabel(camOptics(act)) + "  ▾" : "—";
+    const nt = document.getElementById("camNameTab");
+    if (nt) { nt.disabled = !act; if (document.activeElement !== nt) nt.value = act && act.camName || ""; nt.placeholder = act ? "CAM " + camNo(act) : ""; }
     if (document.activeElement && document.activeElement.closest && document.activeElement.closest("#camChoices")) { const ro = document.getElementById("camTabReadout"); if (ro && act) ro.innerHTML = camReadout(act); }
     else renderCamTab();
     if (!cams.length) {
@@ -5932,7 +6017,7 @@
     cams.forEach((p, i) => {
       const o = document.createElement("option");
       o.value = String(p._uid);
-      o.textContent = "Camera " + (i + 1) + " · " + camVal(p, "focalMm") + "mm";
+      o.textContent = (p.camName || "Camera " + (i + 1)) + " · " + camVal(p, "focalMm") + "mm";
       sel.appendChild(o);
     });
     sel.value = String(act._uid);
@@ -6083,7 +6168,7 @@
     }
     const allCams = config.placedAssets.filter(p => p.assetId === "camera");
     const set = (sel, html) => { const el = vf.querySelector(sel); if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; } };
-    set(".cam", "CAM " + (allCams.indexOf(pa) + 1));
+    set(".cam", escapeHtml(camLabel(pa)));
     set(".trx", '<span class="bx fill">' + escapeHtml(o.S.short || o.S.id.toUpperCase()) + '</span>' + (o.sq > 1 ? '<span class="bx">' + o.sq + '× ANA</span>' : "") +
       '<span class="bx">' + o.f + 'mm</span><span class="bx">' + escapeHtml(o.fmt.short) + '</span><span>' + o.hFov.toFixed(1) + '° H</span><span>' + VF_FPS + 'FPS</span>');
     { const w = cameraPlaceWarning(pa), el = vf.querySelector(".vfWarn"); if (el.dataset.h !== w) { el.dataset.h = w; el.textContent = w; el.classList.toggle("hidden", !w); } }
@@ -6174,19 +6259,51 @@
     wireCamChoices("dc", activeCameraPA);
     addSteppers(box);
   }
+  // ---- Camera names: pa.camName, else "CAM n" by stage order ---------------------------------
+  function camNo(pa) { return config.placedAssets.filter(p => p.assetId === "camera").indexOf(pa) + 1; }
+  function camLabel(pa) { return pa && pa.camName ? pa.camName : "CAM " + (pa ? camNo(pa) : 1); }
+  function camTag(g, pa) {                                  // the floating name over a camera (main view only)
+    if (g.userData.nameTag) { g.remove(g.userData.nameTag); disposeObject3D(g.userData.nameTag); }
+    const tg = makeNameTag(camLabel(pa), "#ffd24a"); tg.position.y = camVal(pa, "heightFt") + 1.3;
+    g.add(tg); g.userData.nameTag = tg;
+  }
+  function renameCamera(pa, name) {
+    name = String(name || "").replace(/\s+/g, " ").trim().slice(0, 32);
+    if ((pa.camName || "") === name) return;
+    if (name) pa.camName = name; else delete pa.camName;
+    config.placedAssets.filter(p => p.assetId === "camera").forEach(p => { const g = placedGroupByUid[p._uid]; if (g) camTag(g, p); });
+    refreshCamPicker(); mbState.sig = "";
+    const ti = document.getElementById("inspTitle"); if (ti && selected && selected.uid === pa._uid) ti.textContent = camLabel(pa);
+    ["camNameIn", "camNameTab", "csName"].forEach(id => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = pa.camName || ""; });
+    scheduleAutosave();
+  }
+  // A name box: commits on Enter / leaving the box; keys don't drive the stage while typing.
+  function wireCamName(id, getPa) {
+    const el = document.getElementById(id); if (!el || el.dataset.wired) return;
+    el.dataset.wired = "1";
+    el.addEventListener("change", () => { const pa = getPa(); if (pa) renameCamera(pa, el.value); });
+    el.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") el.blur(); });
+    el.addEventListener("keyup", e => e.stopPropagation());
+  }
+
   // Setup pop-up: shown when a camera is added (Add menu, or opening Camera with none on stage).
   let camSetupUid = null;
   function openCamSetup(pa) {
     camSetupUid = pa._uid;
     const sh = document.getElementById("camSetup"), body = document.getElementById("camSetupBody");
     const refresh = () => { const p = getPlacedByUid(camSetupUid); if (!p) return; document.getElementById("camSetupReadout").innerHTML = camReadout(p); };
-    body.innerHTML = camChoicesHTML("cs", pa);
+    body.innerHTML = '<div class="field"><label for="csName">Name</label><input id="csName" type="text" maxlength="32" autocomplete="off" placeholder="' + escapeHtml("CAM " + camNo(pa)) + '" value="' + escapeHtml(pa.camName || "") + '"></div>' + camChoicesHTML("cs", pa);
     wireCamChoices("cs", () => getPlacedByUid(camSetupUid), refresh);
+    wireCamName("csName", () => getPlacedByUid(camSetupUid));
     refresh(); addSteppers(body);
     sh.classList.remove("hidden");
-    document.getElementById("csDone").focus();
+    document.getElementById("csName").focus();
   }
-  function closeCamSetup() { document.getElementById("camSetup").classList.add("hidden"); camSetupUid = null; }
+  function closeCamSetup() {
+    const nm = document.getElementById("csName"), p = getPlacedByUid(camSetupUid);
+    if (nm && p) renameCamera(p, nm.value);                  // Done without leaving the name box still keeps the name
+    document.getElementById("camSetup").classList.add("hidden"); camSetupUid = null;
+  }
   function addCameraWithSetup(fromTab) {
     const cams = config.placedAssets.filter(p => p.assetId === "camera");
     // The first camera goes to the classic spot on the shooting floor, facing the volume.
@@ -6517,7 +6634,7 @@
       downloadBlob(blob, projectBase() + "_" + code + "_move_" + moveDur(mv) + "s." + ext);
       toast("Saved the move as a " + ext.toUpperCase() + " clip");
     };
-    mvUI.rec = { rec: rec, cv: cv, ctx: cv.getContext("2d"), pa: pa, label: (boardEditId && frameCode(boardEditId)) || ("CAM " + (cams => cams.indexOf(pa) + 1)(config.placedAssets.filter(p => p.assetId === "camera"))) };
+    mvUI.rec = { rec: rec, cv: cv, ctx: cv.getContext("2d"), pa: pa, label: (boardEditId && frameCode(boardEditId)) || camLabel(pa) };
     document.getElementById("movePanel").classList.add("recording");
     goMoveKey(0);
     rec.start(200);
@@ -6646,11 +6763,11 @@
     if (want !== mbState.shown) { bar.classList.toggle("hidden", !want); mbState.shown = want; mbState.sig = ""; }
     if (!want) return;
     const cams = config.placedAssets.filter(p => p.assetId === "camera");
-    const sig = [pa._uid, mv.keys.length, mvUI.sel, mvUI.playing, moveDur(mv), blockingNames(mv).length, mode].join("|");
+    const sig = [pa._uid, camLabel(pa), mv.keys.length, mvUI.sel, mvUI.playing, moveDur(mv), blockingNames(mv).length, mode].join("|");
     if (sig !== mbState.sig) {
       mbState.sig = sig;
       const n = blockingNames(mv);
-      bar.innerHTML = '<span class="mbLbl">CAM ' + (cams.indexOf(pa) + 1) + ' move</span>' +
+      bar.innerHTML = '<span class="mbLbl">' + escapeHtml(camLabel(pa)) + ' move</span>' +
         '<span class="mbKeys">' + mv.keys.map((k, i) => '<button class="mpKey' + (i === mvUI.sel ? " on" : "") + '" data-mbk="' + i + '" title="Put the camera' + (n.length ? " and everyone" : "") + ' at ' + keyLetter(i) + '">' + keyLetter(i) + '</button>').join('<span class="mpLeg"></span>') + '</span>' +
         '<button class="primary" id="mbPlay">' + (mvUI.playing ? '<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Pause' : '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>Play') + '</button>' +
         '<input type="range" id="mbScrub" min="0" max="1000" aria-label="Scrub through the move"><span id="mbTime"></span>' +
@@ -6831,7 +6948,7 @@
     if (!pa || !g || !g.userData.rig) { toast("Place a camera first (Piece Library → Camera)."); return; }
     try {
       const o = camOptics(pa), allCams = config.placedAssets.filter(p => p.assetId === "camera");
-      const camNo = allCams.indexOf(pa) + 1;
+      const camTxt = camLabel(pa);
       const hideCommon = [yawRing, collOutline];              // editing overlays never go in a print
 
       // Lens view
@@ -6890,7 +7007,7 @@
       pctx.strokeStyle = "rgba(76,240,255,.95)"; pctx.setLineDash([6, 5]); pctx.stroke(); pctx.setLineDash([]);
       pctx.beginPath(); pctx.arc(cpx[0], cpx[1], 7, 0, Math.PI * 2); pctx.fillStyle = "#ffd24a"; pctx.fill();
       pctx.strokeStyle = "#000"; pctx.lineWidth = 2; pctx.stroke();
-      pctx.font = "600 15px Segoe UI, sans-serif"; pctx.fillStyle = "#ffd24a"; pctx.fillText("CAM " + camNo, cpx[0] + 11, cpx[1] + 18);
+      pctx.font = "600 15px Segoe UI, sans-serif"; pctx.fillStyle = "#ffd24a"; pctx.fillText(camTxt, cpx[0] + 11, cpx[1] + 18);
       // Cast with roles: coloured dot + name on the plan (background people stay unmarked).
       const roles = config.placedAssets.filter(p => p.role && p.role.color);
       roles.forEach(p => {
@@ -6937,7 +7054,7 @@
       const title = bf ? bix[bf.id].code + (bf.action ? " · " + bf.action : "") : (seq ? seq + " · " : "") + (shotName || "Shot");
       c.fillStyle = "#e6e8ec"; c.font = "600 38px Segoe UI, sans-serif"; c.fillText(title, P, 56);
       c.fillStyle = "#9aa0ac"; c.font = "20px Segoe UI, sans-serif";
-      c.fillText(projectLine() + " · CAM " + camNo + " · " + o.f + "mm · " + formatLabel(o) + " · " + new Date().toLocaleString(), P, 84);
+      c.fillText(projectLine() + " · " + camTxt + " · " + o.f + "mm · " + formatLabel(o) + " · " + new Date().toLocaleString(), P, 84);
       c.drawImage(shotImg, P, HEAD);
       c.strokeStyle = "#3a3f4b"; c.lineWidth = 2; c.strokeRect(P, HEAD, SHOT_W, SHOT_H);
       c.drawImage(planImg, COLX, HEAD);
@@ -6945,7 +7062,7 @@
       c.fillStyle = "#9aa0ac"; c.font = "600 16px Segoe UI, sans-serif"; c.fillText("STAGE PLAN (top-down)", COLX, HEAD - 8);
       c.fillText("VIEWFINDER", P + SHOT_W - 90, HEAD - 8);
       let y = infoTop;
-      c.fillStyle = "#ffd24a"; c.font = "600 24px Segoe UI, sans-serif"; c.fillText("CAMERA " + camNo, COLX, y); y += 40;
+      c.fillStyle = "#ffd24a"; c.font = "600 24px Segoe UI, sans-serif"; c.fillText(camTxt.toUpperCase(), COLX, y); y += 40;
       info.forEach(([k, v]) => {
         c.fillStyle = "#9aa0ac"; c.font = "18px Segoe UI, sans-serif"; c.fillText(k, COLX, y);
         c.fillStyle = "#e6e8ec"; c.font = "600 20px Segoe UI, sans-serif"; c.fillText(v, COLX + 180, y);
@@ -7276,7 +7393,7 @@
         text(mq[0] + 6, mq[1] - 5, moveSummary(mvp, true), { size: 5.5, fill: "#a86f00", halo: true });
       }
       const q = P(pa.x, pa.z), no = allCams.indexOf(pa) + 1;
-      text(q[0] + 7, q[1] + 11, (typeof pa._planLabel === "string" ? pa._planLabel + " · " + o.f + "mm" : "CAM " + no + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : "")), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
+      text(q[0] + 7, q[1] + 11, (typeof pa._planLabel === "string" ? pa._planLabel + " · " + o.f + "mm" : (pa.camName || "CAM " + no) + " · " + o.f + "mm · " + o.fmt.short + (o.sq > 1 ? " ana" : "")), { size: 6.5, weight: 700, fill: "#a86f00", halo: true });
     });
     // ---- origin + dimensions -----------------------------------------------------------
     { const q = P(0, 0); out.push('<path d="M' + f2(q[0] - 5) + " " + f2(q[1]) + "h10M" + f2(q[0]) + " " + f2(q[1] - 5) + 'v10" stroke="' + INK + '" stroke-width="0.7"/>');
@@ -7352,9 +7469,10 @@
     if (cams.length && room() > 40) {
       head("CAMERAS");
       cams.forEach(c => { if (room() < 20) return; const pa = c.pa, o = camOptics(pa), no = allCams.indexOf(pa) + 1;
-        text(tx + pad, y, "CAM " + no, { size: 6, weight: 700, fill: "#a86f00" });
-        text(tx + pad + 30, y, o.f + "mm · " + formatLabel(o) + " · lens " + ftIn(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°", { size: 5.6 }); y += 8;
-        text(tx + pad + 30, y, "at x " + ftIn(pa.x) + ", z " + ftIn(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "° · focus " + ftIn(camVal(pa, "focusFt")), { size: 5.2, fill: MUTE }); y += 10; });
+        const cl = pa.camName || "CAM " + no, cx = Math.max(30, Math.round(cl.length * 3.6) + 6);
+        text(tx + pad, y, cl, { size: 6, weight: 700, fill: "#a86f00" });
+        text(tx + pad + cx, y, o.f + "mm · " + formatLabel(o) + " · lens " + ftIn(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "°", { size: 5.6 }); y += 8;
+        text(tx + pad + cx, y, "at x " + ftIn(pa.x) + ", z " + ftIn(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "° · focus " + ftIn(camVal(pa, "focusFt")), { size: 5.2, fill: MUTE }); y += 10; });
       y += 1; rule();
     }
     if (heroes.length && room() > 34) {
@@ -7493,7 +7611,7 @@
       rollingWalls: deepClone(config.rollingWalls || []),
       ceiling: ceil ? { heightFt: ceil.heightFt, visible: ceil.visible !== false } : null,
       leds: leds,
-      environment: env ? { yaw: env.yaw || 0, pitch: env.pitch || 0, brightness: env.brightness != null ? env.brightness : 1, follow: env.follow, fixed: deepClone(env.fixed || null) } : null,
+      environment: env ? Object.assign({ yaw: env.yaw || 0, pitch: env.pitch || 0, brightness: env.brightness != null ? env.brightness : 1, follow: env.follow, fixed: deepClone(env.fixed || null) }, env.lift ? { lift: env.lift } : {}) : null,
       houseLights: houseLightsOn()
     };
   }
@@ -7688,7 +7806,7 @@
       ceil.heightFt = st.ceiling.heightFt; ceil.visible = st.ceiling.visible;
       if (ceilingGroup) { ceilingGroup.position.y = ceil.heightFt; ceilingGroup.visible = ceil.visible !== false; }
     }
-    if (st.environment && config.environment) Object.assign(config.environment, deepClone(st.environment));
+    if (st.environment && config.environment) { Object.assign(config.environment, deepClone(st.environment)); config.environment.lift = st.environment.lift || 0; }
     config.houseLights = st.houseLights !== false; applyHouseLights();
     rebuildPlaced();
     Object.keys(st.leds || {}).forEach(k => {
@@ -8825,9 +8943,23 @@
   function ceilingControlsHTML() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
     if (!ceil) return "";
-    return '<label class="setToggle"><input type="checkbox" id="ceilVis" ' + (ceil.visible !== false ? "checked" : "") + '><span>Show the ceiling panel</span></label>' +
-      '<div class="field" style="margin-top:6px"><span>Height</span><input type="number" id="ceilH" min="' + (Math.round(toDisplay(ceil.panelRigMinHeightFt) * 100) / 100) + '" max="' + (Math.round(toDisplay(ceil.panelRigMaxHeightFt) * 100) / 100) + '" step="' + (displayUnit === "m" ? "0.1" : "0.25") + '" value="' + (Math.round(toDisplay(ceil.heightFt) * 100) / 100) + '"></div>' +
-      '<div class="hint">The rig only moves up and down: ' + fmtLen(ceil.panelRigMinHeightFt) + ' to ' + fmtLen(ceil.panelRigMaxHeightFt) + '.</div>';
+    const on = ceil.visible !== false, d = v => Math.round(toDisplay(v) * 100) / 100, st = displayUnit === "m" ? "0.05" : "0.25";
+    return '<label class="ceilRow" title="Show or hide the LED ceiling"><span>Ceiling panel</span><span class="swt"><input type="checkbox" role="switch" id="ceilVis"' + (on ? " checked" : "") + '><i></i></span></label>' +
+      '<div class="dial' + (on ? "" : " off") + '" id="ceilDial"><div class="dialTop"><label for="ceilHN">Height</label><span class="inl">' +
+      '<input type="number" id="ceilHN" min="' + d(ceil.panelRigMinHeightFt) + '" max="' + d(ceil.panelRigMaxHeightFt) + '" step="' + st + '" value="' + d(ceil.heightFt) + '"' + (on ? "" : " disabled") + '><span class="unit">' + displayUnit + '</span></span></div>' +
+      '<input type="range" id="ceilH" min="' + ceil.panelRigMinHeightFt + '" max="' + ceil.panelRigMaxHeightFt + '" step="0.25" value="' + ceil.heightFt + '" aria-label="Ceiling height"' + (on ? "" : " disabled") + '></div>' +
+      '<div class="hint">' + fmtLen(ceil.panelRigMinHeightFt) + ' to ' + fmtLen(ceil.panelRigMaxHeightFt) + '. In the 3D view you can also grab the panel from underneath and drag it up or down.</div>';
+  }
+  // The one place the ceiling height changes (Stage panel or a drag in the 3D view).
+  function setCeilingHeight(ft, quiet) {
+    const ceil = config.fixedElements.find(e => e.id === "ceiling"); if (!ceil) return;
+    ceil.heightFt = Math.round(Math.min(ceil.panelRigMaxHeightFt, Math.max(ceil.panelRigMinHeightFt, ft)) * 100) / 100;
+    if (ceilingGroup) ceilingGroup.position.y = ceil.heightFt;
+    const sl = document.getElementById("ceilH"), nb = document.getElementById("ceilHN");
+    if (sl && document.activeElement !== sl) sl.value = ceil.heightFt;
+    if (nb && document.activeElement !== nb) nb.value = Math.round(toDisplay(ceil.heightFt) * 100) / 100;
+    if (!quiet) scheduleAutosave();
+    return ceil.heightFt;
   }
   // Fill the Stage → Ceiling and LED drawer sections from the current config.
   function renderSections() {
@@ -8848,16 +8980,18 @@
   function wireFixedControls() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
     const cv = document.getElementById("ceilVis");
-    const ch = document.getElementById("ceilH");
-    if (cv && ceilingGroup) cv.addEventListener("change", () => { ceil.visible = cv.checked; ceilingGroup.visible = cv.checked; scheduleAutosave(); });
-    if (ch && ceilingGroup) ch.addEventListener("change", () => {
-      let ft = fromDisplay(parseFloat(ch.value) || ceil.heightFt);
-      ft = Math.min(ceil.panelRigMaxHeightFt, Math.max(ceil.panelRigMinHeightFt, ft));
-      ceil.heightFt = Math.round(ft * 100) / 100;
-      ceilingGroup.position.y = ceil.heightFt;
-      ch.value = Math.round(toDisplay(ceil.heightFt) * 100) / 100;
+    const ch = document.getElementById("ceilH"), cn = document.getElementById("ceilHN");
+    if (cv && ceilingGroup) cv.addEventListener("change", () => {
+      ceil.visible = cv.checked; ceilingGroup.visible = cv.checked;
+      const dl = document.getElementById("ceilDial"); if (dl) dl.classList.toggle("off", !cv.checked);
+      if (ch) ch.disabled = !cv.checked; if (cn) cn.disabled = !cv.checked;
       scheduleAutosave();
     });
+    if (ch && ceilingGroup) ch.addEventListener("input", () => setCeilingHeight(parseFloat(ch.value)));
+    if (cn && ceilingGroup) {
+      cn.addEventListener("change", () => { const v = parseFloat(cn.value); setCeilingHeight(isNaN(v) ? ceil.heightFt : fromDisplay(v)); cn.value = Math.round(toDisplay(ceil.heightFt) * 100) / 100; });
+      cn.addEventListener("keydown", e => e.stopPropagation());
+    }
     wirePlateControls();
   }
 
@@ -9191,6 +9325,7 @@
     if (!o && e.follow === "viewer") o = camera.position;
     if (!o) { const f = e.fixed || ENV_DEFAULT.fixed; o = _envTmp.set(f.x, f.y, f.z); }
     envUniforms.origin.value.copy(o);
+    envUniforms.origin.value.y += e.lift || 0;               // horizon height: the world's eye moves up or down
     envUniforms.yaw.value = degToRad(e.yaw || 0);
     envUniforms.pitch.value = degToRad(e.pitch || 0);
     envUniforms.brightness.value = e.brightness != null ? e.brightness : 1;
@@ -9321,11 +9456,12 @@
       (local ? '<br><span class="warnTxt">Local file — not saved with the layout; load it again after a refresh.</span>' : "") + '</div>';
     h += '<div class="field"><label for="envFollow">Seen from</label><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
       envDialHTML("envYaw", "Turn", -180, 180, 0.1, e.yaw || 0, "°", 1, "Rotate the world left / right") +
-      envDialHTML("envPitch", "Horizon", -45, 45, 0.1, e.pitch || 0, "°", 1, "Raise (+) or lower (−) the world’s horizon") +
+      envDialHTML("envLift", "Horizon height", displayUnit === "m" ? -6 : -20, displayUnit === "m" ? 6 : 20, 0.1, toDisplay(e.lift || 0), displayUnit, displayUnit === "m" ? FT_PER_M : 1, "Move the horizon up (+) or down (−) on the walls") +
+      (e.pitch ? envDialHTML("envPitch", "Tilt", -45, 45, 0.1, e.pitch, "°", 1, "Tilts the horizon about the stage centre (set by an older layout) — 0 removes it") : "") +
       envDialHTML("envBright", "Brightness", 20, 200, 1, (e.brightness != null ? e.brightness : 1) * 100, "%", 0.01, "LED output");
     h += '<div class="btnRow">' + (p.video ? '<button id="envPlay">' + (p.video.paused ? "Play" : "Pause") + '</button><button id="envRestart">Restart</button>' : "") +
       '<button id="envRemove" class="danger">Remove</button></div>';
-    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street or horizon with the set. Choose which surfaces show it in the list above.</div>';
+    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street with the set; Horizon height puts the horizon where the set needs it. Choose which surfaces show it in the list above.</div>';
     const on = ledSurfaceRows().filter(r => surfacePlateIdx[r[0]] === envPlateIndex()).length;
     return grpHTML("led360", "360° world", (local ? "local file · " : "") + "on " + on + " of " + ledSurfaceRows().length, h, true);
   }
@@ -9355,6 +9491,7 @@
       });
     };
     dial("envYaw", "yaw");
+    dial("envLift", "lift");
     dial("envPitch", "pitch");
     dial("envBright", "brightness");
     const fo = $("envFollow"); if (fo) fo.addEventListener("change", () => { e.follow = fo.value; scheduleAutosave(); });
@@ -9374,27 +9511,22 @@
   function buildLibrary() {
     const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-    // Stage → Sets: the big pre-built pieces, toggled in/out (one instance each).
-    const setsBody = document.getElementById("setsBody");
-    setsBody.innerHTML = "";
-    (config.sets || []).forEach(sd => {
-      const lab = el("label", "setToggle");
-      const chk = document.createElement("input"); chk.type = "checkbox";
-      chk.id = "set_" + sd.key; chk.checked = setIsOn(sd.key);
-      chk.addEventListener("change", () => toggleSet(sd.key, chk.checked));
-      lab.appendChild(chk); lab.appendChild(el("span", null, sd.label)); setsBody.appendChild(lab);
-    });
-    setsBody.appendChild(el("div", "hint", "Each set loads at its usual spot. Drag it to adjust; untick to remove."));
-
     // Add: collapsible groups of placeable pieces. Only the first is open on a fresh view.
     const body = document.getElementById("libraryBody");
     const openNow = {};
     body.querySelectorAll("details.grp").forEach(d => { openNow[d.dataset.k] = d.open; });
     body.innerHTML = "";
-    const find = el("input"); find.type = "search"; find.id = "libFind"; find.placeholder = "Find a piece"; find.setAttribute("aria-label", "Find a piece in the library");
+    const find = el("input"); find.type = "search"; find.id = "libFind"; find.placeholder = "Find in the Lumo library"; find.setAttribute("aria-label", "Find a piece in the Lumo library");
     find.value = libFindQ; find.addEventListener("input", () => { libFindQ = find.value; applyLibFind(); });
     find.addEventListener("keydown", e => { if (e.key === "Escape" && find.value) { find.value = ""; libFindQ = ""; applyLibFind(); e.stopPropagation(); } });
     body.appendChild(find);
+    const models = config.customModels || [];
+    const tools = el("div", "btnRow libTools");
+    const imp = el("button", null, "Import a .glb…"); imp.addEventListener("click", () => document.getElementById("glbInput").click());
+    imp.title = "One model comes straight in. A pack (a furnished room, a prop kit) opens a picker to choose its pieces.";
+    tools.appendChild(imp);
+    if (models.length) { const man = el("button", "ghost", "Manage uploads…"); man.addEventListener("click", openLibManager); man.title = "Rename, file on a shelf or delete your uploads"; tools.appendChild(man); }
+    body.appendChild(tools);
     const group = (k, label, count, openDefault) => {
       const d = el("details", "grp"); d.dataset.k = k;
       d.open = openNow[k] != null ? openNow[k] : !!openDefault;
@@ -9437,23 +9569,24 @@
       addBtn(row, () => addStageDeck(sel.value));
     }
 
-    const cats = [
-      { key: "set-wall", label: "Set walls" },
-      { key: "glass-wall", label: "Glass walls" },
-      { key: "set-piece", label: "Set pieces" },
-      { key: "vehicle", label: "Vehicles" },
-      { key: "human", label: "People", also: ["person"] },
-      { key: "camera", label: "Cameras" }
-    ];
-    cats.forEach(cat => {
+    // An upload's row: real size comes from the file; one real dimension typed in the Inspector rescales a copy.
+    const mineRow = (gb, e) => {
+      const n = e.native, sub = fmtLen(Math.max(n.x, n.z) * FT_PER_M) + " × " + fmtLen(Math.min(n.x, n.z) * FT_PER_M) + " · " + fmtLen(n.y * FT_PER_M) + " high";
+      const row = item(gb, e.name, "Yours · " + sub, e.assetId);
+      row.parentNode.classList.add("mine");
+      addBtn(row, () => addToScene(e.assetId, null));
+    };
+    // Cameras aren't here: they're added and named in the Camera section.
+    LIB_CATS.forEach(cat => {
       // Hide any entry flagged deferred (rooftop set, door box).
       const keys = [cat.key].concat(cat.also || []);
       // Hidden: deferred pieces, and the legacy cylinder human (still renders in old layouts).
       const entries = config.assetCatalog.filter(e => keys.indexOf(e.category) !== -1 && !(e.status && (e.status.indexOf("deferred") !== -1 || e.status === "legacy")));
-      if (!entries.length) return;
-      const gb = group(cat.key, cat.label, entries.length);
+      const mine = models.filter(e => libCatOf(e) === cat);
+      if (!entries.length && !mine.length) return;
+      const gb = group(cat.key, cat.label, entries.length + mine.length);
       entries.forEach(e => {
-        const sub = cat.key === "camera" ? "film camera with lens" : e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
+        const sub = e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
         const row = item(gb, e.name.replace(/\s*\(.*\)$/, ""), sub, e.assetId, e.variants ? e.variants[0].variant : null);
         let sel = null;
         if (e.variants) {
@@ -9467,26 +9600,16 @@
         }
         addBtn(row, () => addToScene(e.assetId, sel ? sel.value : null));
       });
+      mine.forEach(e => mineRow(gb, e));
     });
 
-    // Your own .glb models, on shelves (a pack lands on its own shelf). Real size comes from the file;
-    // one real dimension typed in the Inspector rescales a copy.
-    const models = config.customModels || [];
-    const gb = group("imported", "Your 3D models", models.length || null, false);
-    shelves().forEach(sh => {
+    // Uploads on their own shelves (a pack lands on its own shelf until you file it).
+    shelves().filter(sh => !LIB_CATS.some(c => c.label.toLowerCase() === sh.toLowerCase())).forEach(sh => {
       const list = models.filter(e => shelfOf(e) === sh);
-      if (shelves().length > 1 || sh !== "Imported") gb.appendChild(el("div", "shelfHead", sh));
-      list.forEach(e => {
-        const n = e.native, sub = fmtLen(Math.max(n.x, n.z) * FT_PER_M) + " × " + fmtLen(Math.min(n.x, n.z) * FT_PER_M) + " · " + fmtLen(n.y * FT_PER_M) + " high";
-        addBtn(item(gb, e.name, sub, e.assetId), () => addToScene(e.assetId, null));
-      });
+      const gb = group("shelf:" + sh, sh, list.length, false);
+      list.forEach(e => mineRow(gb, e));
+      gb.appendChild(el("div", "hint", "Your uploads. In Manage uploads, put one on the Set pieces, Vehicles or People shelf to file it with the Lumo pieces."));
     });
-    const tools = el("div", "btnRow libTools");
-    const imp = el("button", null, "Import a .glb…"); imp.addEventListener("click", () => document.getElementById("glbInput").click());
-    const man = el("button", "ghost", "Manage…"); man.addEventListener("click", openLibManager); man.title = "Rename, re-shelve or delete your models";
-    tools.appendChild(imp); if (models.length) tools.appendChild(man);
-    gb.appendChild(tools);
-    gb.appendChild(el("div", "hint", "One model comes straight in. A pack — a furnished room, a prop kit — opens a picker to choose its pieces."));
 
     // More models: free libraries to download a .glb from, then bring in with Import above.
     const mm = group("more", "More models", null, false);
@@ -9499,7 +9622,7 @@
       a.textContent = "Open ↗"; a.title = "Opens " + host + " in a new tab";
       row.appendChild(a);
     });
-    mm.appendChild(el("div", "hint", "Download a model as .glb (or glTF binary), then use “Import a .glb file…” under Your 3D models."));
+    mm.appendChild(el("div", "hint", "Download a model as .glb (or glTF binary), then use “Import a .glb…” at the top of the library."));
     applyLibFind();
   }
   // Library search: hides rows that don't match, opens the groups that do.
@@ -9676,7 +9799,7 @@
       if (u.kind !== "placed") return;
       const pa = getPlacedByUid(u.uid), e = pa && catalogEntry(pa.assetId); if (!pa || !e) return;
       const c = e.category, it = { key: "p:" + pa._uid, g: g, uid: pa._uid, hid: pa.deployed === false };
-      if (pa.assetId === "camera") { Object.assign(it, { grp: "cams", name: "Camera " + camN[pa._uid], dims: camVal(pa, "focalMm") + "mm" }); }
+      if (pa.assetId === "camera") { Object.assign(it, { grp: "cams", name: pa.camName || "Camera " + camN[pa._uid], dims: camVal(pa, "focalMm") + "mm" }); }
       else if (c === "person") {
         const vn = pa.variant && e.variants && (e.variants.find(v => v.variant === pa.variant) || {}).name;
         const s = pa.pin && pinnedSpot(pa), host = s && catalogEntry(s.host.assetId);
@@ -10900,8 +11023,8 @@
 
   // ---- Section rail + drawer ------------------------------------------
   const SECTIONS = {
-    stage:  { title: "Stage",  sub: "The fixed LED volume, the ceiling, and pre-built sets." },
-    add:    { title: "Add to stage", sub: "Place a piece, then drag it where you want it." },
+    stage:  { title: "Stage",  sub: "The LED ceiling over the volume." },
+    add:    { title: "Add to stage", sub: "The Lumo library, with your uploads. Place a piece, then drag it where you want it." },
     led:    { title: "LED content", sub: "A 360° world, or flat images and video, on the walls and ceiling." },
     camera: { title: "Camera", sub: "Lens, framing, saved shots and prints." }
   };
@@ -11026,6 +11149,8 @@
     // Camera section
     document.getElementById("lensBtn").addEventListener("click", () => lensMenu.open ? closeLensMenu() : openLensMenu());
     document.getElementById("lookBtn").addEventListener("click", () => { openDrawer(null); enterCameraView(); });
+    wireCamName("camNameTab", activeCameraPA);
+    document.getElementById("camAddBtn").addEventListener("click", () => addCameraWithSetup(!config.placedAssets.some(p => p.assetId === "camera")));
     document.getElementById("frustChk").addEventListener("change", e => setShowFrustums(e.target.checked));
     // Lens view bar
     document.getElementById("lbLens").addEventListener("click", () => lensMenu.open ? closeLensMenu() : openLensMenu());
@@ -11171,7 +11296,10 @@
     syncMoveBar();
     updateNav(dt);
     syncFootprints();
+    const ceilHide = nav.mode === "top" && ceilingGroup && ceilingGroup.visible ? ceilingGroup.children.filter(c => !c.isLine && c.visible) : null;
+    if (ceilHide) ceilHide.forEach(c => { c.visible = false; });
     renderer.render(scene, viewCam());
+    if (ceilHide) ceilHide.forEach(c => { c.visible = true; });
   }
 
   // Go.

@@ -346,3 +346,9 @@ Until real models exist, Phase 1 primitives (correctly *dimensioned* boxes/cylin
 - **Move timeline bar** (Walk / Plan, bottom centre) whenever the active camera has a move: letters (go to), Play / Pause, scrub, time, who's blocked. Playing outside the lens moves the camera and everyone on stage.
 - Marks are drawn on the stage (rings + letters in the cast colour, dashed path) and on plans / setup sheets. Move frames capture everyone at A and at the end; summaries add "MAYA R. on marks".
 - **Stage states ignore people**: blocking (where people stand) and casting aren't re-dresses. `stageSig` (people included) still decides whether going back to a frame rebuilds the stage, so people return to where that frame had them.
+
+## As built — UI revisions (Oct 2026)
+- **Stage**: the Sets group is gone (Subway Car is in Add → Vehicles/Set pieces; Station Platform moved to Add → Set pieces). The ceiling is one switch plus one height dial. In the 3D walk view the panel can be grabbed from underneath and dragged up or down (0.25′ steps, Shift for 0.05′). In Plan it isn't drawn or pickable; the Footprints dashed outline stays.
+- **Add**: no Cameras group (added from the Camera section's "Add a camera"). One Lumo library: an upload whose shelf is named Set walls, Glass walls, Set pieces, Vehicles or People sits in that group, marked "Yours"; any other shelf is its own group. Import and Manage uploads sit at the top.
+- **360° world**: "Horizon height" (`environment.lift`, ft) raises or lowers the projection eyepoint, so the horizon moves up or down the walls. Tilt is only shown when a layout already has one. `lift` is stored in frame snapshots only when non-zero.
+- **Camera names**: `pa.camName`, else "CAM n". Set in the setup pop-up, the Camera section or the Inspector. Shown in the picker, the Plan pick list, a floating tag on stage, plan sheets, the viewfinder, the move bar, clips and printed shots.
