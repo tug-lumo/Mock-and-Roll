@@ -743,8 +743,8 @@
   body.touch #navHud { display: none !important; }
   body.touch:not(.phone) #joy { left: calc(var(--rail) + 18px); bottom: 18px; }
   body.touch.drawerOpen:not(.phone) #joy { left: calc(var(--rail) + 330px); }
-  #rotatePrompt, #newSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
-  #rotatePrompt.hidden, #newSheet.hidden { display: none; }
+  #rotatePrompt, #newSheet, #expSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #rotatePrompt.hidden, #newSheet.hidden, #expSheet.hidden { display: none; }
   #camSetup { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.6); }
   #camSetup.hidden { display: none; }
   #camSetup .card { width: min(420px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); max-height: calc(100% - 32px); overflow: auto; }
@@ -753,10 +753,14 @@
   #camSetup .btnRow button { flex: 1; }
   select.wideSel { max-width: 200px; }
   #camChoices select.wideSel { max-width: 170px; }
-  #rotatePrompt .card, #newSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
-  #rotatePrompt h3, #newSheet h3 { margin: 0 0 6px; font-size: 16px; }
-  #rotatePrompt p, #newSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  #rotatePrompt .card, #newSheet .card, #expSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #rotatePrompt h3, #newSheet h3, #expSheet h3 { margin: 0 0 6px; font-size: 16px; }
+  #rotatePrompt p, #newSheet p, #expSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
   #newSheet .btnRow button { flex: 1 1 auto; }
+  #expSheet .seg { display: flex; margin: 0 0 8px; }
+  #expSheet .seg button { flex: 1; justify-content: center; }
+  #expSheet .setToggle.off { opacity: .45; pointer-events: none; }
+  #expSheet .hint { margin: 6px 0 14px; }
 
   /* ---- Phone (landscape first): slim top bar, icon rail on the left, side panels ---- */
   body.phone { --top: 46px; --rail: 58px; }
@@ -971,6 +975,7 @@
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-cube" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></g></symbol>
       <symbol id="i-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></symbol>
       <symbol id="i-open" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14"/></g></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></g></symbol>
@@ -1017,6 +1022,7 @@
         <button class="item hidden" id="openPublished" role="menuitem"><svg><use href="#i-phone"/></svg><span>Open the published layout<small>The setup last published from the studio PC</small></span></button>
         <div class="sep"></div>
         <button class="item" id="planBtn" role="menuitem"><svg><use href="#i-plan"/></svg><span>Stage plan…<small>A to-scale floor plan to print, PDF or share (Ctrl+P)</small></span></button>
+        <button class="item" id="expBtn" role="menuitem"><svg><use href="#i-cube"/></svg><span>Export 3D model…<small>The stage or the selection as a .glb for Blender, Unreal, C4D</small></span></button>
         <div class="sep editOnly"></div>
         <button class="item hidden" id="publishBtn" role="menuitem"><svg><use href="#i-phone"/></svg><span>Publish to phone<small>Send this layout and any imported models to the phone viewer</small></span></button>
         <button class="item" id="modeBtn" role="menuitem"><svg><use href="#i-eye"/></svg><span><span id="modeLabel">View-only mode</span><small id="modeSub">Hide the editing tools for a walkthrough</small></span></button>
@@ -1365,6 +1371,19 @@
       <h3 id="newTitle">Start a new layout?</h3>
       <p>This clears the stage and starts a new project: sets, decks, vehicles, people, cameras, saved shots, the storyboard and project details. The studio, LED / 360° setup, settings and your imported 3D models stay. You can undo it straight after.</p>
       <div class="btnRow"><button id="newCancel">Cancel</button><button id="newSaveGo">Save, then clear</button><button class="primary" id="newGo">Clear the stage</button></div>
+    </div>
+  </div>
+  <!-- File → Export 3D model -->
+  <div id="expSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+    <div class="card">
+      <h3 id="expTitle">Export a 3D model</h3>
+      <p>One .glb file at real-world size in metres. It opens in Blender, Unreal, Cinema 4D, Maya and most 3D tools.</p>
+      <div class="seg" role="radiogroup" aria-label="What to export"><button id="expSel" role="radio">The selection</button><button id="expAll" role="radio">The whole stage</button></div>
+      <label class="setToggle"><input type="checkbox" id="expPeople" checked><span>People</span></label>
+      <label class="setToggle"><input type="checkbox" id="expCams"><span>Cameras</span></label>
+      <label class="setToggle" id="expStudioRow"><input type="checkbox" id="expStudio" checked><span>The LED volume and studio</span></label>
+      <div class="hint" id="expHint"></div>
+      <div class="btnRow"><button id="expCancel">Cancel</button><button class="primary" id="expGo">Download .glb</button></div>
     </div>
   </div>
   <div id="joy" class="hidden"><div class="knob"></div></div>
@@ -2032,6 +2051,7 @@
     wireCamSetup();
     wireVfBar(); wireMovePanel(); wireMoveBar();
     wireNewLayout();
+    wireExportSheet();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
@@ -5382,7 +5402,7 @@
         '<div class="field" style="margin-top:8px"><label for="mTurnBy">Turn each by</label><div class="inl"><input type="number" id="mTurnBy" step="1" placeholder="°"><button id="mTurnGo">Turn</button></div></div>' +
         '<div class="field"><label for="mFace">Face all to</label><div class="inl"><input type="number" id="mFace" step="1" placeholder="°"><button id="mFaceGo">Set</button></div></div>' +
         '<div class="hint">0° faces the main wall. People riding a selected car or set turn with it.</div>', true) +
-      '<div class="foot"><button id="mClear">Clear selection</button><button id="mRemove" class="danger">Remove all</button></div>';
+      '<div class="foot"><button id="mClear">Clear selection</button><button id="mExport" title="Export these pieces as one .glb 3D model">Export .glb</button><button id="mRemove" class="danger">Remove all</button></div>';
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
       inspOpenState()[d.dataset.k] = d.open;
       try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
@@ -5399,6 +5419,7 @@
     body.querySelectorAll("[data-rot]").forEach(b => b.addEventListener("click", () => multiRotateGroup(+b.dataset.rot)));
     document.getElementById("mClear").addEventListener("click", () => { clearMulti(); deselect(); });
     document.getElementById("mRemove").addEventListener("click", multiRemove);
+    document.getElementById("mExport").addEventListener("click", () => openExportSheet("sel"));
     const mg = document.getElementById("mGroup"), mu = document.getElementById("mUngroup");
     if (mg) mg.addEventListener("click", groupSelection);
     if (mu) mu.addEventListener("click", ungroupSelection);
@@ -5644,7 +5665,7 @@
       (isCamera ? cameraFieldsHTML(cur) : "") +
       (cur && selected.kind === "placed" && mode === "edit" ? blockingGroupHTML(cur) : "") +
       (cur && selected.kind === "placed" && groupUids(cur).length > 1 ? '<div class="grpNote">One piece of a group of ' + groupUids(cur).length + '<span><button class="linkish" id="selGrp">Select the group</button><button class="linkish" id="leaveGrp">Take it out</button></span></div>' : "") +
-      (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="delBtn" class="danger">Remove</button></div>' : "");
+      (canDup ? '<div class="foot"><button id="dupBtn">Duplicate</button><button id="expPieceBtn" title="Export this piece as a .glb 3D model">Export .glb</button><button id="delBtn" class="danger">Remove</button></div>' : "");
     body.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
       inspOpenState()[d.dataset.k] = d.open;
       try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
@@ -6325,6 +6346,8 @@
     if (del) del.addEventListener("click", removeSelected);
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
+    const xp = document.getElementById("expPieceBtn");
+    if (xp) xp.addEventListener("click", () => openExportSheet("sel"));
     wireBlocking();
     wireCamName("camNameIn", cfgForSelected);
     const sg = document.getElementById("selGrp"), lg = document.getElementById("leaveGrp");
@@ -8295,6 +8318,188 @@
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ---- Export 3D model (.glb) -------------------------------------------------------------
+  // The selection (a piece, a group, a Ctrl-click set, plus anyone riding them) or the whole stage,
+  // as one binary glTF in metres. Each piece becomes one named node with its meshes baked into
+  // piece-local metres; helpers (name tags, footprints, frustum lines, outlines) are left out, and
+  // materials glTF can't carry (the LED shader, live reflections, video) become plain stand-ins.
+  const FT_TO_M = 0.3048;
+  let gltfExporterReady = null;
+  function loadGLTFExporter() {
+    if (gltfExporterReady) return gltfExporterReady;
+    gltfExporterReady = new Promise((resolve, reject) => {
+      const sc = document.createElement("script"); sc.src = "vendor/three/GLTFExporter.js";
+      sc.onload = () => resolve(THREE.GLTFExporter);
+      sc.onerror = () => { gltfExporterReady = null; reject(new Error("couldn't load the 3D exporter")); };
+      document.head.appendChild(sc);
+    });
+    return gltfExporterReady;
+  }
+  const expUI = { what: "sel" };
+  function exportSelectionUids() {
+    if (multi.length > 1) return multi.slice();
+    const pa = selected && selected.kind === "placed" && cfgForSelected();
+    return pa ? [pa._uid] : [];
+  }
+  function openExportSheet(what) {
+    closeMenus();
+    const sel = exportSelectionUids();
+    expUI.what = what === "sel" && sel.length ? "sel" : (what || (sel.length ? "sel" : "stage"));
+    if (!sel.length) expUI.what = "stage";
+    document.getElementById("expSel").disabled = !sel.length;
+    document.getElementById("expSel").textContent = sel.length > 1 ? "The selection (" + sel.length + ")" : sel.length ? "The selected piece" : "The selection";
+    syncExportSheet();
+    document.getElementById("expSheet").classList.remove("hidden");
+    document.getElementById("expGo").focus();
+  }
+  function syncExportSheet() {
+    const all = expUI.what === "stage";
+    document.getElementById("expSel").classList.toggle("active", !all);
+    document.getElementById("expAll").classList.toggle("active", all);
+    document.getElementById("expSel").setAttribute("aria-checked", String(!all));
+    document.getElementById("expAll").setAttribute("aria-checked", String(all));
+    document.getElementById("expStudioRow").classList.toggle("off", !all);
+    const n = exportTargets(exportOpts()).pieces.length;
+    document.getElementById("expHint").textContent = n
+      ? n + (n === 1 ? " piece" : " pieces") + (all ? "" : ", placed around the selection's centre") + ". LED content and live reflections don't carry over; the walls export as plain screens."
+      : "Nothing to export with these options.";
+    document.getElementById("expGo").disabled = !n;
+  }
+  function exportOpts() {
+    return { what: expUI.what, people: document.getElementById("expPeople").checked,
+      cams: document.getElementById("expCams").checked, studio: document.getElementById("expStudio").checked };
+  }
+  // { pieces: [{ obj, name }], centre: Vector3 | null }
+  function exportTargets(o) {
+    const keep = pa => pa && (o.cams || pa.assetId !== "camera") && (o.people || !isPersonEntry(pa));
+    let pas;
+    if (o.what === "sel") {
+      pas = exportSelectionUids().map(getPlacedByUid).filter(Boolean);
+      const keys = pas.map(p => p.key).filter(Boolean);                       // anyone riding a selected car or deck
+      config.placedAssets.forEach(p => { if (p.pin && keys.indexOf(p.pin.host) !== -1 && pas.indexOf(p) === -1) pas.push(p); });
+    } else pas = config.placedAssets.slice();
+    const pieces = [];
+    pas.filter(keep).forEach(pa => {
+      const g = placedGroupByUid[pa._uid], e = catalogEntry(pa.assetId);
+      if (!g || !g.visible) return;
+      const base = e ? e.name : "Piece", name = pa.assetId === "camera" ? camLabel(pa) : pa.role && pa.role.name ? pa.role.name + " (" + base + ")" : base;
+      pieces.push({ obj: g, name: name });
+    });
+    if (o.what === "stage" && o.studio) {
+      if (mainWallGroup) pieces.push({ obj: mainWallGroup, name: "LED wall" });
+      if (ceilingGroup && ceilingGroup.visible) pieces.push({ obj: ceilingGroup, name: "LED ceiling" });
+      scene.children.forEach(c => { if (c.userData.kind === "rollingWall" && c.visible) pieces.push({ obj: c, name: "Rolling wall " + c.userData.id }); });
+      if (studioGroup) pieces.push({ obj: studioGroup, name: "Studio" });
+    }
+    let centre = null;
+    if (o.what === "sel" && pieces.length) {
+      const b = new THREE.Box3();
+      pieces.forEach(p => b.expandByObject(p.obj));
+      centre = b.getCenter(new THREE.Vector3()); centre.y = 0;              // keep the floor at 0
+    }
+    return { pieces: pieces, centre: centre };
+  }
+  // A glTF-friendly copy of a material (cached per export so shared materials stay shared).
+  function exportMaterial(m, cache) {
+    if (Array.isArray(m)) return m.map(x => exportMaterial(x, cache));
+    if (!m) return m;
+    if (cache.has(m)) return cache.get(m);
+    let out;
+    const tex = t => t && t.image && (t.image instanceof HTMLImageElement || t.image instanceof HTMLCanvasElement ||
+      (typeof ImageBitmap !== "undefined" && t.image instanceof ImageBitmap)) ? t : null;     // video and render targets drop out
+    if (m.isShaderMaterial) {                                                 // the LED / 360° shader: a dark screen
+      out = new THREE.MeshStandardMaterial({ color: 0x0b0e14, roughness: 0.35, metalness: 0, side: m.side });
+      out.name = "LED screen";
+    } else if (m.isMeshStandardMaterial || m.isMeshBasicMaterial) {
+      out = m.clone();
+      out.envMap = null;
+      ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "alphaMap", "bumpMap", "lightMap"].forEach(k => { if (k in out) out[k] = tex(out[k]); });
+    } else {                                                                  // Lambert / Phong / anything else
+      out = new THREE.MeshStandardMaterial({ color: m.color ? m.color.getHex() : 0xcccccc, map: tex(m.map), roughness: 0.8, metalness: 0,
+        transparent: !!m.transparent, opacity: m.opacity != null ? m.opacity : 1, side: m.side });
+      if (m.emissive) out.emissive.copy(m.emissive);
+    }
+    if (!out.name) out.name = m.name || "";
+    cache.set(m, out);
+    return out;
+  }
+  // One piece → a Group at its spot (metres) holding its visible meshes, baked into piece-local metres.
+  function exportPiece(p, centre, cache) {
+    const src = p.obj;
+    src.updateMatrixWorld(true);
+    const W = src.matrixWorld, inv = new THREE.Matrix4().copy(W).invert();
+    const S = new THREE.Matrix4().makeScale(FT_TO_M, FT_TO_M, FT_TO_M);
+    const node = new THREE.Group(); node.name = p.name;
+    const pos = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+    W.decompose(pos, q, sc);
+    if (centre) pos.sub(centre);
+    node.position.copy(pos.multiplyScalar(FT_TO_M)); node.quaternion.copy(q);
+    const bake = (mesh, M) => {                                               // M: piece-local, already in metres
+      const geo = mesh.geometry.clone();
+      geo.applyMatrix4(M);
+      if (geo.attributes.normal) geo.normalizeNormals();                      // the metre scale stretches them
+      if (M.determinant() < 0) {                                              // mirrored: keep faces pointing out
+        const n = geo.index ? geo.index.count : geo.attributes.position.count, idx = [];
+        for (let i = 0; i + 2 < n; i += 3) {
+          const a = geo.index ? geo.index.getX(i) : i, b = geo.index ? geo.index.getX(i + 1) : i + 1, c = geo.index ? geo.index.getX(i + 2) : i + 2;
+          idx.push(a, c, b);
+        }
+        geo.setIndex(idx);
+      }
+      const out = new THREE.Mesh(geo, exportMaterial(mesh.material, cache));
+      out.name = mesh.name || "";
+      node.add(out);
+    };
+    const walk = n => {
+      if (!n.visible || n.userData.tag || (n.layers.mask & 1) === 0) return;  // name tags, footprint-only bands
+      if (n.isSprite || n.isLine || n.isPoints || n.isCamera || n.isLight) return;
+      if (n.isMesh && n.geometry && n.geometry.attributes.position) {
+        const rel = new THREE.Matrix4().multiplyMatrices(inv, n.matrixWorld);
+        if (n.isInstancedMesh) {
+          const im = new THREE.Matrix4();
+          for (let i = 0; i < n.count; i++) { n.getMatrixAt(i, im); bake(n, new THREE.Matrix4().multiplyMatrices(S, rel).multiply(im)); }
+        } else bake(n, new THREE.Matrix4().multiplyMatrices(S, rel));
+      }
+      n.children.forEach(walk);
+    };
+    walk(src);
+    return node.children.length ? node : null;
+  }
+  async function runExport() {
+    const o = exportOpts(), t = exportTargets(o);
+    if (!t.pieces.length) { toast("Nothing to export"); return; }
+    const go = document.getElementById("expGo"); go.disabled = true; go.textContent = "Exporting…";
+    try {
+      const Exporter = await loadGLTFExporter();
+      const root = new THREE.Group(), cache = new Map();
+      root.name = o.what === "stage" ? "Mock & Roll stage" : "Mock & Roll selection";
+      t.pieces.forEach(p => { const n = exportPiece(p, t.centre, cache); if (n) root.add(n); });
+      const buf = await new Promise((resolve, reject) => {
+        try { new Exporter().parse(root, resolve, { binary: true, maxTextureSize: 2048 }); } catch (err) { reject(err); }
+      });
+      root.traverse(n => { if (n.isMesh) n.geometry.dispose(); });
+      cache.forEach(m => m.dispose());
+      const what = o.what === "stage" ? "stage" : t.pieces.length === 1 ? slugPart(t.pieces[0].name) : "selection-" + t.pieces.length;
+      const name = projectBase() + "_" + what + "_" + todayStamp() + ".glb";
+      downloadBlob(new Blob([buf], { type: "model/gltf-binary" }), name);
+      document.getElementById("expSheet").classList.add("hidden");
+      toast("Exported " + name);
+    } catch (err) {
+      console.error(err);
+      toast("Export failed: " + (err && err.message || err));
+    } finally { go.disabled = false; go.textContent = "Download .glb"; }
+  }
+  function wireExportSheet() {
+    const sh = document.getElementById("expSheet");
+    document.getElementById("expBtn").addEventListener("click", () => openExportSheet());
+    document.getElementById("expSel").addEventListener("click", () => { expUI.what = "sel"; syncExportSheet(); });
+    document.getElementById("expAll").addEventListener("click", () => { expUI.what = "stage"; syncExportSheet(); });
+    ["expPeople", "expCams", "expStudio"].forEach(id => document.getElementById(id).addEventListener("change", syncExportSheet));
+    document.getElementById("expCancel").addEventListener("click", () => sh.classList.add("hidden"));
+    document.getElementById("expGo").addEventListener("click", runExport);
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { sh.classList.add("hidden"); e.stopPropagation(); } });
   }
   function wirePlanSheet() {
     const d = document.getElementById("planSheet");
