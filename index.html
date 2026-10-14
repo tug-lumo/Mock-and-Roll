@@ -6563,7 +6563,10 @@
     g.visible = false; // the camera's own body would sit inside its near plane
     const others = otherCamGroups(pa); others.forEach(c => { c.visible = false; });
     if (movePaths) movePaths.visible = false;              // the planned path is for the stage view, not the lens
-    renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.clear();
+    // The bars beyond the image are always black. clear() uses whatever GL clear colour the last render
+    // left behind: the stage background after a reflection-probe snapshot, black after the lens blur,
+    // so the bars strobed grey/black. Setting it here re-applies black every frame.
+    renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.setClearColor(0x000000, 1); renderer.clear();
     const pr = renderer.getPixelRatio();
     if (!renderDof(shotCam, pa, full ? o.sensorH : o.frameH, Math.max(1, Math.round(vw * pr)), Math.max(1, Math.round(vh * pr)), null, [vx, vy, vw, vh])) {
       renderer.setScissorTest(true); renderer.setScissor(vx, vy, vw, vh); renderer.setViewport(vx, vy, vw, vh);
