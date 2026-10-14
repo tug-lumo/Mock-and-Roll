@@ -616,6 +616,10 @@
   #vf { overflow: hidden; }
   /* Frame lines: the delivery frame; everything outside it is shaded like a monitor's surround */
   #vf .fl { position: absolute; box-sizing: border-box; }
+  /* Shade outside the frame: four plain panels (a 100vmax box-shadow re-rasterised with every
+     timecode tick and flickered on big screens). The timecode gets its own layer so it repaints alone. */
+  #vf .sh i { position: absolute; background: #000; }
+  #vf .tc { will-change: transform; }
   #vf .fl.lines { outline: 1.5px solid rgba(255,255,255,.95); }
   #vf .fl .lbl, #vf .pl .lbl { position: absolute; left: 6px; top: 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.9); }
   #vf .vfWarn { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); background: rgba(160,36,44,.94); color: #fff; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 6px; white-space: nowrap; text-shadow: none; }
@@ -1125,6 +1129,7 @@
   </div>
   <div id="camHud" class="hidden"></div>
   <div id="vf" class="hidden">
+    <div class="sh"><i></i><i></i><i></i><i></i></div>
     <div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div>
     <div class="fl"><div class="safe"><i class="act"></i><i class="ttl"></i></div><div class="thirds"><i></i><i></i><i></i><i></i></div><span class="lbl"></span></div>
     <div class="pl hidden"><span class="lbl"></span></div>
@@ -6596,7 +6601,10 @@
     if (fl.dataset.sig !== sig) {
       fl.dataset.sig = sig;
       fl.style.left = pct((1 - fx) / 2); fl.style.top = pct((1 - fy) / 2); fl.style.width = pct(fx); fl.style.height = pct(fy);
-      fl.style.boxShadow = "0 0 0 100vmax rgba(0,0,0," + (full ? vp.shade : 0) + ")";
+      const sh = vf.querySelectorAll(".sh i"), a = full ? vp.shade : 0, x0 = (1 - fx) / 2, y0 = (1 - fy) / 2;
+      [[0, 0, 1, y0], [0, 1 - y0, 1, y0], [0, y0, x0, fy], [1 - x0, y0, x0, fy]].forEach((r, i) => {      // top, bottom, left, right
+        const st = sh[i].style; st.left = pct(r[0]); st.top = pct(r[1]); st.width = pct(r[2]); st.height = pct(r[3]); st.opacity = a;
+      });
       fl.classList.toggle("lines", full && o.fmt.aspect != null);
       fl.querySelector(".safe").classList.toggle("hidden", !vp.safe);
       fl.querySelector(".thirds").classList.toggle("hidden", !vp.thirds);
