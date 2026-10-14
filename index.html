@@ -154,6 +154,9 @@
   .subhead { font-size: 12px; font-weight: 600; color: var(--muted); margin: 16px 0 8px; }
   .subhead:first-child { margin-top: 4px; }
 
+  .poseGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 2px 0 6px; }
+  .poseGrid button { padding: 7px 8px; font-size: 12.5px; text-align: left; }
+  .poseGrid button.active { background: var(--accentFill); border-color: var(--accentFill); color: #fff; }
   .setToggle { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; padding: 7px 2px; }
   .setToggle input { cursor: pointer; margin: 0; }
   .setToggle span { user-select: none; }
@@ -1288,6 +1291,8 @@
           <dt>Re-anchor</dt><dd>Drop a person on a free seat or spot and they take it; on a deck, platform or the subway floor they ride with it; clear of everything they stand free</dd></dl></div>
         <div><h3>People</h3><dl>
           <dt>Role</dt><dd>Pick a colour for a hero; it shows on the plan and in prints</dd>
+          <dt>Pose</dt><dd>Standing, folded arms, on the phone, waving, seated, kneeling…; drop someone on a seat and they sit down, take them off and they stand</dd>
+          <dt>Walking</dt><dd>Blocked people walk between their marks when a camera move plays</dd>
           <dt>Name tag</dt><dd>Typing a name gives an untagged person the next free colour</dd>
           <dt>Height off floor</dt><dd>Auto stands them on decks, wall bases and the subway floor; type a value to fix it</dd></dl>
           <h3>360° world</h3><dl>
@@ -1836,16 +1841,18 @@
       // People (assets/people2): standing figures posed from a rigged low-poly pack (tools/bake-pose.py), seated
       // photo-scans decimated with gltf-transform. Heights are averaged real-world figures (US adult men ~5'9",
       // women ~5'4"; a seated adult is ~4'2" floor to crown); each is adjustable per instance.
-      { assetId: "p2_doctor", name: "Doctor", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.80, depthFt: 1.27, model: "assets/people2/doctor.glb" },
-      { assetId: "p2_police_officer", name: "Police officer", category: "person", pose: "standing", heightFt: 5.60, widthFt: 1.46, depthFt: 1.70, model: "assets/people2/police-officer.glb" },
-      { assetId: "p2_construction_worker", name: "Construction worker", category: "person", pose: "standing", heightFt: 5.95, widthFt: 1.66, depthFt: 1.38, model: "assets/people2/construction-worker.glb" },
-      { assetId: "p2_man_phone", name: "Man on the phone", category: "person", pose: "standing", heightFt: 5.80, widthFt: 2.32, depthFt: 1.98, model: "assets/people2/man-phone.glb" },
-      { assetId: "p2_man_walking", name: "Man walking", category: "person", pose: "standing", heightFt: 5.75, widthFt: 2.25, depthFt: 1.55, model: "assets/people2/man-walking.glb" },
-      { assetId: "p2_woman_standing", name: "Woman standing", category: "person", pose: "standing", heightFt: 5.40, widthFt: 1.98, depthFt: 1.02, model: "assets/people2/woman-standing.glb" },
-      { assetId: "p2_woman_walking", name: "Woman walking", category: "person", pose: "standing", heightFt: 5.35, widthFt: 1.59, depthFt: 1.37, model: "assets/people2/woman-walking.glb" },
-      { assetId: "p2_older_woman", name: "Older woman", category: "person", pose: "standing", heightFt: 5.15, widthFt: 1.34, depthFt: 1.07, model: "assets/people2/older-woman.glb" },
-      { assetId: "p2_girl", name: "Girl (teen)", category: "person", pose: "standing", heightFt: 5.00, widthFt: 1.98, depthFt: 0.98, model: "assets/people2/girl.glb" },
-      { assetId: "p2_boy", name: "Boy (about 6)", category: "person", pose: "standing", heightFt: 3.90, widthFt: 1.16, depthFt: 0.82, model: "assets/people2/boy.glb" },
+      // rig: the same figure with its skeleton (tools/prep-rigs.py), posed live from RIG_POSES; model stays
+      // the fallback and the library picture. defPose: the stock pose it arrives in.
+      { assetId: "p2_doctor", name: "Doctor", category: "person", pose: "standing", heightFt: 5.85, widthFt: 1.80, depthFt: 1.27, model: "assets/people2/doctor.glb", rig: "assets/rigs/doctor.glb", gender: "m", defPose: "standing" },
+      { assetId: "p2_police_officer", name: "Police officer", category: "person", pose: "standing", heightFt: 5.60, widthFt: 1.46, depthFt: 1.70, model: "assets/people2/police-officer.glb", rig: "assets/rigs/police-officer.glb", gender: "f", defPose: "standing" },
+      { assetId: "p2_construction_worker", name: "Construction worker", category: "person", pose: "standing", heightFt: 5.95, widthFt: 1.66, depthFt: 1.38, model: "assets/people2/construction-worker.glb", rig: "assets/rigs/construction-worker.glb", gender: "m", defPose: "standing" },
+      { assetId: "p2_man_phone", name: "Man on the phone", category: "person", pose: "standing", heightFt: 5.80, widthFt: 2.32, depthFt: 1.98, model: "assets/people2/man-phone.glb", rig: "assets/rigs/man-phone.glb", gender: "m", defPose: "phone" },
+      { assetId: "p2_man_walking", name: "Man walking", category: "person", pose: "standing", heightFt: 5.75, widthFt: 2.25, depthFt: 1.55, model: "assets/people2/man-walking.glb", rig: "assets/rigs/man-walking.glb", gender: "m", defPose: "walking" },
+      { assetId: "p2_woman_standing", name: "Woman standing", category: "person", pose: "standing", heightFt: 5.40, widthFt: 1.98, depthFt: 1.02, model: "assets/people2/woman-standing.glb", rig: "assets/rigs/woman-standing.glb", gender: "f", defPose: "standing" },
+      { assetId: "p2_woman_walking", name: "Woman walking", category: "person", pose: "standing", heightFt: 5.35, widthFt: 1.59, depthFt: 1.37, model: "assets/people2/woman-walking.glb", rig: "assets/rigs/woman-walking.glb", gender: "f", defPose: "walking" },
+      { assetId: "p2_older_woman", name: "Older woman", category: "person", pose: "standing", heightFt: 5.15, widthFt: 1.34, depthFt: 1.07, model: "assets/people2/older-woman.glb", rig: "assets/rigs/older-woman.glb", gender: "f", defPose: "standing" },
+      { assetId: "p2_girl", name: "Girl (teen)", category: "person", pose: "standing", heightFt: 5.00, widthFt: 1.98, depthFt: 0.98, model: "assets/people2/girl.glb", rig: "assets/rigs/girl.glb", gender: "f", defPose: "standing" },
+      { assetId: "p2_boy", name: "Boy (about 6)", category: "person", pose: "standing", heightFt: 3.90, widthFt: 1.16, depthFt: 0.82, model: "assets/people2/boy.glb", rig: "assets/rigs/boy.glb", gender: "m", defPose: "standing" },
       { assetId: "p2_seated_scan_1", name: "Seated — legs out", category: "person", pose: "seated", noCar: true, seatDz: 1.0, heightFt: 3.90, widthFt: 1.68, depthFt: 4.35, model: "assets/people2/seated-scan-1.glb" },
       { assetId: "p2_seated_scan_2", name: "Seated — relaxed", category: "person", pose: "seated", heightFt: 4.30, widthFt: 1.60, depthFt: 2.75, model: "assets/people2/seated-scan-2.glb" },
       { assetId: "p2_seated_scan_3", name: "Seated — upright", category: "person", pose: "seated", heightFt: 4.40, widthFt: 1.22, depthFt: 2.56, model: "assets/people2/seated-scan-3.glb" },
@@ -2755,6 +2762,168 @@
     const sp = pa.pin && pinnedSpot(pa);                  // a spot can set the figure size (e.g. car seats)
     return sp && sp.spot.figH ? sp.spot.figH : entry.heightFt;
   }
+  // ---- Rigged people: stock poses ----------------------------------------------------------
+  // A figure with a rig (assets/rigs, tools/prep-rigs.py) is posed live: its skeleton takes a base
+  // frame from the pack's clips (assets/rigs/poses.json, local bone rotations by name), then each
+  // adjustment turns one bone about a figure-space axis (+X = the figure's left, +Y up, +Z the way it
+  // faces), parents before children. The posed skin is baked once per figure and pose into a plain
+  // static mesh, so seats, picking, reflections, prints and the .glb export see an ordinary model.
+  const RIG_POSES = [
+    { id: "standing", name: "Standing", kind: "standing", base: "idle" },
+    { id: "folded", name: "Arms folded", kind: "standing", base: "idle_m2" },
+    { id: "hips", name: "Hands on hips", kind: "standing", base: "idle_f2" },
+    { id: "walking", name: "Walking", kind: "standing", base: "walk", at: 0.25 },
+    { id: "phone", name: "On the phone", kind: "standing", base: "phone" },
+    { id: "waving", name: "Waving", kind: "standing", base: "wave" },
+    { id: "seated", name: "Seated", kind: "seated", base: "idle_m", adj: [
+      ["Spine", "x", 4],
+      ["L Thigh", "x", -88], ["R Thigh", "x", -88], ["L Calf", "x", 88], ["R Calf", "x", 88], ["L Foot", "x", 4], ["R Foot", "x", 4],
+      ["L UpperArm", "x", -12], ["R UpperArm", "x", -12], ["L Forearm", "x", -18], ["R Forearm", "x", -18]] },
+    { id: "seatedForward", name: "Seated, leaning in", kind: "seated", base: "idle_m", adj: [
+      ["Spine", "x", 24], ["Spine1", "x", 8], ["Head", "x", -20],
+      ["L Thigh", "x", -86], ["R Thigh", "x", -86], ["L Calf", "x", 80], ["R Calf", "x", 80],
+      ["L UpperArm", "x", -20], ["R UpperArm", "x", -20], ["L Forearm", "x", -5], ["R Forearm", "x", -5]] },
+    { id: "seatedBack", name: "Seated, leaning back", kind: "seated", base: "idle_m", adj: [
+      ["Spine", "x", -14], ["Head", "x", 10],
+      ["L Thigh", "x", -78], ["R Thigh", "x", -78], ["L Thigh", "z", 6], ["R Thigh", "z", -6], ["L Calf", "x", 58], ["R Calf", "x", 58],
+      ["L UpperArm", "x", 4], ["R UpperArm", "x", 4], ["L Forearm", "x", -12], ["R Forearm", "x", -12]] },
+    { id: "kneeling", name: "Kneeling", kind: "standing", base: "idle_m", adj: [
+      ["R Thigh", "x", -88], ["R Calf", "x", 88],
+      ["L Thigh", "x", 4], ["L Calf", "x", 88], ["L Foot", "x", 50],
+      ["L UpperArm", "x", -15], ["L Forearm", "x", -40], ["R UpperArm", "x", -25], ["R Forearm", "x", -45]] },
+    { id: "floor", name: "Sitting on the floor", kind: "standing", base: "idle_m", adj: [
+      ["Spine", "x", -6],
+      ["L Thigh", "x", -84], ["R Thigh", "x", -84], ["L Thigh", "z", 8], ["R Thigh", "z", -8], ["L Calf", "x", 10], ["R Calf", "x", 10],
+      ["L UpperArm", "x", 18], ["R UpperArm", "x", 18], ["L Forearm", "x", 10], ["R Forearm", "x", 10]] }
+  ];
+  const rigPose = id => RIG_POSES.find(p => p.id === id);
+  function personPoseId(pa, e) {
+    e = e || catalogEntry(pa.assetId);
+    if (!e || !e.rig) return null;
+    return rigPose(pa.pose) ? pa.pose : (e.defPose || "standing");
+  }
+  // "seated" | "standing": what kind of spot (seat or standing place) the figure takes.
+  function personKind(pa, e) {
+    e = e || catalogEntry(pa.assetId);
+    const id = personPoseId(pa, e);
+    return id ? rigPose(id).kind : e && e.pose;
+  }
+  let poseLibReady = null;
+  function loadPoseLib() {
+    if (!poseLibReady) poseLibReady = fetch("assets/rigs/poses.json").then(r => r.ok ? r.json() : null).catch(() => null);
+    return poseLibReady;
+  }
+  const rigCache = {};       // rig url -> Promise<{ scene, bones: {name: Bone}, rest: {name: Quaternion} } | null>
+  function loadRig(url) {
+    if (!rigCache[url]) rigCache[url] = new Promise(res => {
+      if (!gltfLoader) return res(null);
+      gltfLoader.load(url, gl => {
+        const scene = fixModelColors(gl.scene), bones = {}, rest = {};
+        scene.traverse(n => { if (n.isBone) { bones[n.name] = n; rest[n.name] = n.quaternion.clone(); } });
+        res({ scene: scene, bones: bones, rest: rest });
+      }, undefined, err => { console.warn("Lumostage: couldn't load rig " + url + " — " + (err && err.message ? err.message : err)); res(null); });
+    });
+    return rigCache[url];
+  }
+  const boneKey = n => "bip_" + n.replace(/ /g, "_");       // pack names → the loader's sanitised node names
+  const POSE_AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+  // frame: { "bip L Thigh": [x, y, z, w], … }
+  function applyRigPose(rig, lib, pose, gender, frameOverride) {
+    Object.keys(rig.rest).forEach(k => rig.bones[k].quaternion.copy(rig.rest[k]));
+    // "idle" / "walk" follow the figure's gender; any other base is that clip for everyone (the sitting
+    // and kneeling poses all start from the male idle, whose arms hang at the sides).
+    const clipId = pose.base === "idle" ? (gender === "f" ? "idle_f" : "idle_m") : pose.base === "walk" ? (gender === "f" ? "walk_f" : "walk_m") : pose.base;
+    const clip = lib && lib[clipId];
+    const frame = frameOverride || (clip && clip.frames[Math.min(clip.frames.length - 1, Math.floor((pose.at || 0) * clip.frames.length))]);
+    if (frame) Object.keys(frame).forEach(n => { const b = rig.bones[n.replace(/ /g, "_")]; if (b) b.quaternion.fromArray(frame[n]); });
+    rig.scene.updateMatrixWorld(true);
+    const qw = new THREE.Quaternion(), qp = new THREE.Quaternion(), dq = new THREE.Quaternion();
+    (pose.adj || []).forEach(([bn, ax, deg]) => {
+      const b = rig.bones[boneKey(bn)]; if (!b) return;
+      b.getWorldQuaternion(qw); b.parent.getWorldQuaternion(qp);
+      dq.setFromAxisAngle(POSE_AXES[ax], degToRad(deg));
+      b.quaternion.copy(qp.invert().multiply(dq.multiply(qw)));
+      b.updateMatrixWorld(true);
+    });
+  }
+  // CPU skinning of every skinned mesh in the rig, in the rig scene's space → a static Group.
+  function bakeRig(rig) {
+    const out = new THREE.Group(), tm = new THREE.Matrix4(), acc = new Float64Array(16);
+    rig.scene.updateMatrixWorld(true);
+    rig.scene.traverse(m => {
+      if (!m.isSkinnedMesh) return;
+      m.skeleton.update();
+      const g = m.geometry, P = g.attributes.position, N = g.attributes.normal, J = g.attributes.skinIndex, Wt = g.attributes.skinWeight;
+      const bm = m.skeleton.boneMatrices, n = P.count;
+      const wMax = !Wt.normalized ? 1 : Wt.array instanceof Uint8Array ? 255 : Wt.array instanceof Uint16Array ? 65535 : 1;
+      if (Wt.itemSize !== 4 || J.itemSize !== 4 || Wt.isInterleavedBufferAttribute || J.isInterleavedBufferAttribute) return;
+      const pre = m.bindMatrix, post = new THREE.Matrix4().multiplyMatrices(m.matrixWorld, m.bindMatrixInverse);
+      const pos = new Float32Array(n * 3), nor = N ? new Float32Array(n * 3) : null;
+      for (let i = 0; i < n; i++) {
+        acc.fill(0);
+        for (let k = 0; k < 4; k++) {
+          const w = Wt.array[i * 4 + k] / wMax; if (!w) continue;
+          const o = J.array[i * 4 + k] * 16;
+          for (let e = 0; e < 16; e++) acc[e] += w * bm[o + e];
+        }
+        // full = post · acc · pre (column-major elements, as three.js stores them)
+        tm.fromArray(acc).multiply(pre).premultiply(post);
+        const t = tm.elements, x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+        pos[i * 3] = t[0] * x + t[4] * y + t[8] * z + t[12];
+        pos[i * 3 + 1] = t[1] * x + t[5] * y + t[9] * z + t[13];
+        pos[i * 3 + 2] = t[2] * x + t[6] * y + t[10] * z + t[14];
+        if (nor) {
+          const a = N.getX(i), b = N.getY(i), c = N.getZ(i);
+          let nx = t[0] * a + t[4] * b + t[8] * c, ny = t[1] * a + t[5] * b + t[9] * c, nz = t[2] * a + t[6] * b + t[10] * c;
+          const l = Math.hypot(nx, ny, nz) || 1; nor[i * 3] = nx / l; nor[i * 3 + 1] = ny / l; nor[i * 3 + 2] = nz / l;
+        }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      if (nor) geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+      if (g.attributes.uv) geo.setAttribute("uv", g.attributes.uv);
+      if (g.index) geo.setIndex(g.index);
+      geo.computeBoundingBox(); geo.computeBoundingSphere();
+      const mesh = new THREE.Mesh(geo, m.material); mesh.name = m.name;
+      out.add(mesh);
+    });
+    return out;
+  }
+  // { tpl: static Group in rig units, standH: the figure's standing height in rig units, standC: its
+  // standing centre (rig units) — walk frames are placed on it so the stride doesn't jitter }
+  const posedCache = {};
+  function posedFigure(entry, poseId) {
+    const key = entry.rig + "|" + poseId;
+    if (!posedCache[key]) posedCache[key] = Promise.all([loadRig(entry.rig), loadPoseLib(), standInfoOf(entry)]).then(([rig, lib, st]) => {
+      if (!rig) return null;
+      applyRigPose(rig, lib, rigPose(poseId) || rigPose("standing"), entry.gender);
+      return { tpl: bakeRig(rig), standH: st.h, standC: st.c };
+    });
+    return posedCache[key];
+  }
+  const WALK_FRAMES = 24;
+  function walkFrameFigure(entry, i) {
+    const key = entry.rig + "|walk#" + i;
+    if (!posedCache[key]) posedCache[key] = Promise.all([loadRig(entry.rig), loadPoseLib(), standInfoOf(entry)]).then(([rig, lib, st]) => {
+      const clip = rig && lib && lib[entry.gender === "f" ? "walk_f" : "walk_m"];
+      if (!clip) return null;
+      applyRigPose(rig, lib, { base: "walk" }, entry.gender, clip.frames[i % clip.frames.length]);
+      return { tpl: bakeRig(rig), standH: st.h, standC: st.c, walk: true };
+    });
+    return posedCache[key];
+  }
+  const standCache = {};
+  function standInfoOf(entry) {
+    if (!standCache[entry.rig]) standCache[entry.rig] = Promise.all([loadRig(entry.rig), loadPoseLib()]).then(([rig, lib]) => {
+      if (!rig) return { h: 1, c: new THREE.Vector3() };
+      applyRigPose(rig, lib, rigPose("standing"), entry.gender);
+      const tmp = bakeRig(rig), bb = new THREE.Box3().setFromObject(tmp);
+      tmp.traverse(n => { if (n.isMesh) n.geometry.dispose(); });
+      return { h: bb.getSize(new THREE.Vector3()).y || 1, c: bb.getCenter(new THREE.Vector3()) };
+    });
+    return standCache[entry.rig];
+  }
+
   // Ghost box at true size immediately (placeable/selectable), swapped for the model when loaded:
   // scaled uniformly so the figure is exactly its height, centred, feet on the floor.
   // A role colour repaints the figure and adds a floating name tag (main view only).
@@ -2763,29 +2932,55 @@
     const role = pa.role && pa.role.color ? pa.role : null;
     const g = buildBox({ lengthFt: (entry.widthFt || 2) * k, widthFt: (entry.depthFt || 1.2) * k, heightFt: h }, role ? parseInt(role.color.slice(1), 16) : 0x8a909a);
     g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.3; o.material.depthWrite = false; } });
-    const addTag = () => { if (role && role.name) { const tg = makeNameTag(role.name, role.color); tg.position.y = h + 0.7; g.add(tg); } };
-    addTag();
-    loadModelUrl(entry.model).then(tpl => {
-      if (!tpl || !g.parent) return;
-      const m = tpl.clone(true);
+    if (role && role.name) { const tg = makeNameTag(role.name, role.color); tg.position.y = h + 0.7; g.add(tg); }
+    fillPersonModel(g, entry, pa);
+    return g;
+  }
+  // Load (or re-pose) the figure into its group. Safe to call again on the same group: the newest
+  // call wins, so a quick run of pose changes never lands an older pose last.
+  function fillPersonModel(g, entry, pa, walkFrame) {
+    const seq = g.userData.modelSeq = (g.userData.modelSeq || 0) + 1;
+    const h = personHeight(entry, pa), k = h / entry.heightFt;
+    const role = pa.role && pa.role.color ? pa.role : null;
+    const poseId = personPoseId(pa, entry);
+    const sp = pa.pin && pinnedSpot(pa);
+    const ready = poseId && walkFrame != null ? walkFrameFigure(entry, walkFrame) : poseId ? posedFigure(entry, poseId) : loadModelUrl(entry.model).then(tpl => tpl && { tpl: tpl });
+    ready.then(r => {
+      if (!r || !r.tpl || !g.parent || g.userData.modelSeq !== seq) return;
+      const m = r.tpl.clone(true);
       m.traverse(n => { n.userData.sharedModel = true; });
       if (role) {                                          // own material in the role colour
         const mat = new THREE.MeshStandardMaterial({ color: parseInt(role.color.slice(1), 16), roughness: 0.55, side: THREE.DoubleSide });
         m.traverse(n => { if (n.isMesh) { n.material = mat; n.userData.sharedModel = false; n.userData.sharedGeo = true; } });
       }
       const bb0 = new THREE.Box3().setFromObject(m), sz = bb0.getSize(new THREE.Vector3());
-      m.scale.setScalar(h / (sz.y || 1));
+      // Static figures are scaled to their height. A posed figure keeps its standing scale (a seated
+      // pose is shorter), except in a seat that sets the figure's size there (car seats).
+      const fitSeat = poseId && rigPose(poseId).kind === "seated" && sp && sp.spot.figH && !(pa.heightFt > 0);
+      m.scale.setScalar(poseId && !fitSeat ? h / r.standH : h / (sz.y || 1));
       const holder = new THREE.Group(); holder.add(m); holder.updateMatrixWorld(true);
       const bb = new THREE.Box3().setFromObject(holder), c = bb.getCenter(new THREE.Vector3());
       // Centred on its box, except where outstretched legs push the box forward of the body:
       // seatDz (ft at catalogue height, + = forward) slides the figure so its hips land on the seat.
       m.position.set(-c.x, -bb.min.y, -c.z + (entry.seatDz || 0) * k);
-      g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
+      // A posed seated figure sits back in the seat: its back ~1.3' behind the spot (spots sit ~1.45'
+      // in front of the seat back), scaled with its seated size, whatever its legs are doing.
+      if (poseId && rigPose(poseId).kind === "seated") m.position.z = -bb.min.z - 1.3 * (bb.max.y - bb.min.y) / 4.3;
+      if (r.walk) { const sc = m.scale.x; m.position.x = -r.standC.x * sc; m.position.z = -r.standC.z * sc; }   // mid-stride: hold the body still
+      g.children.slice().forEach(ch => { if (ch.userData.tag) return; g.remove(ch); disposeObject3D(ch); });
       g.add(holder);
-      addTag();
+      const tg = g.children.find(ch => ch.userData.tag);
+      if (tg) tg.position.y = bb.max.y - bb.min.y + 0.7;
       g.userData.hasModel = true;
     });
-    return g;
+  }
+  // Change a placed person's pose in place (inspector, or taking a seat).
+  function setPersonPose(pa, poseId) {
+    const e = catalogEntry(pa.assetId), g = placedGroupByUid[pa._uid];
+    if (!e || !e.rig || !rigPose(poseId)) return;
+    if (poseId === (e.defPose || "standing")) delete pa.pose; else pa.pose = poseId;
+    if (g) { g.userData.walkFrame = null; fillPersonModel(g, e, pa); }
+    scheduleAutosave();
   }
 
   // Floating name tag (canvas sprite). Layer 1 = main view only: never in the viewfinder,
@@ -2893,7 +3088,7 @@
   // Default figure for a spot: seated poses alternate, standing poses rotate through the six.
   function figureForSpot(spot, i) {
     const people = config.assetCatalog.filter(e => e.category === "person" && e.status !== "legacy");
-    const pool = people.filter(e => e.pose === spot.pose && !(spot.figH && e.noCar));   // legs-out poses don't fit a car seat
+    const pool = people.filter(e => (e.pose === spot.pose || (e.rig && spot.pose === "seated")) && !(spot.figH && e.noCar));   // legs-out poses don't fit a car seat; posed figures sit
     const list = pool.length ? pool : people;
     return list.length ? list[i % list.length].assetId : null;
   }
@@ -2904,6 +3099,7 @@
     if (on && !existing) {
       const fig = figureForSpot(sp, spots.indexOf(sp)); if (!fig) return;
       const pa = { assetId: fig, x: host.x, z: host.z, rotationDeg: 0, pin: { host: key, spot: spotId } };
+      if (catalogEntry(fig).rig && sp.pose === "seated") { pa.pose = "seated"; pa.autoSeat = true; }
       config.placedAssets.push(pa);
     } else if (!on && existing) {
       config.placedAssets = config.placedAssets.filter(p => p !== existing);
@@ -2973,7 +3169,8 @@
       const inside = fp && Math.abs(l.x) <= fp.L / 2 && Math.abs(l.z) <= fp.W / 2;
       const lim = inside && !(hg && hg.userData.walk) ? 3.5 : 1.2;
       spots.forEach(sp => {
-        if (sp.pose && e.pose && sp.pose !== e.pose) return;
+        const kind = personKind(pa, e);
+        if (sp.pose && kind && sp.pose !== kind && !e.rig) return;          // a posed figure takes any spot and fits its pose to it
         if (config.placedAssets.some(o => o !== pa && o.pin && !o.pin.floor && o.pin.host === h.key && o.pin.spot === sp.id)) return;
         const d = Math.hypot(l.x - sp.x, l.z - sp.z);
         if (d <= lim && (!best || d < best.d)) best = { h: h, sp: sp, d: d };
@@ -2982,8 +3179,10 @@
     if (best) {
       pa.pin = { host: ensureKey(best.h), spot: best.sp.id };
       placeCast(pa);
+      if (e.rig) poseForSpot(pa, e, best.sp.pose);
       return { kind: "spot", name: best.sp.name, seated: best.sp.pose === "seated" };
     }
+    if (e.rig) poseForSpot(pa, e, null);                     // off a seat: stand again if the seat sat them down
     // 3. a movable floor
     const f = floorHostAt(x, z, g);
     if (f) {
@@ -2996,6 +3195,17 @@
     if (pa.pin) { delete pa.pin; pa.x = round2(x); pa.z = round2(z); pa.rotationDeg = rot; }
     if (!batch) refreshElevations();
     return { kind: "free" };
+  }
+  // A posed figure taking a seat sits down; leaving it, it stands back up, unless you chose the pose.
+  function poseForSpot(pa, e, spotPose) {
+    const kind = personKind(pa, e);
+    if (spotPose === "seated" && kind !== "seated") { setPersonPose(pa, "seated"); pa.autoSeat = true; }
+    else if (spotPose !== "seated" && kind === "seated" && pa.autoSeat) { delete pa.autoSeat; setPersonPose(pa, e.defPose || "standing"); }
+  }
+  function poseHTML(pa) {
+    const cur = personPoseId(pa), kind = rigPose(cur).kind;
+    return '<div class="poseGrid">' + RIG_POSES.map(p => '<button data-pose="' + p.id + '"' + (p.id === cur ? ' class="active" aria-pressed="true"' : ' aria-pressed="false"') + '>' + escapeHtml(p.name) + '</button>').join("") + '</div>' +
+      (kind === "seated" && !(pa.pin && !pa.pin.floor) ? '<div class="hint">Seated poses sit at chair height: drag them onto a seat, bench or car seat.</div>' : '<div class="hint">Drop a figure on a seat and it sits down; take it off and it stands up.</div>');
   }
   function reanchorSelected() {
     const pa = cfgForSelected();
@@ -5650,6 +5860,7 @@
       platformHTML(cur) +
       (selected.kind === "placed" && cur.assetId === "setFlat" ? flatWallHTML(cur) + grpHTML("paint", "Paint", escapeHtml(paintName(cur.paint)), paintHTML(cur), true) : "") +
       (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
+      (isPerson && personPoseId(cur) ? grpHTML("pose", "Pose", escapeHtml(rigPose(personPoseId(cur)).name), poseHTML(cur), true) : "") +
       (isPerson ? grpHTML("figure", "Figure", fmtLen(personHeight(catalogEntry(cur.assetId), cur)), figureHTML(cur)) : "") +
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
       grpHTML("size", "Real-world size", cur.fitFt ? fmtLen(cur.fitFt) + " " + (cur.fitAxis || "length") : "", customFitHTML(cur)) +
@@ -6268,7 +6479,7 @@
       return "Wall " + fmtLen(e.lengthFt) + " × " + fmtLen(e.heightFt) + (e.assetId === "cornerPillar" ? " × " + fmtLen(e.widthFt) : "") +
         "<br>on deck " + fmtLen(d.lengthFt) + " × " + fmtLen(d.widthFt) + " × " + fmtLen(d.heightFt) + " · total H " + fmtLen(d.heightFt + e.heightFt);
     }
-    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (e.pose || "figure") + "<br>scaled to height · rides whatever it stands on";
+    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (personPoseId(pa, e) ? rigPose(personPoseId(pa, e)).name.toLowerCase() : e.pose || "figure") + "<br>scaled to height · rides whatever it stands on";
     if (e.custom) {
       return "L " + fmtLen(pa.lengthFt) + " × W " + fmtLen(pa.widthFt) + " × H " + fmtLen(pa.heightFt) + "<br>imported model · scaled uniformly";
     }
@@ -6346,6 +6557,10 @@
     if (del) del.addEventListener("click", removeSelected);
     const dup = document.getElementById("dupBtn");
     if (dup) dup.addEventListener("click", duplicateSelected);
+    document.querySelectorAll("#inspectorBody [data-pose]").forEach(b => b.addEventListener("click", () => {
+      const pa = cfgForSelected(); if (!pa) return;
+      delete pa.autoSeat; setPersonPose(pa, b.dataset.pose); renderInspector();
+    }));
     const xp = document.getElementById("expPieceBtn");
     if (xp) xp.addEventListener("click", () => openExportSheet("sel"));
     wireBlocking();
@@ -7132,18 +7347,55 @@
     }
     return marks[ids[ids.length - 1]];
   }
+  // Where along a leg between two marks a piece is at p: { dist, s, heading } — null when it's
+  // standing on a mark (before the first, after the last, or between two marks in one place).
+  function markLegAt(marks, T, p) {
+    const ids = markIdx(marks, T.length);
+    for (let j = 0; j < ids.length - 1; j++) {
+      const a = ids[j], b = ids[j + 1];
+      if (p > T[a] && p < T[b]) {
+        const A = marks[a], B = marks[b], len = Math.hypot(B.x - A.x, B.z - A.z);
+        if (len < 0.25) return null;
+        const s0 = clamp((p - T[a]) / ((T[b] - T[a]) || 1), 0, 1);
+        return { dist: s0 * s0 * (3 - 2 * s0) * len, s: s0, heading: radToDeg(Math.atan2(B.x - A.x, B.z - A.z)) };
+      }
+    }
+    return null;
+  }
+  // Posed people walk between their marks: the pack's walk cycle, one stride per ~0.83 of their
+  // height travelled, turning to face the way they're going and back to their mark's facing at the end.
+  const WALKS_IN = { standing: 1, folded: 1, hips: 1, walking: 1, phone: 1, waving: 1 };
   function applyBlocking(mv, p) {
     const bl = blockingOf(mv); if (!bl) return;
     const T = moveKeyTimes(mv);
     Object.keys(bl).forEach(k => {
       const pa = pieceByKey(k), q = pa && markPoseAt(bl[k], T, p), g = pa && placedGroupByUid[pa._uid];
       if (!q || !g) return;
-      setPosFor(pa, q.x, q.z); setYawFor(pa, q.r);
+      const e = catalogEntry(pa.assetId), leg = e && e.rig && WALKS_IN[personPoseId(pa, e)] ? markLegAt(bl[k], T, p) : null;
+      let r = q.r;
+      if (leg) {
+        const f = Math.min(1, leg.s / 0.15, (1 - leg.s) / 0.15), d = ((leg.heading - q.r) % 360 + 540) % 360 - 180;
+        r = q.r + d * f * f * (3 - 2 * f);
+      }
+      setPosFor(pa, q.x, q.z); setYawFor(pa, r);
       if (isElevatable(pa)) g.position.y = elevationFor(pa, g);
+      if (e && e.rig) setWalkFrame(pa, e, g, leg ? Math.floor((leg.dist / (0.83 * personHeight(e, pa))) * WALK_FRAMES) % WALK_FRAMES : null);
     });
   }
+  function setWalkFrame(pa, e, g, i) {
+    if (g.userData.walkFrame === i || (g.userData.walkFrame == null && i == null)) return;
+    g.userData.walkFrame = i;
+    fillPersonModel(g, e, pa, i);
+  }
   function blockedPoses(mv) { const bl = blockingOf(mv) || {}; return Object.keys(bl).map(pieceByKey).filter(Boolean).map(pa => [pa, pa.x, pa.z, pa.rotationDeg || 0]); }
-  function restorePoses(list) { list.forEach(([pa, x, z, r]) => { setPosFor(pa, x, z); setYawFor(pa, r); const g = placedGroupByUid[pa._uid]; if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g); }); }
+  function restorePoses(list) {
+    list.forEach(([pa, x, z, r]) => {
+      setPosFor(pa, x, z); setYawFor(pa, r);
+      const g = placedGroupByUid[pa._uid], e = catalogEntry(pa.assetId);
+      if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g);
+      if (g && e && e.rig) setWalkFrame(pa, e, g, null);
+    });
+  }
   // Camera points were inserted (+1 from `at`) or removed (-1 after `at`, marks at `at` dropped).
   function shiftBlocking(mv, at, d) {
     const bl = blockingOf(mv); if (!bl) return;
