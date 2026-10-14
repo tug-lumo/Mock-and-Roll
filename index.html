@@ -1125,6 +1125,9 @@
       <button data-ps="3d" title="Plan in 3D (perspective)">3D</button>
       <button data-ps="flat" title="Flat footprints, true scale — no perspective (F)">Footprints</button>
     </div>
+    <div id="planShow" class="seg" role="group" aria-label="Show in plan">
+      <button id="psRoofs" title="Lift the roof off the subway car so you can see and move the people inside">Open roofs</button>
+    </div>
     <div id="pickWrap">
       <button id="pickBtn" class="seg pickBtn" aria-haspopup="listbox" aria-expanded="false" title="Pick a piece from a list (Tab)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>
@@ -2056,6 +2059,7 @@
     wirePlanSheet();
     wireTabSync();
     document.querySelectorAll("#planStyle button").forEach(b => b.addEventListener("click", () => setFlatPlan(b.dataset.ps === "flat")));
+    document.getElementById("psRoofs").addEventListener("click", () => setPlanShow("roofs", !planShow.roofs));
     wirePicker();
     updatePlanStyleUI();
     wireCamSetup();
@@ -2194,6 +2198,7 @@
         const rail = new THREE.Mesh(new THREE.BoxGeometry(alongX ? len : fw, fh, alongX ? fw : len), frameMat);
         rail.position.set(alongX ? 0 : off, fh / 2 - 0.05, alongX ? off : 0);
         rail.raycast = function () {};                   // part of the fixed rig, never a pick target
+        rail.userData.ceilFrame = true;
         ceilingGroup.add(rail);
       });
       {                                                // footprints view: dashed outline of the LED ceiling above
@@ -4618,6 +4623,15 @@
       ring.position.set(cx, ceilY - 0.04, 0);
       const disc = add(new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.06, 32), lightMat));
       disc.position.set(cx, ceilY - 0.06, 0);
+    });
+    // The lid: roof, ceiling and everything hung from it. Plan view can lift it off (Open roofs) so the
+    // people inside are visible and can be picked through it.
+    g.updateMatrixWorld(true);
+    g.traverse(n => {
+      if (!n.isMesh || !n.geometry) return;
+      if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+      const lb = n.geometry.boundingBox.clone().applyMatrix4(n.matrixWorld);
+      if (lb.min.y >= ceilY - 1.15) { markLid(n); g.userData.hasLid = true; }
     });
     // Benches (six, per the plan): cream base, molded orange bucket seats, seat fronts 2'1" off centre.
     const benchSpans = SUBWAY_BENCHES;
@@ -9062,7 +9076,7 @@
   function frameDataFrom(pa, asMove) {
     const st = stageSnapshot(), cam = camSnapshot(pa);
     if (!asMove) delete cam.move;
-    return { stage: st, stateKey: stateKeyOf(st), camera: cam, optics: frameOptics(pa), cast: castInFrame(pa), updated: Date.now() };
+    return { stage: st, stateKey: stateKeyOf(st), camera: cam, camLabel: camLabel(pa), optics: frameOptics(pa), cast: castInFrame(pa), updated: Date.now() };
   }
   // A move frame: pose + optics at A, pictures at A and at the last point, cast seen anywhere along it.
   function captureMove(pa) {
@@ -9756,15 +9770,20 @@
     const states = [];
     rows.forEach(r => { let s = states.find(x => x.key === r.f.stateKey); if (!s) states.push(s = { key: r.f.stateKey, letter: r.i.state, no: r.i.stateNo, stage: r.f.stage, rows: [] }); s.rows.push(r); });
     const before = stageSnapshot(), keepPlaced = config.placedAssets, keepRW = config.rollingWalls, keepHouse = config.houseLights;
+    // Each setup's camera keeps the name it was shot on (CAM 2 stays CAM 2 when it's alone on a sheet);
+    // frames from before names were kept look the camera up by its key.
+    const shotOn = f => f.camLabel || (() => { const live = f.camera && f.camera.key && keepPlaced.find(q => q.assetId === "camera" && q.key === f.camera.key); return live ? camLabel(live) : null; })();
     deselect(); clearMulti();
     let html = "";
     try {
       states.forEach((st, k) => {
         applyStage(st.stage, true);
+        // Only this state's setups: drop the cameras the previous state's sheet put on the stage.
+        config.placedAssets = config.placedAssets.filter(q => !q._planLabel);
         if (withCams) {
           const seen = {};
           st.rows.forEach(r => { const sk = setupKeyOf(r.f); if (seen[sk]) { seen[sk].codes.push(r.i.code); return; }
-            const c = deepClone(r.f.camera); delete c.key; c._planLabel = true; seen[sk] = { pa: c, setup: r.i.setup, codes: [r.i.code] }; config.placedAssets.push(c); });
+            const c = deepClone(r.f.camera), nm = shotOn(r.f); delete c.key; c._planLabel = true; if (nm && !c.camName) c.camName = nm; seen[sk] = { pa: c, setup: r.i.setup, codes: [r.i.code] }; config.placedAssets.push(c); });
           Object.values(seen).forEach(v => { v.pa._planLabel = "SU" + String(v.setup).padStart(2, "0") + " · " + v.codes.join(", "); });
           config.placedAssets = config.placedAssets.filter(q => q.assetId !== "camera" || q._planLabel);
           rebuildPlaced();
@@ -9773,10 +9792,15 @@
         opt.meta = Object.assign({}, planOpts().meta, { production: pj.title, scene: "Stage state " + st.letter + " · " + st.rows.map(r => r.i.code).join(", ") });
         const svg = buildPlanSVG(opt);
         const scenes = [...new Set(st.rows.map(r => r.sc.number))];
+        const frameHTML = r => { const o = r.f.optics || {}; return '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div><div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + '</div>' + (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + '</div>'; };
+        // Frames beside the plan: all of them up to three, else the first, middle and last; the
+        // full set then follows on its own page.
+        const n = st.rows.length, side = n <= 3 ? st.rows : [st.rows[0], st.rows[Math.floor((n - 1) / 2)], st.rows[n - 1]];
         html += (k ? '<div class="pb"></div>' : "") + docHeader("Setup sheet · Stage state " + st.letter) +
-          '<div class="sub">Scene' + (scenes.length > 1 ? "s " : " ") + xmlEsc(scenes.join(", ")) + ' · ' + st.rows.length + ' frame' + (st.rows.length === 1 ? "" : "s") + ' · setups ' + [...new Set(st.rows.map(r => "SU" + String(r.i.setup).padStart(2, "0")))].join(", ") + '</div>' +
-          '<div class="plan">' + svg + '</div><div class="pb"></div>' + docHeader("Setup sheet · Stage state " + st.letter + " · frames") + '<div class="grid">' +
-          st.rows.map(r => { const o = r.f.optics || {}; return '<div class="fr"><div class="im">' + (r.img ? '<img src="' + r.img + '">' : "") + '<span class="cd">' + xmlEsc(r.i.code) + '</span></div><div class="mt">SU' + String(r.i.setup).padStart(2, "0") + ' · ' + xmlEsc(o.f + "mm · " + (o.fmt || "")) + '</div>' + (r.f.action ? '<div class="ac">' + xmlEsc(r.f.action) + '</div>' : "") + '</div>'; }).join("") + '</div>';
+          '<div class="sub">Scene' + (scenes.length > 1 ? "s " : " ") + xmlEsc(scenes.join(", ")) + ' · ' + n + ' frame' + (n === 1 ? "" : "s") + ' · setups ' + [...new Set(st.rows.map(r => "SU" + String(r.i.setup).padStart(2, "0")))].join(", ") + '</div>' +
+          '<div class="sheet"><div class="side">' + side.map(frameHTML).join("") + (n > 3 ? '<div class="more">First, middle and last of ' + n + ' · all frames on the next page</div>' : "") + '</div>' +
+          '<div class="plan">' + svg + '</div></div>' +
+          (n > 3 ? '<div class="pb"></div>' + docHeader("Setup sheet · Stage state " + st.letter + " · frames") + '<div class="grid">' + st.rows.map(frameHTML).join("") + '</div>' : "");
       });
     } finally {
       config.placedAssets = keepPlaced; config.rollingWalls = keepRW;
@@ -9785,7 +9809,8 @@
       rebuildPlaced(); refreshCamPicker();
     }
     printDoc(projectBase() + "_setup-sheets" + (withCams ? "-cameras" : "") + "_" + todayStamp(),
-      '.sub{font-size:11px;color:#3b4247;margin:-6px 0 8px}.plan svg{width:100%;height:auto;max-height:6.6in;display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}.fr{break-inside:avoid}' +
+      '.sub{font-size:11px;color:#3b4247;margin:-6px 0 8px}.sheet{display:grid;grid-template-columns:2.15in 1fr;gap:14px;align-items:start}.side{display:flex;flex-direction:column;gap:10px}.more{font-size:8px;color:#6b7278}' +
+      '.plan svg{width:100%;height:auto;max-height:6.5in;display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}.fr{break-inside:avoid}' +
       '.im{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1d2124}.im img{max-width:100%;max-height:100%;display:block}' +
       '.cd{position:absolute;left:4px;top:4px;background:#1d2124;color:#fff;font-weight:700;font-size:10px;padding:2px 5px;border-radius:3px}.mt{font-size:8px;color:#6b7278;margin:3px 0 1px}.ac{font-size:9px;line-height:1.3}.pb{break-after:page}', html);
   }
@@ -10366,7 +10391,8 @@
       '<div class="dial' + (on ? "" : " off") + '" id="ceilDial"><div class="dialTop"><label for="ceilHN">Height</label><span class="inl">' +
       '<input type="number" id="ceilHN" min="' + d(ceil.panelRigMinHeightFt) + '" max="' + d(ceil.panelRigMaxHeightFt) + '" step="' + st + '" value="' + d(ceil.heightFt) + '"' + (on ? "" : " disabled") + '><span class="unit">' + displayUnit + '</span></span></div>' +
       '<input type="range" id="ceilH" min="' + ceil.panelRigMinHeightFt + '" max="' + ceil.panelRigMaxHeightFt + '" step="0.25" value="' + ceil.heightFt + '" aria-label="Ceiling height"' + (on ? "" : " disabled") + '></div>' +
-      '<div class="hint">' + fmtLen(ceil.panelRigMinHeightFt) + ' to ' + fmtLen(ceil.panelRigMaxHeightFt) + '. In the 3D view you can also grab the panel from underneath and drag it up or down.</div>';
+      '<div class="hint">' + fmtLen(ceil.panelRigMinHeightFt) + ' to ' + fmtLen(ceil.panelRigMaxHeightFt) + '. In the 3D view you can also grab the panel from underneath and drag it up or down.</div>' +
+      '<label class="ceilRow" title="From above, the panel is see-through; this hides its frame too, for a clear view from overhead"><span>Frame seen from above</span><span class="swt"><input type="checkbox" role="switch" id="ceilFrame"' + (planShow.ceilFrame ? " checked" : "") + '><i></i></span></label>';
   }
   // The one place the ceiling height changes (Stage panel or a drag in the 3D view).
   function setCeilingHeight(ft, quiet) {
@@ -10399,6 +10425,8 @@
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
     const cv = document.getElementById("ceilVis");
     const ch = document.getElementById("ceilH"), cn = document.getElementById("ceilHN");
+    const cf = document.getElementById("ceilFrame");
+    if (cf) cf.addEventListener("change", () => setPlanShow("ceilFrame", cf.checked));
     if (cv && ceilingGroup) cv.addEventListener("change", () => {
       ceil.visible = cv.checked; ceilingGroup.visible = cv.checked;
       const dl = document.getElementById("ceilDial"); if (dl) dl.classList.toggle("off", !cv.checked);
@@ -11185,6 +11213,29 @@
   // shapes live on layer 2 (only this camera draws it); the 3D meshes stay on layer 0 and still take
   // the clicks (rays go through the same camera), so selecting and dragging work exactly as before.
   let flatPlan = false;
+  // Per-viewer display: lift roofs off in Plan (subway car), and show or hide the LED ceiling's frame
+  // when you look down on it from above in Walk (Plan never draws the ceiling).
+  const planShow = { roofs: true, ceilFrame: true };
+  try { planShow.roofs = localStorage.getItem("lumostage.planRoofs") !== "0"; planShow.ceilFrame = localStorage.getItem("lumostage.planCeilFrame") !== "0"; } catch (e) {}
+  const roofsOpen = () => planShow.roofs && nav.mode === "top" && viewCamUid == null;
+  function markLid(m) {
+    m.userData.lid = true;
+    m.raycast = function (rc, out) { if (!roofsOpen()) THREE.Mesh.prototype.raycast.call(this, rc, out); };   // click through an open roof
+  }
+  // Hide every lid on the stage for this frame; returns what was hidden so it can be put back.
+  function openLids() {
+    const out = [];
+    Object.keys(placedGroupByUid).forEach(k => {
+      const g = placedGroupByUid[k]; if (!g || !g.visible || !g.userData.hasLid) return;
+      g.traverse(n => { if (n.userData.lid && n.visible) { n.visible = false; out.push(n); } });
+    });
+    return out;
+  }
+  function setPlanShow(k, on) {
+    planShow[k] = !!on;
+    try { localStorage.setItem(k === "roofs" ? "lumostage.planRoofs" : "lumostage.planCeilFrame", on ? "1" : "0"); } catch (e) {}
+    updatePlanStyleUI();
+  }
   try { flatPlan = localStorage.getItem("lumostage.flatPlan") === "1"; } catch (e) {}
   let orthoCam = null;
   const fpGroup = new THREE.Group();
@@ -11327,6 +11378,7 @@
     document.getElementById("planBar").classList.toggle("hidden", !on);
     if (!on) closePicker(); else refreshPickCount();
     el.querySelectorAll("button").forEach(b => { const on = (b.dataset.ps === "flat") === flatPlan; b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on)); });
+    [["psRoofs", planShow.roofs]].forEach(([id, on]) => { const b = document.getElementById(id); b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on)); });
   }
   function fpMat(color, opacity) {
     // Always in the transparent pass so renderOrder puts footprints above the (semi-transparent) glossy floor.
@@ -12717,10 +12769,16 @@
     syncMoveBar();
     updateNav(dt);
     syncFootprints();
-    const ceilHide = nav.mode === "top" && ceilingGroup && ceilingGroup.visible ? ceilingGroup.children.filter(c => !c.isLine && c.visible) : null;
+    let ceilHide = null;
+    if (ceilingGroup && ceilingGroup.visible) {
+      if (nav.mode === "top") ceilHide = ceilingGroup.children.filter(c => !c.isLine && c.visible);
+      else if (!planShow.ceilFrame && camera.position.y > ceilingGroup.position.y) ceilHide = ceilingGroup.children.filter(c => c.userData.ceilFrame && c.visible);
+    }
     if (ceilHide) ceilHide.forEach(c => { c.visible = false; });
+    const lids = roofsOpen() ? openLids() : null;
     renderer.render(scene, viewCam());
     if (ceilHide) ceilHide.forEach(c => { c.visible = true; });
+    if (lids) lids.forEach(c => { c.visible = true; });
   }
 
   // Go.
