@@ -1853,6 +1853,9 @@
       { assetId: "p2_older_woman", name: "Older woman", category: "person", pose: "standing", heightFt: 5.15, widthFt: 1.34, depthFt: 1.07, model: "assets/people2/older-woman.glb", rig: "assets/rigs/older-woman.glb", gender: "f", defPose: "standing" },
       { assetId: "p2_girl", name: "Girl (teen)", category: "person", pose: "standing", heightFt: 5.00, widthFt: 1.98, depthFt: 0.98, model: "assets/people2/girl.glb", rig: "assets/rigs/girl.glb", gender: "f", defPose: "standing" },
       { assetId: "p2_boy", name: "Boy (about 6)", category: "person", pose: "standing", heightFt: 3.90, widthFt: 1.16, depthFt: 0.82, model: "assets/people2/boy.glb", rig: "assets/rigs/boy.glb", gender: "m", defPose: "standing" },
+      // Characters: built here, not from a model. The heart (Repatha "Blocked train" boards) sits on a seat
+      // or stands, with four expressions; it never joins a seat fill.
+      { assetId: "char_heart", name: "Heart character", category: "person", pose: "seated", heart: true, noFill: true, defPose: "seated", heightFt: 3.6, widthFt: 3.0, depthFt: 1.6 },
       { assetId: "p2_seated_scan_1", name: "Seated — legs out", category: "person", pose: "seated", noCar: true, seatDz: 1.0, heightFt: 3.90, widthFt: 1.68, depthFt: 4.35, model: "assets/people2/seated-scan-1.glb" },
       { assetId: "p2_seated_scan_2", name: "Seated — relaxed", category: "person", pose: "seated", heightFt: 4.30, widthFt: 1.60, depthFt: 2.75, model: "assets/people2/seated-scan-2.glb" },
       { assetId: "p2_seated_scan_3", name: "Seated — upright", category: "person", pose: "seated", heightFt: 4.40, widthFt: 1.22, depthFt: 2.56, model: "assets/people2/seated-scan-3.glb" },
@@ -2797,16 +2800,19 @@
       ["L UpperArm", "x", 18], ["R UpperArm", "x", 18], ["L Forearm", "x", 10], ["R Forearm", "x", 10]] }
   ];
   const rigPose = id => RIG_POSES.find(p => p.id === id);
+  // The poses a figure can take: the rigged people's, a character's own (the heart), or none.
+  function posesFor(e) { return e && e.heart ? HEART_POSES : e && e.rig ? RIG_POSES : null; }
+  function poseDef(e, id) { const l = posesFor(e); return l ? l.find(p => p.id === id) || null : null; }
   function personPoseId(pa, e) {
     e = e || catalogEntry(pa.assetId);
-    if (!e || !e.rig) return null;
-    return rigPose(pa.pose) ? pa.pose : (e.defPose || "standing");
+    if (!posesFor(e)) return null;
+    return poseDef(e, pa.pose) ? pa.pose : (e.defPose || "standing");
   }
   // "seated" | "standing": what kind of spot (seat or standing place) the figure takes.
   function personKind(pa, e) {
     e = e || catalogEntry(pa.assetId);
     const id = personPoseId(pa, e);
-    return id ? rigPose(id).kind : e && e.pose;
+    return id ? poseDef(e, id).kind : e && e.pose;
   }
   let poseLibReady = null;
   function loadPoseLib() {
@@ -2977,10 +2983,192 @@
   // Change a placed person's pose in place (inspector, or taking a seat).
   function setPersonPose(pa, poseId) {
     const e = catalogEntry(pa.assetId), g = placedGroupByUid[pa._uid];
-    if (!e || !e.rig || !rigPose(poseId)) return;
+    if (!e || !poseDef(e, poseId)) return;
     if (poseId === (e.defPose || "standing")) delete pa.pose; else pa.pose = poseId;
-    if (g) { g.userData.walkFrame = null; fillPersonModel(g, e, pa); }
+    if (g && e.heart) fillHeart(g, e, pa);
+    else if (g) { g.userData.walkFrame = null; fillPersonModel(g, e, pa); }
     scheduleAutosave();
+  }
+
+  // ---- Heart character ---------------------------------------------------------------------
+  // The cartoon heart from the Repatha "Blocked train" boards: a plump red heart with big eyes,
+  // brows and a mouth, thin periwinkle arms and legs, mitten hands. Built here (no model file).
+  // Feet / floor at y = 0, facing +Z (+X = its left). Seated: the heart's point rests on a 1.45'
+  // seat with its hands on the seat beside it and its legs over the edge, as on the subway benches.
+  const HEART_POSES = [{ id: "seated", name: "Seated", kind: "seated" }, { id: "standing", name: "Standing", kind: "standing" }];
+  const HEART_EXPRESSIONS = [["worried", "Worried"], ["neutral", "Neutral"], ["sad", "Sad"], ["happy", "Happy"]];
+  const heartExpr = pa => HEART_EXPRESSIONS.some(x => x[0] === pa.expr) ? pa.expr : "worried";
+  function heartExprHTML(pa) {
+    const cur = heartExpr(pa);
+    return '<div class="poseGrid">' + HEART_EXPRESSIONS.map(x => '<button data-expr="' + x[0] + '"' + (x[0] === cur ? ' class="active" aria-pressed="true"' : ' aria-pressed="false"') + '>' + x[1] + '</button>').join("") + '</div>';
+  }
+  const HEART = { W: 2.25, H: 2.1, D: 1.4, seat: 1.45, leg: 1.05 };
+  // Taubin's heart, z up, y the thin axis: (x² + 9/4 y² + z² − 1)³ − x²z³ − 9/80 y²z³ = 0.
+  const heartF = (x, y, z) => { const a = x * x + 2.25 * y * y + z * z - 1; return a * a * a - x * x * z * z * z - 0.1125 * y * y * z * z * z; };
+  function heartRay(dx, dy, dz) {                        // distance from the centre to the surface along a unit ray
+    let lo = 0, hi = 0.02;
+    while (hi < 2 && heartF(dx * hi, dy * hi, dz * hi) < 0) { lo = hi; hi += 0.02; }
+    for (let k = 0; k < 24; k++) { const m = (lo + hi) / 2; if (heartF(dx * m, dy * m, dz * m) < 0) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  let heartGeoCache = null;
+  // The body, in feet: point at y = 0, centred on x / z. Also returns surf(), for fitting the face.
+  function heartBody() {
+    if (heartGeoCache) return heartGeoCache;
+    const g = new THREE.SphereGeometry(1, 96, 72), P = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < P.count; i++) {
+      v.fromBufferAttribute(P, i).normalize();
+      const r = heartRay(v.x, v.z, v.y);                   // three's y up = the formula's z
+      P.setXYZ(i, v.x * r, v.y * r, v.z * r);
+    }
+    g.computeBoundingBox();
+    const b = g.boundingBox, sx = HEART.W / (b.max.x - b.min.x), sy = HEART.H / (b.max.y - b.min.y), sz = HEART.D / (b.max.z - b.min.z), y0 = b.min.y;
+    for (let i = 0; i < P.count; i++) P.setXYZ(i, P.getX(i) * sx, (P.getY(i) - y0) * sy, P.getZ(i) * sz);
+    g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
+    // A point on the surface seen from the heart's centre at (u, v) on its face (−1..1 across, up)
+    // and the outward normal there, for placing eyes, brows and mouth.
+    const surf = (u, w) => {
+      const d = new THREE.Vector3(u, w, 1).normalize(), r = heartRay(d.x, d.z, d.y);
+      const X = d.x * r, Y = d.y * r, Z = d.z * r, e = 1e-3;
+      const n = new THREE.Vector3(
+        (heartF(X + e, Z, Y) - heartF(X - e, Z, Y)) / sx,
+        (heartF(X, Z, Y + e) - heartF(X, Z, Y - e)) / sy,
+        (heartF(X, Z + e, Y) - heartF(X, Z - e, Y)) / sz).normalize();
+      return { p: new THREE.Vector3(X * sx, (Y - y0) * sy, Z * sz), n: n };
+    };
+    return heartGeoCache = { geo: g, surf: surf };
+  }
+  function heartSkinTexture() {
+    const c = document.createElement("canvas"); c.width = c.height = 256;
+    const x = c.getContext("2d"), im = x.createImageData(256, 256);
+    for (let i = 0; i < im.data.length; i += 4) { const v = 128 + (Math.random() - 0.5) * 70; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+    x.putImageData(im, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 4);
+    return t;
+  }
+  let heartMats = null;
+  function heartMaterials() {
+    if (heartMats) return heartMats;
+    const m = (o) => { const mt = new THREE.MeshStandardMaterial(o); mt.userData.sharedEnv = true; return mt; };   // shared by every heart
+    heartMats = {
+      body: m({ color: 0xcc2e24, roughness: 0.66, metalness: 0, bumpMap: heartSkinTexture(), bumpScale: 0.005 }),
+      limb: m({ color: 0x7d72c9, roughness: 0.6, metalness: 0 }),
+      white: m({ color: 0xf4f1ea, roughness: 0.25 }), iris: m({ color: 0x4a2c18, roughness: 0.3 }), pupil: m({ color: 0x0c0907, roughness: 0.2 }),
+      shine: m({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 0.1 }),
+      brow: m({ color: 0x2e1a10, roughness: 0.75 }), mouth: m({ color: 0x4a0b0f, roughness: 0.6, side: THREE.DoubleSide }),
+      teeth: m({ color: 0xf6f3ee, roughness: 0.35, side: THREE.DoubleSide }), tongue: m({ color: 0xd45a5e, roughness: 0.5, side: THREE.DoubleSide })
+    };
+    return heartMats;
+  }
+  const _ellip = (mat, rx, ry, rz, seg) => { const s = new THREE.Mesh(new THREE.SphereGeometry(1, seg || 20, seg ? Math.round(seg * 0.7) : 14), mat); s.scale.set(rx, ry, rz); return s; };
+  function heartTube(pts, r, mat, r2) {
+    const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+    const geo = new THREE.TubeGeometry(curve, 28, r, 12, false);
+    if (r2 != null) {                                       // taper from r to r2 along the length
+      const P = geo.attributes.position, c = new THREE.Vector3(), q = new THREE.Vector3();
+      for (let i = 0; i <= 28; i++) {
+        curve.getPointAt(i / 28, c); const k = (r + (r2 - r) * (i / 28)) / r;
+        for (let j = 0; j <= 12; j++) { const idx = i * 13 + j; q.fromBufferAttribute(P, idx).sub(c).multiplyScalar(k).add(c); P.setXYZ(idx, q.x, q.y, q.z); }
+      }
+      geo.computeVertexNormals();
+    }
+    const m = new THREE.Mesh(geo, mat);
+    const cap = (p, rr) => { const s = _ellip(mat, rr, rr, rr, 14); s.position.set(p[0], p[1], p[2]); return s; };
+    const grp = new THREE.Group(); grp.add(m, cap(pts[0], r), cap(pts[pts.length - 1], r2 != null ? r2 : r));
+    return grp;
+  }
+  // Mitten hand at p, fingers pointing along dir (unit, in the figure's frame), palm down.
+  function heartHand(p, dir, mat, side) {
+    const g = new THREE.Group(); g.position.set(p[0], p[1], p[2]);
+    g.rotation.y = Math.atan2(dir[0], dir[2]);
+    const palm = _ellip(mat, 0.12, 0.055, 0.13); g.add(palm);
+    [-0.075, -0.025, 0.025, 0.075].forEach((x, i) => {
+      const f = _ellip(mat, 0.028, 0.03, 0.1 - Math.abs(i - 1.5) * 0.012, 12); f.position.set(x, -0.012, 0.15); f.rotation.x = 0.25; g.add(f);
+    });
+    const th = _ellip(mat, 0.03, 0.03, 0.085, 12); th.position.set(-side * 0.12, 0, 0.06); th.rotation.y = -side * 0.9; g.add(th);
+    return g;
+  }
+  function heartFoot(p, mat) {
+    const f = _ellip(mat, 0.13, 0.1, 0.22); f.position.set(p[0], p[1], p[2] + 0.08); return f;
+  }
+  // Eyes, brows and mouth for one expression, fitted to the body's surface.
+  function heartFace(body, expr, mats) {
+    const face = new THREE.Group(), S = body.surf;
+    const gaze = { worried: [0.35, 0.18], neutral: [0.12, 0.05], sad: [0.1, -0.22], happy: [0.3, 0.12] }[expr];
+    const place = (obj, u, w, out) => { const s = S(u, w); obj.position.copy(s.p).addScaledVector(s.n, out || 0); obj.lookAt(obj.position.clone().add(s.n)); face.add(obj); return s; };
+    [-1, 1].forEach(side => {
+      const u = side * 0.5, w = 0.14;
+      const eye = new THREE.Group();
+      eye.add(_ellip(mats.white, 0.26, 0.31, 0.15, 28));
+      const look = new THREE.Group(); look.rotation.set(-gaze[1] * 0.9, gaze[0] * 0.9, 0); eye.add(look);
+      const iris = _ellip(mats.iris, 0.14, 0.155, 0.05, 24); iris.position.z = 0.125; look.add(iris);
+      const pup = _ellip(mats.pupil, 0.08, 0.09, 0.03, 20); pup.position.z = 0.158; look.add(pup);
+      const sh = _ellip(mats.shine, 0.034, 0.04, 0.015, 12); sh.position.set(0.045, 0.06, 0.18); look.add(sh);
+      place(eye, u, w, -0.01);
+      // brows: worried / sad lift the inner end, happy arches high, neutral sits level
+      const lift = { worried: 0.12, sad: 0.17, neutral: 0.02, happy: -0.02 }[expr], hgt = { worried: 0.44, sad: 0.43, neutral: 0.44, happy: 0.5 }[expr];
+      const inner = side * 0.24, outer = side * 0.8, sIn = S(inner, w + hgt + lift), sMid = S(side * 0.52, w + hgt + (expr === "happy" ? 0.05 : lift * 0.35) + 0.02), sOut = S(outer, w + hgt - (expr === "happy" ? 0.01 : 0.03));
+      const bp = [sIn, sMid, sOut].map(s => s.p.clone().addScaledVector(s.n, 0.02).toArray());
+      face.add(heartTube(bp, 0.05, mats.brow, 0.034));
+    });
+    // mouth
+    if (expr === "happy") {
+      const m = new THREE.Group(), sh = new THREE.Shape();
+      sh.moveTo(-0.26, 0.02); sh.quadraticCurveTo(0, 0.08, 0.26, 0.02); sh.quadraticCurveTo(0.2, -0.24, 0, -0.25); sh.quadraticCurveTo(-0.2, -0.24, -0.26, 0.02);
+      const mo = new THREE.Mesh(new THREE.ShapeGeometry(sh, 16), mats.mouth); m.add(mo);
+      const tt = new THREE.Shape(); tt.moveTo(-0.22, 0.02); tt.quadraticCurveTo(0, 0.07, 0.22, 0.02); tt.lineTo(0.18, -0.05); tt.quadraticCurveTo(0, -0.02, -0.18, -0.05); tt.lineTo(-0.22, 0.02);
+      const te = new THREE.Mesh(new THREE.ShapeGeometry(tt, 12), mats.teeth); te.position.z = 0.004; m.add(te);
+      const tg = _ellip(mats.tongue, 0.12, 0.06, 0.01, 16); tg.position.set(0, -0.18, 0.004); m.add(tg);
+      [mo, te].forEach(x => { x.material.polygonOffset = true; x.material.polygonOffsetFactor = -2; });
+      m.scale.set(1.9, 1.7, 1); place(m, 0, -0.3, 0.012);
+    } else {
+      const curve = { worried: [0.0, -0.035, 0.0], neutral: [0, -0.015, 0], sad: [-0.06, 0.02, -0.06] }[expr];
+      const pts = [-0.26, 0, 0.26].map((u, i) => { const s = S(u * (expr === "sad" ? 1.15 : 1), -0.33 + curve[i] * 1.6 + (expr === "worried" && i === 2 ? 0.025 : 0)); return s.p.clone().addScaledVector(s.n, 0.014).toArray(); });
+      face.add(heartTube(pts, 0.04, mats.mouth, 0.034));
+    }
+    return face;
+  }
+  function buildHeartCharacter(entry, pa) {
+    const g = new THREE.Group();
+    g.userData.baseY = 0;
+    fillHeart(g, entry, pa);
+    return g;
+  }
+  function fillHeart(g, entry, pa) {
+    g.children.slice().forEach(ch => { g.remove(ch); disposeObject3D(ch); });
+    const body = heartBody(), mats = heartMaterials(), H = HEART, seated = personKind(pa, entry) === "seated";
+    const s = (pa.heightFt > 0 ? pa.heightFt : entry.heightFt) / entry.heightFt;
+    const root = new THREE.Group(); root.scale.setScalar(s); g.add(root);
+    // the heart's point sits on the seat (seated) or on top of the legs (standing)
+    const by = seated ? H.seat - 0.02 : H.leg, bz = seated ? -0.28 : 0;
+    const heart = new THREE.Group(); heart.position.set(0, by, bz); root.add(heart);
+    const m = new THREE.Mesh(body.geo, mats.body); m.userData.sharedGeo = true; heart.add(m);
+    heart.add(heartFace(body, heartExpr(pa), mats));
+    const L = mats.limb, sideX = H.W / 2;
+    [-1, 1].forEach(sd => {
+      // arms from the heart's sides, a little below the middle
+      const sh = [sd * (sideX - 0.3), by + H.H * 0.3, bz + 0.15];
+      if (seated) {
+        const hand = [sd * (sideX - 0.02), H.seat + 0.12, bz + 0.3];         // on the cushion, just above the seat base
+        root.add(heartTube([sh, [sd * (sideX - 0.06), by + H.H * 0.2, bz + 0.25], [sd * (sideX - 0.02), H.seat + 0.16, bz + 0.28]], 0.065, L, 0.058));
+        root.add(heartHand(hand, [sd * 0.25, 0, 1], L, sd));
+        // legs out of the point, over the seat's front edge, dangling
+        const hip = [sd * 0.2, by + 0.12, bz + 0.12], knee = [sd * 0.24, H.seat + 0.02, 0.3], ankle = [sd * 0.27, H.seat - 0.95, 0.36];
+        root.add(heartTube([hip, [sd * 0.22, H.seat + 0.06, 0.12], knee, [sd * 0.26, H.seat - 0.45, 0.34], ankle], 0.085, L, 0.075));
+        root.add(heartFoot([ankle[0], ankle[1] - 0.04, ankle[2]], L));
+      } else {
+        const hand = [sd * (sideX - 0.02), by + 0.05, 0.2];
+        root.add(heartTube([sh, [sd * (sideX - 0.04), by + H.H * 0.15, 0.2], [hand[0], hand[1] + 0.07, hand[2]]], 0.065, L, 0.058));
+        const hd = heartHand(hand, [0, -1, 0.15], L, sd); hd.rotation.set(Math.PI / 2 - 0.15, 0, 0); root.add(hd);
+        const hip = [sd * 0.22, by + 0.15, 0], ankle = [sd * 0.24, 0.12, 0.02];
+        root.add(heartTube([hip, [sd * 0.23, by * 0.5, 0.02], ankle], 0.085, L, 0.075));
+        root.add(heartFoot([ankle[0], 0.09, ankle[2]], L));
+      }
+    });
+    root.traverse(n => { if (n.isMesh) { n.castShadow = true; } });
+    const role = pa.role && pa.role.color ? pa.role : null;
+    if (role && role.name) { const tg = makeNameTag(role.name, role.color); tg.position.y = (by + H.H) * s + 0.7; g.add(tg); }
+    g.userData.hasModel = true;
   }
 
   // Floating name tag (canvas sprite). Layer 1 = main view only: never in the viewfinder,
@@ -3087,7 +3275,7 @@
   function castOf(host) { return host && host.key ? config.placedAssets.filter(p => p.pin && !p.pin.floor && p.pin.host === host.key) : []; }
   // Default figure for a spot: seated poses alternate, standing poses rotate through the six.
   function figureForSpot(spot, i) {
-    const people = config.assetCatalog.filter(e => e.category === "person" && e.status !== "legacy");
+    const people = config.assetCatalog.filter(e => e.category === "person" && e.status !== "legacy" && !e.noFill);
     const pool = people.filter(e => (e.pose === spot.pose || (e.rig && spot.pose === "seated")) && !(spot.figH && e.noCar));   // legs-out poses don't fit a car seat; posed figures sit
     const list = pool.length ? pool : people;
     return list.length ? list[i % list.length].assetId : null;
@@ -3170,7 +3358,7 @@
       const lim = inside && !(hg && hg.userData.walk) ? 3.5 : 1.2;
       spots.forEach(sp => {
         const kind = personKind(pa, e);
-        if (sp.pose && kind && sp.pose !== kind && !e.rig) return;          // a posed figure takes any spot and fits its pose to it
+        if (sp.pose && kind && sp.pose !== kind && !posesFor(e)) return;   // a posed figure takes any spot and fits its pose to it
         if (config.placedAssets.some(o => o !== pa && o.pin && !o.pin.floor && o.pin.host === h.key && o.pin.spot === sp.id)) return;
         const d = Math.hypot(l.x - sp.x, l.z - sp.z);
         if (d <= lim && (!best || d < best.d)) best = { h: h, sp: sp, d: d };
@@ -3179,10 +3367,10 @@
     if (best) {
       pa.pin = { host: ensureKey(best.h), spot: best.sp.id };
       placeCast(pa);
-      if (e.rig) poseForSpot(pa, e, best.sp.pose);
+      if (posesFor(e)) poseForSpot(pa, e, best.sp.pose);
       return { kind: "spot", name: best.sp.name, seated: best.sp.pose === "seated" };
     }
-    if (e.rig) poseForSpot(pa, e, null);                     // off a seat: stand again if the seat sat them down
+    if (posesFor(e)) poseForSpot(pa, e, null);               // off a seat: stand again if the seat sat them down
     // 3. a movable floor
     const f = floorHostAt(x, z, g);
     if (f) {
@@ -3203,8 +3391,8 @@
     else if (spotPose !== "seated" && kind === "seated" && pa.autoSeat) { delete pa.autoSeat; setPersonPose(pa, e.defPose || "standing"); }
   }
   function poseHTML(pa) {
-    const cur = personPoseId(pa), kind = rigPose(cur).kind;
-    return '<div class="poseGrid">' + RIG_POSES.map(p => '<button data-pose="' + p.id + '"' + (p.id === cur ? ' class="active" aria-pressed="true"' : ' aria-pressed="false"') + '>' + escapeHtml(p.name) + '</button>').join("") + '</div>' +
+    const e = catalogEntry(pa.assetId), cur = personPoseId(pa, e), kind = poseDef(e, cur).kind;
+    return '<div class="poseGrid">' + posesFor(e).map(p => '<button data-pose="' + p.id + '"' + (p.id === cur ? ' class="active" aria-pressed="true"' : ' aria-pressed="false"') + '>' + escapeHtml(p.name) + '</button>').join("") + '</div>' +
       (kind === "seated" && !(pa.pin && !pa.pin.floor) ? '<div class="hint">Seated poses sit at chair height: drag them onto a seat, bench or car seat.</div>' : '<div class="hint">Drop a figure on a seat and it sits down; take it off and it stands up.</div>');
   }
   function reanchorSelected() {
@@ -4942,6 +5130,8 @@
     let g, modelSrc = entry;   // where to read model/modelReady from (variant overrides entry)
     if (entry.custom) {
       return buildCustomModel(entry, pa);
+    } else if (entry.category === "person" && entry.heart) {
+      return buildHeartCharacter(entry, pa);
     } else if (entry.category === "person") {
       return buildPerson(entry, pa);
     } else if (entry.assetId === "subwayCar") {
@@ -5860,7 +6050,8 @@
       platformHTML(cur) +
       (selected.kind === "placed" && cur.assetId === "setFlat" ? flatWallHTML(cur) + grpHTML("paint", "Paint", escapeHtml(paintName(cur.paint)), paintHTML(cur), true) : "") +
       (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
-      (isPerson && personPoseId(cur) ? grpHTML("pose", "Pose", escapeHtml(rigPose(personPoseId(cur)).name), poseHTML(cur), true) : "") +
+      (isPerson && personPoseId(cur) ? grpHTML("pose", "Pose", escapeHtml(poseDef(catalogEntry(cur.assetId), personPoseId(cur)).name), poseHTML(cur), true) : "") +
+      (isPerson && catalogEntry(cur.assetId).heart ? grpHTML("expr", "Expression", escapeHtml((HEART_EXPRESSIONS.find(x => x[0] === heartExpr(cur)) || [])[1] || ""), heartExprHTML(cur), true) : "") +
       (isPerson ? grpHTML("figure", "Figure", fmtLen(personHeight(catalogEntry(cur.assetId), cur)), figureHTML(cur)) : "") +
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
       grpHTML("size", "Real-world size", cur.fitFt ? fmtLen(cur.fitFt) + " " + (cur.fitAxis || "length") : "", customFitHTML(cur)) +
@@ -6479,7 +6670,7 @@
       return "Wall " + fmtLen(e.lengthFt) + " × " + fmtLen(e.heightFt) + (e.assetId === "cornerPillar" ? " × " + fmtLen(e.widthFt) : "") +
         "<br>on deck " + fmtLen(d.lengthFt) + " × " + fmtLen(d.widthFt) + " × " + fmtLen(d.heightFt) + " · total H " + fmtLen(d.heightFt + e.heightFt);
     }
-    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (personPoseId(pa, e) ? rigPose(personPoseId(pa, e)).name.toLowerCase() : e.pose || "figure") + "<br>scaled to height · rides whatever it stands on";
+    if (e.category === "person") return "Height " + fmtLen(personHeight(e, pa)) + " · " + (personPoseId(pa, e) ? poseDef(e, personPoseId(pa, e)).name.toLowerCase() : e.pose || "figure") + "<br>scaled to height · rides whatever it stands on";
     if (e.custom) {
       return "L " + fmtLen(pa.lengthFt) + " × W " + fmtLen(pa.widthFt) + " × H " + fmtLen(pa.heightFt) + "<br>imported model · scaled uniformly";
     }
@@ -6560,6 +6751,12 @@
     document.querySelectorAll("#inspectorBody [data-pose]").forEach(b => b.addEventListener("click", () => {
       const pa = cfgForSelected(); if (!pa) return;
       delete pa.autoSeat; setPersonPose(pa, b.dataset.pose); renderInspector();
+    }));
+    document.querySelectorAll("#inspectorBody [data-expr]").forEach(b => b.addEventListener("click", () => {
+      const pa = cfgForSelected(), e = pa && catalogEntry(pa.assetId), g = pa && placedGroupByUid[pa._uid]; if (!e || !e.heart) return;
+      if (b.dataset.expr === "worried") delete pa.expr; else pa.expr = b.dataset.expr;
+      if (g) fillHeart(g, e, pa);
+      scheduleAutosave(); renderInspector();
     }));
     const xp = document.getElementById("expPieceBtn");
     if (xp) xp.addEventListener("click", () => openExportSheet("sel"));
