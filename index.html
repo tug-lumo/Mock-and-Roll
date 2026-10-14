@@ -1547,6 +1547,21 @@
     });
     return out;
   }
+  // Bell 212 helicopter seats (see buildHelicopter).
+  const HELI_FLOOR = 2;
+  // Spot origins sit 1.45' in front of the seat back (as the subway's), feet on the floor.
+  function heliSpots() {
+    const F = HELI_FLOOR, out = [];
+    const s = (id, name, group, x, z, rot, seat) => out.push({ id: id, name: name, group: group, x: x, y: F, z: z, rot: rot, pose: "seated", seat: seat });
+    // Facing the nose, left is +z. The pilot flies from the right seat.
+    s("pilot", "Pilot (right seat)", "Cockpit", -6.65, -1.9, -90, { w: 1.7, back: 2.4 });
+    s("copilot", "Co-pilot (left seat)", "Cockpit", -6.65, 1.9, -90, { w: 1.7, back: 2.4 });
+    [2.25, 0.75, -0.75, -2.25].forEach((z, k) => s("fw" + (k + 1), "Forward bench · seat " + (k + 1), "Forward bench", -3.3, z, 90, { w: 1.48 }));
+    [1.86, 0.62, -0.62, -1.86].forEach((z, k) => s("rb" + (k + 1), "Rear bench · seat " + (k + 1), "Rear bench", 0.75, z, -90, { w: 1.24 }));
+    [[1, "left"], [-1, "right"]].forEach(sd => [2.55, 4.45].forEach((x, k) =>
+      s("pk" + sd[1][0] + (k + 1), "Aft pocket " + sd[1] + " · seat " + (k + 1), "Aft pockets", x, sd[0] * 3.25, -90, { w: 1.3 })));
+    return out;
+  }
   // Car seating fitted to a car's size. front: -1 = nose toward local -X (default), +1 = +X.
   // Left-hand drive puts the driver on the occupant's left; rhd flips it.
   // opt (per vehicle type): fx / rx = front / rear row offset as a fraction of L (toward the nose /
@@ -1758,6 +1773,16 @@
           { name: "Platform exterior",         x: 0,     z: -13, heightFt: 7, rotationDeg: 180, focusFt: 9 },
           { name: "Interior, center aisle",    x: -14,   z: 0,   heightFt: 7, rotationDeg: 270, focusFt: 20 },
           { name: "Interior, looking out door", x: 7,    z: 2.5, heightFt: 7, rotationDeg: 0,   focusFt: 8 }
+        ] },
+      // Bell 212 helicopter fuselage (FlightFlix rental): no tail boom or rotor; on skids or a caster dolly
+      // (pa.mount), sliding cabin doors open/closed (pa.doorsOpen). Nose to -X; cabin floor 2' up.
+      { assetId: "heliBell212", name: "Helicopter — Bell 212 (fuselage)", category: "aircraft", nose: -1, spots: heliSpots(),
+        lengthFt: 22.25, widthFt: 8.5, heightFt: 8, floorFt: 2,
+        cameraMarks: [
+          { name: "Cabin door, wide",            x: -0.3,  z: 11,  heightFt: 5.5, rotationDeg: 0,   focusFt: 11 },
+          { name: "Cockpit, over the shoulder",  x: -3.9,  z: 0.7, heightFt: 5.6, rotationDeg: 90,  focusFt: 4 },
+          { name: "Through the windshield",      x: -17,   z: 0,   heightFt: 4.8, rotationDeg: 270, focusFt: 8 },
+          { name: "Rear bench, from the front",  x: -3.2,  z: 0,   heightFt: 5.3, rotationDeg: 270, focusFt: 4 }
         ] },
       // Vehicle pack (assets/vehicles, prepared by tools/prep-vehicle.py): nose to -X, real-world lengths
       // (averaged for the type), windows split into see-through Glass. Widths include mirrors.
@@ -3657,7 +3682,7 @@
     { key: "set-wall", label: "Set walls" },
     { key: "glass-wall", label: "Glass walls" },
     { key: "set-piece", label: "Set pieces", also: ["set"] },
-    { key: "vehicle", label: "Vehicles" },
+    { key: "vehicle", label: "Vehicles", also: ["aircraft"] },
     { key: "human", label: "People", also: ["person"] }
   ];
   function libCatOf(e) { const sh = shelfOf(e).toLowerCase(); return LIB_CATS.find(c => c.label.toLowerCase() === sh) || null; }
@@ -4425,6 +4450,256 @@
     return g;
   }
 
+  // ==================================================================
+  //  HELICOPTER — Bell 212 fuselage (FlightFlix rental; CHOPPER/ photos + tech sheet)
+  // ==================================================================
+  // As rented: the fuselage only, cut flat behind the cabin (no tail boom, no rotor), ~22' long,
+  // here in military green on its skids (or a caster dolly). Low-poly on purpose: the skin is one
+  // lofted mesh (cross-sections along x, nose at -X) whose quads are sorted into paint / glass /
+  // open, and the instrument panel and console are painted textures, not modelled.
+  // Seats as photographed: 4 facing aft behind the pilots, 4 facing forward against the
+  // transmission well, two tandem seats in each aft pocket beside it, plus pilot and co-pilot.
+  // [x, belly y, roof y, half width, bottom corner r, top corner r]
+  const HELI_RINGS = [
+    [-11.0, 2.95, 3.65, 0.7, 0.3, 0.3], [-10.6, 2.35, 4.35, 2.1, 0.6, 0.8], [-9.9, 2.0, 4.85, 3.05, 0.5, 1.2],
+    [-9.0, 1.85, 5.35, 3.65, 0.4, 1.3], [-7.8, 1.75, 6.0, 4.0, 0.3, 1.1], [-6.5, 1.75, 6.4, 4.1, 0.25, 0.6],
+    [-5.1, 1.75, 6.5, 4.1, 0.25, 0.42], [-4.8, 1.75, 6.5, 4.1, 0.25, 0.42], [-3.0, 1.75, 6.5, 4.1, 0.25, 0.42],
+    [-2.8, 1.75, 6.5, 4.1, 0.25, 0.42], [2.2, 1.75, 6.5, 4.1, 0.25, 0.42], [3.0, 1.75, 6.5, 4.1, 0.25, 0.42],
+    [7.2, 1.75, 6.5, 4.1, 0.25, 0.42], [8.6, 2.5, 6.45, 3.5, 0.5, 0.42], [10.2, 3.3, 6.3, 2.6, 0.4, 0.4],
+    [11.0, 3.6, 6.2, 2.2, 0.3, 0.35]
+  ];
+  // One cross-section's +z half: bottom centre → side → top centre. Side vertices land on the
+  // door / window levels (clamped into the section) so openings fall on whole quads.
+  function heliRing(r) {
+    const yb = r[1], yt = r[2], hw = r[3], rb = r[4], rt = r[5], a = yb + rb, b = yt - rt, lean = 0.12;
+    const zAt = y => hw - lean * Math.max(0, Math.min(1, (y - a) / Math.max(b - a, 0.01)));
+    const h = [[0, yb], [hw - rb, yb]];
+    for (let k = 1; k <= 2; k++) { const t = k / 3 * Math.PI / 2; h.push([hw - rb + Math.sin(t) * rb, a - Math.cos(t) * rb]); }
+    h.push([hw, a]);
+    [HELI_FLOOR, 3.9, 5.6, 6.05].forEach(y => { const yy = Math.min(Math.max(y, a), b); h.push([zAt(yy), yy]); });
+    const zt = zAt(b); h.push([zt, b]);
+    for (let k = 1; k <= 2; k++) { const t = k / 3 * Math.PI / 2; h.push([zt - rt + Math.cos(t) * rt, b + Math.sin(t) * rt]); }
+    h.push([zt - rt, yt], [0, yt]);
+    return h;
+  }
+  // 0 paint · 1 glass · 2 open · 3 anti-glare black. (x, y) = quad centre, az = its |z|.
+  function heliQuad(xm, ym, az) {
+    if (xm > -2.8 && xm < 2.2 && ym > HELI_FLOOR && ym < 6.05 && az > 3) return 2;          // sliding-door opening
+    if (xm > -4.8 && xm < -3.0 && ym > 3.9 && ym < 5.6 && az > 3) return 1;                 // hinged panel window
+    if (xm > -9.9 && xm < -5.1 && ym > 4.05) return 1;                                      // windshield, door windows, overhead
+    if (xm > -10.6 && xm < -9.0 && ym > 2.25 && ym < 3.6 && az > 1.2) return 1;             // chin windows
+    if (xm > -10.6 && xm < -9.9 && ym > 4.0) return 3;                                     // anti-glare panel ahead of the windshield
+    return 0;
+  }
+  // Boxes / tubes merged into one mesh per material (one draw call each).
+  function mergeGeos(geos, mat) {
+    const pos = [], nor = [];
+    geos.forEach(g => {
+      const n = g.index ? g.toNonIndexed() : g;
+      Array.prototype.push.apply(pos, n.attributes.position.array); Array.prototype.push.apply(nor, n.attributes.normal.array);
+      if (n !== g) n.dispose(); g.dispose();
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    return new THREE.Mesh(geo, mat);
+  }
+  const _hm = new THREE.Matrix4(), _hq = new THREE.Quaternion(), _he = new THREE.Euler(), _hv = new THREE.Vector3(), _h1 = new THREE.Vector3(1, 1, 1);
+  function heliBox(w, h, d, x, y, z, ry, rx) {
+    const g = new THREE.BoxGeometry(w, h, d);
+    return g.applyMatrix4(_hm.compose(_hv.set(x, y, z), _hq.setFromEuler(_he.set(rx || 0, ry || 0, 0, "YXZ")), _h1));
+  }
+  function heliTube(a, b, r) {
+    const d = new THREE.Vector3().subVectors(b, a), g = new THREE.CylinderGeometry(r, r, d.length(), 6, 1, true);
+    _hq.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+    return g.applyMatrix4(_hm.compose(new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5), _hq, _h1));
+  }
+  // Painted panel textures, shared by every helicopter.
+  let heliTex = null;
+  function heliTextures() {
+    if (heliTex) return heliTex;
+    const mk = (w, h, draw) => {
+      const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+      const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+    };
+    const gauge = (x, cx, cy, r, k) => {
+      x.fillStyle = "#0b0c0d"; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+      x.strokeStyle = "#5c6166"; x.lineWidth = 2; x.stroke();
+      x.strokeStyle = "#e6e6e6"; x.lineWidth = 1;
+      for (let i = 0; i < 11; i++) { const a = -3.9 + i * 0.52; x.beginPath(); x.moveTo(cx + Math.cos(a) * r * 0.74, cy + Math.sin(a) * r * 0.74); x.lineTo(cx + Math.cos(a) * r * 0.9, cy + Math.sin(a) * r * 0.9); x.stroke(); }
+      const a = -3.6 + (k * 1.37 % 4.6); x.strokeStyle = "#ffffff"; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * r * 0.68, cy + Math.sin(a) * r * 0.68); x.stroke();
+    };
+    const panel = mk(512, 128, (x, w, h) => {
+      x.fillStyle = "#c4c8cb"; x.fillRect(0, 0, w, h);                       // light grey panel face (as photographed)
+      x.fillStyle = "#9da2a6"; x.fillRect(0, h - 10, w, 10);
+      let k = 0;
+      [[22, 186], [326, 490]].forEach(span => {                             // pilot / co-pilot flight instruments
+        for (let row = 0; row < 2; row++) for (let col = 0; col < 3; col++) gauge(x, span[0] + 26 + col * 55, 32 + row * 56, 24, k++);
+      });
+      x.fillStyle = "#1c1f22"; x.fillRect(200, 10, 112, 98);                 // centre stack: engine gauges + displays
+      for (let row = 0; row < 3; row++) for (let col = 0; col < 4; col++) gauge(x, 214 + col * 28, 24 + row * 30, 11, k++);
+      x.fillStyle = "#e3e6e8"; [[40, 112], [120, 112], [356, 112], [436, 112]].forEach(p => x.fillRect(p[0], p[1], 34, 5));   // placards
+    });
+    const consoleT = mk(128, 256, (x, w, h) => {
+      x.fillStyle = "#16181b"; x.fillRect(0, 0, w, h);
+      for (let y = 6; y < h - 20; y += 30) {                                // radio / nav heads, stacked
+        x.fillStyle = "#26292d"; x.fillRect(6, y, w - 12, 26);
+        x.fillStyle = (y / 30) % 3 === 0 ? "#6dd36d" : "#e8a33a"; x.fillRect(14, y + 7, 40, 8);
+        x.fillStyle = "#c9ccd0"; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(70 + i * 13, y + 13, 4, 0, 7); x.fill(); }
+      }
+    });
+    heliTex = { panel: panel, console: consoleT };
+    return heliTex;
+  }
+
+  function buildHelicopter(entry, pa) {
+    pa = pa || {};
+    const F = HELI_FLOOR, g = new THREE.Group();
+    g.userData.baseY = 0;
+    const paint = new THREE.MeshStandardMaterial({ color: 0x4b5330, roughness: 0.74, metalness: 0.08 });          // olive drab
+    const paint2 = new THREE.MeshStandardMaterial({ color: 0x4b5330, roughness: 0.74, metalness: 0.08, side: THREE.DoubleSide });
+    const black = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.62, metalness: 0.1 });
+    const black2 = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.62, metalness: 0.1, side: THREE.DoubleSide });
+    const alu = new THREE.MeshStandardMaterial({ color: 0xa7acb1, roughness: 0.45, metalness: 0.6, side: THREE.DoubleSide });
+    const inner = new THREE.MeshStandardMaterial({ color: 0x80868c, roughness: 0.62, metalness: 0.3, side: THREE.BackSide });
+    const inner2 = new THREE.MeshStandardMaterial({ color: 0x80868c, roughness: 0.62, metalness: 0.3, side: THREE.DoubleSide });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x55595d, roughness: 0.85 });
+    const vinyl = new THREE.MeshStandardMaterial({ color: 0x5c6167, roughness: 0.7 });
+    const tubeMat = new THREE.MeshStandardMaterial({ color: 0xb1b6bb, roughness: 0.4, metalness: 0.6 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x1e2b2a, roughness: 0.04, metalness: 0.9, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide });
+    glass.userData.reflective = true;
+    const tex = heliTextures();
+
+    // ---- skin: lofted cross-sections; outside painted, inside bare aluminium -------------------
+    const rings = HELI_RINGS.map(r => {
+      const h = heliRing(r);
+      return h.concat(h.slice(1, h.length - 1).reverse().map(p => [-p[0], p[1]])).map(p => [r[0], p[1], p[0]]);
+    });
+    const N = rings[0].length, pos = [], idx = [[], [], [], [], []];
+    rings.forEach(rg => rg.forEach(p => pos.push(p[0], p[1], p[2])));
+    const V = (i, j) => i * N + (j % N);
+    for (let i = 0; i < rings.length - 1; i++) for (let j = 0; j < N; j++) {
+      const q = [V(i, j), V(i + 1, j), V(i + 1, j + 1), V(i, j + 1)];
+      let xm = 0, ym = 0, az = 0;
+      q.forEach(k => { xm += pos[k * 3] / 4; ym += pos[k * 3 + 1] / 4; az += Math.abs(pos[k * 3 + 2]) / 4; });
+      const t = heliQuad(xm, ym, az); if (t === 2) continue;
+      idx[t].push(q[0], q[1], q[2], q[0], q[2], q[3]);
+    }
+    // End caps on their own vertices (flat-shaded): a rounded nose tip, the bare aluminium cut aft.
+    const cap = (ring, tip, flip, t) => {
+      const c0 = pos.length / 3; let cy = 0;
+      ring.forEach(p => { pos.push(p[0], p[1], p[2]); cy += p[1] / N; });
+      pos.push(tip, cy, 0);
+      const c = c0 + N;
+      for (let j = 0; j < N; j++) { const a = c0 + j, b = c0 + (j + 1) % N; flip ? idx[t].push(c, b, a) : idx[t].push(c, a, b); }
+    };
+    cap(rings[0], -11.25, false, 0);
+    cap(rings[rings.length - 1], rings[rings.length - 1][0][0], true, 4);
+    const skinGeo = new THREE.BufferGeometry();
+    skinGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    const order = [0, 1, 3, 4], all = [];
+    order.forEach((t, m) => { skinGeo.addGroup(all.length, idx[t].length, m); Array.prototype.push.apply(all, idx[t]); });
+    skinGeo.setIndex(all); skinGeo.computeVertexNormals();
+    g.add(new THREE.Mesh(skinGeo, [paint, glass, black, alu]));
+    const innerGeo = new THREE.BufferGeometry();                            // same skin, opaque faces only, seen from inside
+    innerGeo.setAttribute("position", skinGeo.attributes.position); innerGeo.setAttribute("normal", skinGeo.attributes.normal);
+    innerGeo.setIndex(idx[0].concat(idx[3], idx[4]));
+    g.add(new THREE.Mesh(innerGeo, inner));
+
+    // Window frames: centre post and roof rails over the greenhouse, posts at the door lines.
+    const ringPt = (i, j, sd) => { const p = rings[i][j]; return new THREE.Vector3(p[0], p[1], p[2] * (sd || 1)); };
+    const frames = [], gh = [2, 3, 4, 5, 6];                                // greenhouse stations (-9.9 … -5.1)
+    for (let n = 0; n < gh.length - 1; n++) {
+      frames.push(heliTube(ringPt(gh[n], 13), ringPt(gh[n + 1], 13), 0.07));
+      [1, -1].forEach(sd => frames.push(heliTube(ringPt(gh[n], 10, sd), ringPt(gh[n + 1], 10, sd), 0.06)));
+    }
+    [4, 5, 6].forEach(i => [1, -1].forEach(sd => {
+      let j = 4; while (j < 13 && rings[i][j][1] < 4.05) j++;
+      for (; j < 13; j++) frames.push(heliTube(ringPt(i, j, sd), ringPt(i, j + 1, sd), 0.06));
+    }));
+    g.add(mergeGeos(frames, paint2));
+
+    // ---- engine / transmission cowling on the roof, beacon, exhausts ---------------------------
+    const cs = new THREE.Shape();
+    cs.moveTo(-3.6, 6.45); cs.quadraticCurveTo(-3.3, 7.5, -1.9, 7.55); cs.lineTo(6.6, 7.55);
+    cs.quadraticCurveTo(7.7, 7.5, 8.8, 6.4); cs.lineTo(-3.6, 6.45);
+    const cg = new THREE.ExtrudeGeometry(cs, { depth: 3.0, bevelEnabled: true, bevelThickness: 0.22, bevelSize: 0.18, bevelSegments: 2, curveSegments: 6 });
+    cg.translate(0, 0, -1.5);
+    g.add(new THREE.Mesh(cg, paint));
+    const dark = [heliBox(1.5, 0.5, 0.04, -1.2, 7.05, 1.74), heliBox(1.5, 0.5, 0.04, -1.2, 7.05, -1.74)];   // intake grilles
+    [1, -1].forEach(sd => dark.push(heliTube(new THREE.Vector3(6.4, 7.5, sd * 0.9), new THREE.Vector3(7.2, 7.95, sd * 1.15), 0.28)));
+    g.add(mergeGeos(dark, black2));
+    const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.25, 10), new THREE.MeshStandardMaterial({ color: 0xff2a1a, emissive: 0x7a0d06 }));
+    beacon.position.set(5.6, 7.9, 0); g.add(beacon);
+
+    // ---- base: skids (default) or a caster dolly ------------------------------------------------
+    const base = [], v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    if (pa.mount === "casters") {
+      [1, -1].forEach(sd => {
+        base.push(heliBox(13.5, 0.35, 0.35, -0.6, 0.62, sd * 3.0));
+        [-6.4, -0.6, 5.2].forEach(x => base.push(heliBox(0.5, 0.18, 0.5, x, 0.36, sd * 3.0)));
+        [-4.2, 2.6].forEach(x => base.push(heliBox(0.3, 1.0, 0.3, x, 1.25, sd * 3.0)));
+      });
+      [-6.4, -0.6, 5.2].forEach(x => base.push(heliBox(0.3, 0.3, 6.0, x, 0.62, 0)));
+      g.add(mergeGeos(base, black2));
+      const wheels = [];
+      [-6.4, -0.6, 5.2].forEach(x => [1, -1].forEach(sd => {
+        const w = new THREE.CylinderGeometry(0.25, 0.25, 0.18, 12); w.rotateX(Math.PI / 2); w.translate(x, 0.25, sd * 3.0); wheels.push(w);
+      }));
+      g.add(mergeGeos(wheels, new THREE.MeshStandardMaterial({ color: 0x222426, roughness: 0.9 })));
+    } else {
+      [1, -1].forEach(sd => {
+        const z = sd * 4.0;
+        base.push(heliTube(v3(-7.0, 0.16, z), v3(5.6, 0.16, z), 0.16), heliTube(v3(-8.0, 0.8, z), v3(-7.0, 0.16, z), 0.16));
+        [-4.2, 2.6].forEach(x => base.push(heliTube(v3(x, 0.2, z), v3(x, 1.62, sd * 3.15), 0.14)));
+      });
+      [-4.2, 2.6].forEach(x => base.push(heliTube(v3(x, 1.62, -3.15), v3(x, 1.62, 3.15), 0.14)));
+      g.add(mergeGeos(base, new THREE.MeshStandardMaterial({ color: 0x3b4128, roughness: 0.7, metalness: 0.15 })));
+    }
+
+    // ---- sliding cabin doors (both sides): open = slid aft over the rear fuselage ---------------
+    const open = pa.doorsOpen !== false, dx = open ? 4.7 : -0.3, wins = [-1.15, 1.15];
+    [1, -1].forEach(sd => {
+      const z = sd * (open ? 4.2 : 4.05);
+      const door = makeWallWithHoles(5.0, 4.0, 0.1, wins.map(x => ({ x: x, y: 1.75, w: 1.6, h: 1.6, r: 0.3 })), paint2);
+      door.position.set(dx, F, z); g.add(door);
+      wins.forEach(x => { const gl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), glass); gl.position.set(dx + x, F + 2.55, z); g.add(gl); });
+    });
+    g.add(mergeGeos([1, -1].map(sd => heliBox(10.2, 0.1, 0.1, 2.2, 6.12, sd * 4.12)), black2));   // upper door tracks
+
+    // ---- interior: floors, transmission well, aft bulkhead --------------------------------------
+    g.add(mergeGeos([heliBox(3.6, 0.1, 7.2, -6.75, F - 0.05, 0), heliBox(12.2, 0.1, 8.0, 1.05, F - 0.05, 0)], floorMat));
+    g.add(mergeGeos([heliBox(4.8, 4.45, 5.0, 4.7, F + 2.22, 0), heliBox(0.1, 4.45, 8.0, 7.15, F + 2.22, 0)], inner2));
+    g.userData.walk = [{ x0: -8.4, x1: 7.1, z0: -3.95, z1: 3.95, y: F }];
+
+    // ---- seats: one per cast spot, merged (vinyl pads, tube frames) ------------------------------
+    const pads = [], legs = [];
+    heliSpots().forEach(sp => {
+      const w = sp.seat.w, bh = sp.seat.back || 1.75, ry = degToRad(sp.rot), c = Math.cos(ry), s = Math.sin(ry);
+      const at = (lx, lz) => [sp.x + lx * c + lz * s, sp.z - lx * s + lz * c];      // seat frame: facing local +z
+      let p = at(0, -0.74); pads.push(heliBox(w - 0.1, 0.16, 1.4, p[0], F + 1.32, p[1], ry));
+      p = at(0, -1.47); pads.push(heliBox(w - 0.1, bh, 0.14, p[0], F + 1.42 + bh / 2, p[1], ry, -0.14));
+      [[-1, -0.2], [1, -0.2], [-1, -1.3], [1, -1.3]].forEach(l => { const q = at(l[0] * (w / 2 - 0.16), l[1]); legs.push(heliBox(0.08, 1.24, 0.08, q[0], F + 0.62, q[1], ry)); });
+    });
+    g.add(mergeGeos(pads, vinyl));
+    g.add(mergeGeos(legs, tubeMat));
+
+    // ---- cockpit: instrument panel + console as textures, glareshield, cyclics ------------------
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 1.5), new THREE.MeshStandardMaterial({ map: tex.panel, roughness: 0.6 }));
+    panel.rotation.y = Math.PI / 2; panel.rotateX(-0.28); panel.position.set(-8.3, F + 2.15, 0); g.add(panel);
+    const cockpitDark = [heliBox(0.8, 0.14, 6.3, -8.55, F + 2.98, 0, 0, 0), heliBox(0.4, 1.5, 6.0, -8.55, F + 2.15, 0)];
+    [1, -1].forEach(sd => {
+      cockpitDark.push(heliTube(v3(-7.25, F, sd * 1.9), v3(-7.45, F + 1.95, sd * 1.9), 0.045));
+      cockpitDark.push(heliBox(0.12, 0.35, 0.12, -7.46, F + 2.05, sd * 1.9));
+    });
+    g.add(mergeGeos(cockpitDark, black2));
+    const conMat = new THREE.MeshStandardMaterial({ map: tex.console, roughness: 0.6 });
+    const pedestal = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.25, 1.1), [black2, black2, conMat, black2, black2, black2]);
+    pedestal.position.set(-7.3, F + 0.62, 0); g.add(pedestal);
+    return g;
+  }
+
   function buildAssetGroup(pa) {
     const entry = catalogEntry(pa.assetId);
     if (!entry) { console.warn("Lumostage: placedAsset references unknown assetId '" + pa.assetId + "' — skipped."); return null; }
@@ -4437,6 +4712,9 @@
     } else if (entry.assetId === "subwayCar") {
       g = buildSubwayCar(entry, pa);
       attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // stainless shell mirrors the volume
+    } else if (entry.assetId === "heliBell212") {
+      g = buildHelicopter(entry, pa);
+      attachProbe(g, g, pa, { filter: mt => !!mt.userData.reflective });   // the canopy glass mirrors the volume
     } else if (entry.assetId === "stationPlatform") {
       g = buildStationPlatform(entry, pa);
     } else if (entry.assetId === "setFlat") {
@@ -5476,7 +5754,7 @@
   // Reflection controls for pieces that carry a probe (imported models, the subway shell).
   function hasProbeKind(pa) {
     const e = pa && catalogEntry(pa.assetId);
-    return !!(e && (e.custom || e.assetId === "subwayCar"));
+    return !!(e && (e.custom || e.assetId === "subwayCar" || e.assetId === "heliBell212"));
   }
   function reflSummary(pa) {
     if (selected.kind !== "placed" || !hasProbeKind(pa)) return "";
@@ -5537,11 +5815,14 @@
 
   // Subway doors: a quick state, so it sits right under Position as a two-way switch.
   function doorsHTML(pa) {
-    if (selected.kind !== "placed" || pa.assetId !== "subwayCar") return "";
-    const open = pa.doorsOpen !== false;
-    return '<div class="rowSeg"><span id="doorsLbl">Doors</span><div class="seg" role="group" aria-labelledby="doorsLbl">' +
+    if (selected.kind !== "placed" || (pa.assetId !== "subwayCar" && pa.assetId !== "heliBell212")) return "";
+    const open = pa.doorsOpen !== false, heli = pa.assetId === "heliBell212", cast = pa.mount === "casters";
+    return '<div class="rowSeg"><span id="doorsLbl">' + (heli ? "Cabin doors" : "Doors") + '</span><div class="seg" role="group" aria-labelledby="doorsLbl">' +
       '<button data-doors="0" class="' + (open ? "" : "active") + '" aria-pressed="' + !open + '">Closed</button>' +
-      '<button data-doors="1" class="' + (open ? "active" : "") + '" aria-pressed="' + open + '">Open</button></div></div>';
+      '<button data-doors="1" class="' + (open ? "active" : "") + '" aria-pressed="' + open + '">Open</button></div></div>' +
+      (heli ? '<div class="rowSeg"><span id="mountLbl">Sits on</span><div class="seg" role="group" aria-labelledby="mountLbl">' +
+        '<button data-mount="skids" class="' + (cast ? "" : "active") + '" aria-pressed="' + !cast + '">Skids</button>' +
+        '<button data-mount="casters" class="' + (cast ? "active" : "") + '" aria-pressed="' + cast + '">Casters</button></div></div>' : "");
   }
   function wireReflectFields() {
     const on = document.getElementById("reflOn"), k = document.getElementById("reflK");
@@ -5559,6 +5840,13 @@
       const uid = pa._uid, open = b.dataset.doors === "1";
       if ((pa.doorsOpen !== false) === open) return;
       pa.doorsOpen = open;
+      rebuildPlaced(); reselectUid(uid); scheduleAutosave();
+    }));
+    document.querySelectorAll("#inspectorBody [data-mount]").forEach(b => b.addEventListener("click", () => {
+      const pa = cfgForSelected(); if (!pa) return;
+      const uid = pa._uid, m = b.dataset.mount === "casters" ? "casters" : "skids";
+      if ((pa.mount || "skids") === m) return;
+      if (m === "casters") pa.mount = m; else delete pa.mount;
       rebuildPlaced(); reselectUid(uid); scheduleAutosave();
     }));
   }
@@ -5934,6 +6222,10 @@
       const uc = e.undercarriageFt != null ? e.undercarriageFt : 0;
       return "L " + fmtLen(e.lengthFt) + " × W " + fmtLen(e.widthFt) + " × H " + fmtLen(e.heightFt + uc) + " · hollow" +
         (uc ? "<br>on " + fmtLen(uc) + " air-caster undercarriage (floor at " + fmtLen(uc) + ")" : "");
+    }
+    if (e.assetId === "heliBell212") {
+      return "L " + fmtLen(e.lengthFt) + " × W " + fmtLen(e.widthFt) + " × H " + fmtLen(e.heightFt) + " · no tail boom or rotor" +
+        "<br>on " + (pa.mount === "casters" ? "a caster dolly" : "skids") + " · cabin floor at " + fmtLen(e.floorFt) + " · 12 cabin seats + 2 pilots";
     }
     if (e.platform) {
       const d = platformDims(e, pa);
@@ -7605,6 +7897,7 @@
     if (pa.assetId === "glassWall") return { name: "Glass wall", dims: "12′ × 10′ on 12×4 deck" };
     if (pa.assetId === "cornerPillar") return { name: "Glass corner", dims: "4′ × 4′ × 10′" };
     if (pa.assetId === "subwayCar") return { name: "Subway car", dims: "37′ × 8′, doors " + (pa.doorsOpen !== false ? "open" : "closed") };
+    if (pa.assetId === "heliBell212") return { name: "Helicopter (Bell 212)", dims: "22′ × 8′6″ on " + (pa.mount === "casters" ? "casters" : "skids") + ", doors " + (pa.doorsOpen !== false ? "open" : "closed") };
     const nm = (e.name || pa.assetId).replace(/\s*\(.*\)\s*$/, "");
     const L = e.custom ? pa.lengthFt : e.lengthFt, W = e.custom ? pa.widthFt : e.widthFt;
     return { name: nm, dims: L ? ftIn(L) + " × " + ftIn(W) : "" };
@@ -7789,7 +8082,7 @@
           });
           centroid = planW(g, 0, 0);
         } else if (fp) {
-          const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar";
+          const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar" || e.nose;
           out.push('<polygon points="' + pts(fp) + '" fill="' + (veh ? "#dfe3e7" : pa.assetId === "stageDeck" ? "#eef0f2" : "#e6e2da") + '" stroke="#4b525a" stroke-width="0.9"/>');
           const lb = localBoxOfGroup(g);
           if (veh && lb) {                                     // nose marker: chevron at the front end
@@ -10430,7 +10723,7 @@
         platformPillars().forEach(q => fpRect(fp, q[0] - PLATFORM.pw / 2, q[0] + PLATFORM.pw / 2, q[1] - PLATFORM.pd / 2, q[1] + PLATFORM.pd / 2, 0x2f5a3a, 1, 4));
       } else {
         const lb = localBoxOfGroup(g); if (!lb) return fp;
-        const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar";
+        const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar" || e.nose;
         const col = pa.assetId === "stageDeck" ? 0x6f7a86 : veh ? 0xaab4be : e.custom ? 0xaab4be : 0xb9b1a3;
         fpRect(fp, lb.min.x, lb.max.x, lb.min.z, lb.max.z, col, 0.85, veh ? 3 : 2, 0x2b3038);
         if (veh) {                                                       // chevron at the front
