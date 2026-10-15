@@ -4454,32 +4454,43 @@
   }
   // 8' railing section, after the NYC elevated-station rails: a heavy 10" kick bar along the bottom
   // (the break between the built set and the LED world beyond), thin vertical bars at 4" centres you
-  // can see through, a top rail with a band under it, and a capped post at each end. Runs along X;
-  // pa.postL / pa.postR (default on) drop an end post so sections share one where they butt.
+  // can see through, a top rail with a band under it, and a capped post at each end. Runs along X and
+  // is exactly 8' end to end whatever the posts: a post sits inside the 8' (its outer face flush with
+  // the end), and without one the rails run right to the end, so sections butt flush either way.
+  // pa.postL / pa.postR (default on) · pa.paint: the colour (default subway green).
+  const RAIL_PAINTS = [["#4a7b5a", "Subway green"], ["#1f2326", "Black"], ["#e8e6e0", "White"], ["#a9afb5", "Galvanised"], ["#8a3b2c", "Oxide red"], ["#2e4a7a", "Navy"], ["#c99a2e", "Brass"]];
   function buildRailing(entry, pa) {
     pa = pa || {};
     const L = entry.lengthFt, g = new THREE.Group(); g.userData.baseY = 0;
-    const green = new THREE.MeshStandardMaterial({ color: 0x4a7b5a, roughness: 0.6, metalness: 0.15 });
+    const col = parseInt((pa.paint || RAIL_PAINTS[0][0]).slice(1), 16);
+    const green = new THREE.MeshStandardMaterial({ color: col, roughness: 0.6, metalness: 0.15 });
     const P = 4 / 12, kickH = 10 / 12, kickD = 0.25, topY = 3.5, bandY = 3.05, HT = entry.heightFt;
+    const postL = pa.postL !== false, postR = pa.postR !== false;
     const box = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), green); m.position.set(x, y, z); g.add(m); return m; };
-    const x0 = -L / 2 + P, x1 = L / 2 - P, run = x1 - x0;   // the run between the posts
-    box(run, kickH, kickD, 0, kickH / 2, 0);                                       // kick bar
-    box(run + 0.02, 0.06, kickD + 0.06, 0, kickH + 0.03, 0);                       // its capping lip
-    box(run, 0.2, 0.24, 0, topY - 0.1, 0);                                         // top rail
-    box(run, 0.12, 0.14, 0, bandY, 0);                                             // band under it
-    const n = Math.round(run / (4 / 12)), lo = kickH + 0.06, hi = bandY - 0.06, hi2 = topY - 0.2;
+    // The rails fill the 8' between the posts, or out to the very end where there's no post.
+    const x0 = -L / 2 + (postL ? P : 0), x1 = L / 2 - (postR ? P : 0), run = x1 - x0, xm = (x0 + x1) / 2;
+    box(run, kickH, kickD, xm, kickH / 2, 0);                                      // kick bar
+    box(run, 0.06, kickD + 0.06, xm, kickH + 0.03, 0);                             // its capping lip
+    box(run, 0.2, 0.24, xm, topY - 0.1, 0);                                        // top rail
+    box(run, 0.12, 0.14, xm, bandY, 0);                                            // band under it
+    // Bars on a fixed 4" grid from the section's own ends, so two sections butted together keep the
+    // rhythm across the joint (no bar on the joint itself or inside a post).
+    const lo = kickH + 0.06, hi = bandY - 0.06, hi2 = topY - 0.2, pitch = 4 / 12;
     const bar = new THREE.BoxGeometry(0.07, hi - lo, 0.07), short = new THREE.BoxGeometry(0.07, hi2 - bandY - 0.06, 0.07);
+    const n = Math.round(L / pitch);
     for (let i = 1; i < n; i++) {
-      const m = new THREE.Mesh(bar, green); m.position.set(x0 + run * i / n, (lo + hi) / 2, 0); g.add(m);
-      if (i % 2) { const t = new THREE.Mesh(short, green); t.position.set(x0 + run * i / n, (bandY + 0.06 + hi2) / 2, 0); g.add(t); }
+      const bx = -L / 2 + i * pitch;
+      if (bx < x0 + 0.05 || bx > x1 - 0.05) continue;
+      const m = new THREE.Mesh(bar, green); m.position.set(bx, (lo + hi) / 2, 0); g.add(m);
+      if (i % 2) { const t = new THREE.Mesh(short, green); t.position.set(bx, (bandY + 0.06 + hi2) / 2, 0); g.add(t); }
     }
-    [[-1, pa.postL !== false], [1, pa.postR !== false]].forEach(([sx, on]) => {
+    [[-1, postL], [1, postR]].forEach(([sx, on]) => {
       if (!on) return;
-      const px = sx * (L / 2 - P / 2);
+      const px = sx * (L / 2 - P / 2);                       // outer face flush with the section's end
       box(P, HT - 0.2, P, px, (HT - 0.2) / 2, 0);                                  // post
-      box(P + 0.12, 0.09, P + 0.12, px, HT - 0.16, 0);                            // cap plate
+      box(P, 0.09, P + 0.12, px, HT - 0.16, 0);                                   // cap plate (kept inside the 8')
       const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), green); ball.position.set(px, HT - 0.02, 0); g.add(ball);
-      box(P + 0.1, 0.25, P + 0.1, px, 0.125, 0);                                  // base collar
+      box(P, 0.25, P + 0.1, px, 0.125, 0);                                        // base collar
     });
     return g;
   }
@@ -6288,7 +6299,15 @@
     return grpHTML("rail", "Posts", [pa.postL !== false && "left", pa.postR !== false && "right"].filter(Boolean).join(" + ") || "none",
       '<label class="setToggle"><input type="checkbox" id="railPostL" ' + (pa.postL !== false ? "checked" : "") + '><span>Post at the left end</span></label>' +
       '<label class="setToggle"><input type="checkbox" id="railPostR" ' + (pa.postR !== false ? "checked" : "") + '><span>Post at the right end</span></label>' +
-      '<div class="hint">Butting two sections together? Switch off one of the two posts where they meet. Group a railing with its deck (Ctrl + G) to move them together.</div>', true);
+      '<div class="hint">Every section is exactly 8′ end to end, posts or not, so they butt flush. Where two meet, switch off one of the two posts for a single shared post. Group a railing with its deck (Ctrl + G) to move them together.</div>', true) +
+      grpHTML("railPaint", "Colour", escapeHtml(railPaintName(pa.paint)), railPaintHTML(pa), true);
+  }
+  function railPaintName(c) { const f = RAIL_PAINTS.find(x => x[0] === (c || RAIL_PAINTS[0][0])); return f ? f[1] : "Custom " + c; }
+  function railPaintHTML(pa) {
+    const cur = pa.paint || RAIL_PAINTS[0][0];
+    return '<div class="roles" role="radiogroup" aria-label="Railing colour">' + RAIL_PAINTS.map(f => '<button class="roleSw paintSw" role="radio" data-c="' + f[0] + '" aria-checked="' + (cur === f[0]) + '" aria-label="' + f[1] + '" title="' + f[1] + '"' +
+      ' tabindex="' + (cur === f[0] ? 0 : -1) + '" style="--c:' + f[0] + ';--k:' + (lumaOf(f[0]) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>').join("") + '</div>' +
+      '<div class="field"><label for="paintCustom">Custom colour</label><input type="color" id="paintCustom" value="' + cur + '" style="width:60px;height:30px;padding:2px"></div>';
   }
   function platformHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
