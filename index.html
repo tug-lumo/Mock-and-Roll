@@ -747,8 +747,8 @@
   body.touch #navHud { display: none !important; }
   body.touch:not(.phone) #joy { left: calc(var(--rail) + 18px); bottom: 18px; }
   body.touch.drawerOpen:not(.phone) #joy { left: calc(var(--rail) + 330px); }
-  #rotatePrompt, #newSheet, #expSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
-  #rotatePrompt.hidden, #newSheet.hidden, #expSheet.hidden { display: none; }
+  #rotatePrompt, #newSheet, #expSheet, #snapSheet { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.72); }
+  #rotatePrompt.hidden, #newSheet.hidden, #expSheet.hidden, #snapSheet.hidden { display: none; }
   #camSetup { position: absolute; inset: 0; z-index: 47; display: grid; place-items: center; background: rgba(10,11,13,.6); }
   #camSetup.hidden { display: none; }
   #camSetup .card { width: min(420px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); max-height: calc(100% - 32px); overflow: auto; }
@@ -757,11 +757,18 @@
   #camSetup .btnRow button { flex: 1; }
   select.wideSel { max-width: 200px; }
   #camChoices select.wideSel { max-width: 170px; }
-  #rotatePrompt .card, #newSheet .card, #expSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
-  #rotatePrompt h3, #newSheet h3, #expSheet h3 { margin: 0 0 6px; font-size: 16px; }
-  #rotatePrompt p, #newSheet p, #expSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  #rotatePrompt .card, #newSheet .card, #expSheet .card, #snapSheet .card { width: min(440px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--panelShadow); }
+  #rotatePrompt h3, #newSheet h3, #expSheet h3, #snapSheet h3 { margin: 0 0 6px; font-size: 16px; }
+  #rotatePrompt p, #newSheet p, #expSheet p, #snapSheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
   #newSheet .btnRow button { flex: 1 1 auto; }
-  #expSheet .seg { display: flex; margin: 0 0 8px; }
+  #expSheet .seg, #snapSheet .seg { display: flex; margin: 0 0 8px; }
+  #snapSheet .seg button { flex: 1; justify-content: center; }
+  #snapSheet .card { width: min(520px, calc(100% - 32px)); }
+  #snapPrev { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #0b0e10; border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; }
+  .snapCap { display: block; font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  .snapCap input { display: block; width: 100%; margin-top: 4px; }
+  .snapCap .opt { opacity: .7; }
+  #snapSheet .btnRow button { flex: 1 1 auto; }
   #expSheet .seg button { flex: 1; justify-content: center; }
   #expSheet .setToggle.off { opacity: .45; pointer-events: none; }
   #expSheet .hint { margin: 6px 0 14px; }
@@ -979,6 +986,7 @@
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-snap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></g></symbol>
       <symbol id="i-cube" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></g></symbol>
       <symbol id="i-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></symbol>
       <symbol id="i-open" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14"/></g></symbol>
@@ -1007,6 +1015,7 @@
       <button id="boardBtn" title="Storyboard — every frame you've added, by scene"><svg><use href="#i-board"/></svg>Board</button>
     </div>
     <span class="spacer"></span>
+    <button class="ghost" id="snapBtn" title="Snapshot this view: a clean, high-resolution picture to download or print"><svg><use href="#i-snap"/></svg>Snapshot</button>
     <button class="ghost" id="houseBtn" aria-pressed="true" title="House lights (H) — switch off to see only the light coming from the LED volume"><svg><use href="#i-bulb"/></svg>House lights <b>ON</b></button>
     <div class="histBtns editOnly" role="group" aria-label="History">
       <button class="ghost" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#i-undo"/></svg></button>
@@ -1026,6 +1035,7 @@
         <button class="item hidden" id="openPublished" role="menuitem"><svg><use href="#i-phone"/></svg><span>Open the published layout<small>The setup last published from the studio PC</small></span></button>
         <div class="sep"></div>
         <button class="item" id="planBtn" role="menuitem"><svg><use href="#i-plan"/></svg><span>Stage plan…<small>A to-scale floor plan to print, PDF or share (Ctrl+P)</small></span></button>
+        <button class="item" id="snapMenuBtn" role="menuitem"><svg><use href="#i-snap"/></svg><span>Snapshot this view…<small>A clean picture of what you're looking at, to download or print</small></span></button>
         <button class="item" id="expBtn" role="menuitem"><svg><use href="#i-cube"/></svg><span>Export 3D model…<small>The stage or the selection as a .glb for Blender, Unreal, C4D</small></span></button>
         <div class="sep editOnly"></div>
         <button class="item hidden" id="publishBtn" role="menuitem"><svg><use href="#i-phone"/></svg><span>Publish to phone<small>Send this layout and any imported models to the phone viewer</small></span></button>
@@ -1380,6 +1390,18 @@
       <h3 id="newTitle">Start a new project?</h3>
       <p>This clears the stage and starts a new project: sets, decks, vehicles, people, cameras, saved shots, the storyboard and project details. The studio, LED / 360° setup, settings and your imported 3D models stay. You can undo it straight after.</p>
       <div class="btnRow"><button id="newCancel">Cancel</button><button id="newSaveGo">Save, then clear</button><button class="primary" id="newGo">Clear the stage</button></div>
+    </div>
+  </div>
+  <!-- Snapshot this view -->
+  <div id="snapSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="snapTitle">
+    <div class="card">
+      <h3 id="snapTitle">Snapshot this view</h3>
+      <p>Exactly what you're looking at, without the app around it, selection rings or helpers. For behind-the-scenes pages and approach notes.</p>
+      <img id="snapPrev" alt="Preview of the snapshot">
+      <label class="snapCap">Caption <span class="opt">optional · on the printed sheet</span><input type="text" id="snapCaption" maxlength="120" placeholder="e.g. Approach: car on the platform, heart on the bench"></label>
+      <div class="seg" role="radiogroup" aria-label="Size"><button id="snapHD" role="radio">1920 wide</button><button id="snap4K" role="radio">3840 wide</button></div>
+      <label class="setToggle"><input type="checkbox" id="snapTags" checked><span>Name tags (cameras, characters)</span></label>
+      <div class="btnRow"><button id="snapCancel">Cancel</button><button id="snapPng">Download PNG</button><button class="primary" id="snapPrint">Print sheet</button></div>
     </div>
   </div>
   <!-- File → Export 3D model -->
@@ -2074,6 +2096,7 @@
     wireVfBar(); wireMovePanel(); wireMoveBar();
     wireNewLayout();
     wireExportSheet();
+    wireSnapSheet();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
@@ -8137,8 +8160,8 @@
   // view (right), and the camera report under the plan. Rendered off-screen at 2x and scaled down,
   // so it doesn't depend on the window size and the viewfinder/HUD never appear in it.
   // dofPa: render through that camera's lens with depth of field (when it's on).
-  function renderOffscreen(cam, w, h, hideList, dofPa) {
-    const ss = Math.min(2, renderer.capabilities.maxTextureSize / Math.max(w, h));
+  function renderOffscreen(cam, w, h, hideList, dofPa, ssMax) {
+    const ss = Math.min(ssMax || 2, renderer.capabilities.maxTextureSize / Math.max(w, h));
     const W = Math.round(w * ss), H = Math.round(h * ss);
     const rt = new THREE.WebGLRenderTarget(W, H);
     const was = hideList.map(o => o ? o.visible : null);
@@ -8882,6 +8905,65 @@
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ---- Snapshot this view -----------------------------------------------------------------
+  // The main view (Walk or Plan) rendered again off screen at print resolution: same camera, same
+  // lens, same open roofs and hidden ceiling, without the UI, selection rings or helpers. Name tags
+  // (layer 1) only when asked. PNG download, or a titled landscape sheet to print / save as PDF.
+  const snapUI = { w: 1920 };
+  function snapshotCanvas(w, tags) {
+    const src = viewCam(), cam = src.clone(), r = renderer.domElement;
+    const aspect = r.clientWidth / Math.max(1, r.clientHeight), h = Math.round(w / aspect);
+    if (cam.isPerspectiveCamera) { cam.aspect = aspect; cam.updateProjectionMatrix(); }
+    cam.layers.mask = src.layers.mask;
+    if (tags) cam.layers.enable(1); else cam.layers.disable(1);
+    const hid = mainViewHide();
+    try {
+      return renderOffscreen(cam, w, h, [yawRing, collOutline, pivotMark].concat(multiMarks), null, w > 2400 ? 1.5 : 2);
+    } finally { hid.forEach(c => { c.visible = true; }); }
+  }
+  function openSnapSheet() {
+    closeMenus();
+    if (viewCamUid != null) { toast("In the viewfinder, use Print for the shot with its plan"); return; }
+    if (boardOpen) { toast("Close the board first: the snapshot is of the stage view"); return; }
+    syncSnapSheet();
+    const pv = document.getElementById("snapPrev"); pv.src = snapshotCanvas(640, document.getElementById("snapTags").checked).toDataURL("image/jpeg", 0.8);
+    document.getElementById("snapSheet").classList.remove("hidden");
+    document.getElementById("snapPrint").focus();
+  }
+  function syncSnapSheet() {
+    [["snapHD", 1920], ["snap4K", 3840]].forEach(([id, w]) => { const b = document.getElementById(id), on = snapUI.w === w; b.classList.toggle("active", on); b.setAttribute("aria-checked", String(on)); });
+  }
+  function snapView() { return nav.mode === "top" ? (flatPlan ? "Plan · footprints" : "Plan view") : "Walk view"; }
+  function snapDownload() {
+    const c = snapshotCanvas(snapUI.w, document.getElementById("snapTags").checked);
+    c.toBlob(b => {
+      const name = projectBase() + "_view_" + todayStamp() + ".png";
+      downloadBlob(b, name); toast("Saved " + name);
+    }, "image/png");
+    document.getElementById("snapSheet").classList.add("hidden");
+  }
+  function snapPrint() {
+    const url = snapshotCanvas(snapUI.w, document.getElementById("snapTags").checked).toDataURL("image/jpeg", 0.92);
+    const cap = document.getElementById("snapCaption").value.trim();
+    printDoc(projectBase() + "_view_" + todayStamp(),
+      '.cap{font-size:13px;margin:-4px 0 8px;color:#1d2124}.shot{width:100%;max-height:6.5in;object-fit:contain;display:block;background:#0b0e10;border:1px solid #1d2124}.ft{font-size:9px;color:#6b7278;margin-top:5px}',
+      docHeader("Behind the scenes · " + snapView()) + (cap ? '<div class="cap">' + xmlEsc(cap) + '</div>' : "") +
+      '<img class="shot" src="' + url + '"><div class="ft">' + xmlEsc(snapView()) + ' · Mock &amp; Roll planning view, not a camera frame</div>');
+    document.getElementById("snapSheet").classList.add("hidden");
+  }
+  function wireSnapSheet() {
+    const sh = document.getElementById("snapSheet");
+    document.getElementById("snapBtn").addEventListener("click", openSnapSheet);
+    document.getElementById("snapMenuBtn").addEventListener("click", openSnapSheet);
+    document.getElementById("snapHD").addEventListener("click", () => { snapUI.w = 1920; syncSnapSheet(); });
+    document.getElementById("snap4K").addEventListener("click", () => { snapUI.w = 3840; syncSnapSheet(); });
+    document.getElementById("snapTags").addEventListener("change", () => { document.getElementById("snapPrev").src = snapshotCanvas(640, document.getElementById("snapTags").checked).toDataURL("image/jpeg", 0.8); });
+    document.getElementById("snapCancel").addEventListener("click", () => sh.classList.add("hidden"));
+    document.getElementById("snapPng").addEventListener("click", snapDownload);
+    document.getElementById("snapPrint").addEventListener("click", snapPrint);
+    sh.addEventListener("keydown", e => { if (e.key === "Escape") { sh.classList.add("hidden"); e.stopPropagation(); } });
   }
 
   // ---- Export 3D model (.glb) -------------------------------------------------------------
@@ -12874,16 +12956,21 @@
     syncMoveBar();
     updateNav(dt);
     syncFootprints();
-    let ceilHide = null;
-    if (ceilingGroup && ceilingGroup.visible) {
-      if (nav.mode === "top") ceilHide = ceilingGroup.children.filter(c => !c.isLine && c.visible);
-      else if (!planShow.ceilFrame && camera.position.y > ceilingGroup.position.y) ceilHide = ceilingGroup.children.filter(c => c.userData.ceilFrame && c.visible);
-    }
-    if (ceilHide) ceilHide.forEach(c => { c.visible = false; });
-    const lids = roofsOpen() ? openLids() : null;
+    const hid = mainViewHide();
     renderer.render(scene, viewCam());
-    if (ceilHide) ceilHide.forEach(c => { c.visible = true; });
-    if (lids) lids.forEach(c => { c.visible = true; });
+    hid.forEach(c => { c.visible = true; });
+  }
+  // What the main view leaves out this frame (Plan's ceiling, an overhead ceiling frame, open roofs).
+  // Hides them and returns them so the caller can put them back.
+  function mainViewHide() {
+    let out = [];
+    if (ceilingGroup && ceilingGroup.visible) {
+      if (nav.mode === "top") out = ceilingGroup.children.filter(c => !c.isLine && c.visible);
+      else if (!planShow.ceilFrame && camera.position.y > ceilingGroup.position.y) out = ceilingGroup.children.filter(c => c.userData.ceilFrame && c.visible);
+    }
+    out.forEach(c => { c.visible = false; });
+    if (roofsOpen()) out = out.concat(openLids());
+    return out;
   }
 
   // Go.
