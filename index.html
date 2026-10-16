@@ -98,6 +98,7 @@
   #rail button {
     display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 0 8px;
     border: 0; background: transparent; color: var(--muted); border-radius: 9px; font-size: 11.5px; font-weight: 550;
+    text-align: center; line-height: 1.15;
   }
   #rail button svg { width: 22px; height: 22px; }
   #rail button:hover { color: var(--text); background: var(--panel2); }
@@ -574,6 +575,50 @@
   body.phone #ctlPanel { width: min(320px, calc(100vw - var(--rail) - 16px)); left: calc(var(--rail) + 8px); bottom: 8px; }
   #navHud .cap { min-width: 18px; height: 18px; font-size: 10.5px; padding: 0 4px; border-bottom-width: 2px; border-radius: 4px; vertical-align: -3px; margin: 0 2px; }
   #navHud b { color: var(--text); font-weight: 600; }
+
+  /* Prompt maker: describe a place, get a generator prompt fitted to this volume and camera */
+  #promptMaker { position: absolute; z-index: 33; left: calc(var(--rail) + 12px); right: 12px; top: 12px; bottom: 12px; margin: 0 auto; max-width: 1120px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--panelShadow); display: flex; flex-direction: column; overflow: hidden; }
+  #promptMaker.hidden { display: none; }
+  body.drawerOpen #promptMaker { left: calc(var(--rail) + 322px); }
+  .pmHead { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); }
+  .pmHead b { font-size: 14px; white-space: nowrap; }
+  .pmHead .seg button { padding: 4px 12px; font-size: 12px; }
+  #promptMaker .seg button[aria-pressed="true"] { background: var(--accentFill); color: #fff; }
+  .pmHead .x { padding: 6px; line-height: 0; } .pmHead .x svg { width: 16px; height: 16px; }
+  .pmBody { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+  .pmVars { overflow-y: auto; padding: 4px 16px 16px; border-right: 1px solid var(--line); }
+  .pmVars .ctlSec { margin-top: 14px; }
+  .pmRow { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 4px 12px; align-items: start; padding: 5px 0; }
+  .pmRow > label, .pmRow > .lbl { font-size: 12.5px; font-weight: 600; padding-top: 6px; }
+  .pmRow small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; line-height: 1.3; margin-top: 1px; }
+  .pmRow textarea { width: 100%; min-height: 50px; resize: vertical; font: inherit; font-size: 12.5px; line-height: 1.4; box-sizing: border-box;
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; }
+  .pmRow textarea:focus-visible { outline: none; box-shadow: var(--focus); }
+  .pmRow .calc.warn { color: #ffb648; }
+  .pmRow input[type=text] { width: 100%; }
+  .pmRow .inl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .pmRow input[type=number] { width: 84px; }
+  .pmRow input:disabled { opacity: 1; color: var(--accent); background: transparent; border-style: dashed; }
+  .pmRow .calc { font: 11.5px ui-monospace, Consolas, monospace; color: var(--muted); }
+  .pmRow.only360, .pmRow.onlyPlate { }
+  #promptMaker[data-mode="360"] .onlyPlate, #promptMaker[data-mode="plate"] .only360 { display: none !important; }
+  .pmSrc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 2px 0 6px; }
+  .pmSrc .seg button { padding: 4px 10px; font-size: 12px; }
+  .pmCam { font-size: 12px; color: var(--muted); line-height: 1.4; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.02); }
+  .pmCam b { color: var(--text); font-weight: 600; }
+  .pmOut { display: flex; flex-direction: column; min-height: 0; }
+  .pmOutHead { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+  .pmOutHead .count { font-size: 12px; color: var(--muted); }
+  #pmText { flex: 1; min-height: 120px; margin: 0 14px; padding: 14px; overflow: auto; background: #0b0e10; color: #dfe9e4; border: 1px solid var(--line); border-radius: 8px;
+    font: 12.5px/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  #pmText .fill { color: #ffd24a; }
+  .pmNext { padding: 10px 14px 14px; display: grid; gap: 8px; }
+  .pmNext .btnRow { margin: 0; flex-wrap: wrap; }
+  .pmNote { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .pmNote b { color: var(--text); font-weight: 600; }
+  body.phone #promptMaker { left: calc(var(--rail) + 6px); right: 6px; top: 6px; bottom: 6px; }
+  @media (max-width: 900px) { .pmBody { grid-template-columns: minmax(0, 1fr); overflow-y: auto; } .pmVars { overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); } #pmText { min-height: 280px; } }
 
   /* Plate canvas */
   #plateCanvas { position: absolute; z-index: 31; left: calc(var(--rail) + 12px); right: 12px; bottom: 12px; margin: 0 auto; max-width: 900px;
@@ -1116,6 +1161,7 @@
       <symbol id="i-gamepad" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M7.5 7h9a4.5 4.5 0 0 1 4.4 3.6l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L15.5 15h-7l-1.7 2.3a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A4.5 4.5 0 0 1 7.5 7z"/><path d="M8 9.8v3M6.5 11.3h3"/></g><g fill="currentColor"><circle cx="15.6" cy="10.4" r="1.1"/><circle cx="17.6" cy="12.4" r="1.1"/></g></symbol>
       <symbol id="i-kbd" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 9.5h.01M9 9.5h.01M12 9.5h.01M15 9.5h.01M18 9.5h.01M6 12.3h.01M9 12.3h.01M12 12.3h.01M15 12.3h.01M18 12.3h.01M8 15h8"/></g></symbol>
       <symbol id="i-touch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M9.5 11V5.5a1.5 1.5 0 0 1 3 0V11l3.6.7a2 2 0 0 1 1.6 2.3l-.7 4A3 3 0 0 1 14 20.5h-2.6a3 3 0 0 1-2.4-1.2L6 15.2a1.5 1.5 0 0 1 2.2-2L9.5 14.5"/><path d="M6.3 7.5a5 5 0 0 1 9.4 0"/></g></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M17.5 13.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M4 19h8"/></g></symbol>
       <symbol id="i-canvas" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="7" width="14" height="10" rx="1"/><path d="M8.5 14l2.5-3 2 2 1.5-1.5 2 2.5" stroke-linecap="round"/></g><g fill="currentColor"><rect x="3" y="5" width="4" height="4" rx=".8"/><rect x="17" y="5" width="4" height="4" rx=".8"/><rect x="3" y="15" width="4" height="4" rx=".8"/><rect x="17" y="15" width="4" height="4" rx=".8"/></g></symbol>
       <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></g></symbol>
       <symbol id="i-fliph" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2 2"/><path d="M9 6L3 18h6z"/><path d="M15 6l6 12h-6z" fill="currentColor" fill-opacity=".35"/></g></symbol>
@@ -1204,7 +1250,7 @@
   <nav id="rail" aria-label="Sections">
     <button data-sec="stage" class="editOnly" title="The LED ceiling over the volume"><svg><use href="#i-stage"/></svg>Stage</button>
     <button data-sec="add" class="editOnly" title="Add decks, glass walls, vehicles, people and your own models"><svg><use href="#i-add"/></svg>Add</button>
-    <button data-sec="led" class="editOnly" title="Put images or video on the LED walls and ceiling"><svg><use href="#i-led"/></svg>LED</button>
+    <button data-sec="led" class="editOnly" title="Put images or video on the LED walls and ceiling"><svg><use href="#i-led"/></svg>Virtual Content</button>
     <button data-sec="camera" title="Film camera, lens, saved shots and prints"><svg><use href="#i-camera"/></svg>Camera</button>
     <span class="railGap" aria-hidden="true"></span>
     <button id="ctlBtn" title="Controls for what you're doing right now (?)" aria-expanded="false" aria-controls="ctlPanel"><svg><use href="#i-gamepad"/></svg>Controls</button>
@@ -1465,7 +1511,7 @@
           <dt>Name tag</dt><dd>Typing a name gives an untagged person the next free colour</dd>
           <dt>Height off floor</dt><dd>Auto stands them on decks, wall bases and the subway floor; type a value to fix it</dd></dl>
           <h3>360° world</h3><dl>
-          <dt>LED</dt><dd>Each surface shows Off, a flat plate, or the 360° world</dd>
+          <dt>Virtual Content</dt><dd>Each surface shows Off, a flat plate, or the 360° world</dd>
           <dt>World size</dt><dd>Shrink the world sphere to fit more of it on the walls (the background reads smaller and further), grow it to zoom in; ∞ = no parallax. The dashed floor ring is its edge</dd>
           <dt>Plate canvas</dt><dd>The frame icon by a surface places its flat plate: drag to move, corners scale (Shift keeps proportions), edges stretch, the round handle turns (Shift 15°), wheel scales; flip H / V; Fit, Fill or Fill camera view</dd>
           <dt>Library</dt><dd>Ready-made worlds, saved with the layout</dd>
@@ -1550,6 +1596,54 @@
     </div>
   </div>
   <!-- Plate canvas: where a flat plate sits on its LED surface (non-modal, the stage stays live behind it) -->
+  <div id="promptMaker" class="hidden" role="dialog" aria-labelledby="pmTitle" data-mode="360">
+    <div class="pmHead">
+      <svg class="pcGrip" aria-hidden="true"><use href="#i-spark"/></svg><b id="pmTitle">Prompt maker</b>
+      <div class="seg" role="group" aria-label="What to generate"><button data-pmmode="360">360° world</button><button data-pmmode="plate">Main-wall plate</button></div>
+      <span class="spacer"></span>
+      <button class="ghost" id="pmExample" title="Fill the place fields with a worked example">Example</button>
+      <button class="ghost" id="pmClear" title="Empty the place fields">Clear text</button>
+      <button class="ghost x" id="pmClose" aria-label="Close the prompt maker"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="pmBody">
+      <div class="pmVars">
+        <div class="ctlSec">The place</div>
+        <div class="pmRow"><label for="pmScene">Scene<small>The place, in a sentence or two</small></label><textarea id="pmScene" rows="3"></textarea></div>
+        <div class="pmRow"><label for="pmHero">Straight ahead<small>The hero view, where the camera looks</small></label><textarea id="pmHero" rows="2"></textarea></div>
+        <div class="pmRow"><label for="pmSides">Left and right<small>How the scene continues</small></label><textarea id="pmSides" rows="2"></textarea></div>
+        <div class="pmRow only360"><label for="pmBehind">Behind<small>Rarely seen; keep it simple</small></label><input type="text" id="pmBehind"></div>
+        <div class="pmRow"><label for="pmAbove">Above<small>Sky, roof or canopy (lights the ceiling)</small></label><input type="text" id="pmAbove"></div>
+        <div class="pmRow"><label for="pmGround">Ground<small>Below the viewpoint</small></label><input type="text" id="pmGround"></div>
+        <div class="pmRow"><label for="pmLight">Light and time<small>Time of day, weather, direction, mood</small></label><textarea id="pmLight" rows="2"></textarea></div>
+        <div class="pmRow"><label for="pmExtra">Also avoid<small>Optional, comma separated</small></label><input type="text" id="pmExtra" placeholder="e.g. cages, zoo visitors"></div>
+        <div class="pmRow"><span class="lbl">People and animals</span><label class="setToggle"><input type="checkbox" id="pmPeople"><span>Allow them in the background</span></label></div>
+
+        <div class="ctlSec">Camera and scale</div>
+        <div class="pmSrc"><div class="seg" role="group" aria-label="Where the camera numbers come from"><button data-pmsrc="camera">From the film camera</button><button data-pmsrc="manual">Manual</button></div></div>
+        <div class="pmCam" id="pmCam"></div>
+        <div class="pmRow"><label for="pmEye">Lens height on stage<small>Above the stage floor; sets the horizon on the wall</small></label><div class="inl"><input type="number" id="pmEye" step="0.25" min="0.5" max="40"><span class="unit" data-pmu></span><span class="calc" id="pmEyeC"></span></div></div>
+        <div class="pmRow onlyPlate"><label for="pmDist">Distance to the wall<small>Lens to the LED face, straight ahead</small></label><div class="inl"><input type="number" id="pmDist" step="0.5" min="1" max="60"><span class="unit" data-pmu></span></div></div>
+        <div class="pmRow"><label for="pmFov">Lens sees<small>Horizontal angle of the frame</small></label><div class="inl"><input type="number" id="pmFov" step="1" min="5" max="170"><span class="unit">°</span></div></div>
+        <div class="pmRow onlyPlate"><label for="pmAim">Frame centre<small>Across the wall, left to right</small></label><div class="inl"><input type="number" id="pmAim" step="1" min="0" max="100"><span class="unit">%</span><span class="calc" id="pmAimC"></span></div></div>
+        <div class="pmRow"><label for="pmWorld">Height in the world<small>The viewpoint above the world's ground: 500 ft for a skyscraper window</small></label>
+          <div class="inl"><label class="setToggle" style="padding:2px 0"><input type="checkbox" id="pmWorldSame"><span>Same as the lens height</span></label><input type="number" id="pmWorld" step="1" min="0.5" max="30000"><span class="unit" data-pmu></span><span class="calc" id="pmWorldC"></span></div></div>
+        <div class="pmRow"><label for="pmNear">Nearest distance<small>Nothing in the world closer than this</small></label><div class="inl"><input type="number" id="pmNear" step="1" min="1" max="5000"><span class="unit" data-pmu></span></div></div>
+        <div class="pmRow"><label for="pmFeat">Main features at<small>How far the subject of the view is</small></label><div class="inl"><input type="number" id="pmFeat" step="1" min="2" max="100000"><span class="unit" data-pmu></span><span class="calc" id="pmFeatC"></span></div></div>
+        <div class="pmRow"><label for="pmRes">Size</label><select id="pmRes"></select></div>
+      </div>
+      <div class="pmOut">
+        <div class="pmOutHead"><b style="font-size:13px">Prompt</b><span class="count" id="pmCount"></span><span class="spacer"></span><button class="primary" id="pmCopy">Copy prompt</button></div>
+        <pre id="pmText" tabindex="0" aria-live="polite"></pre>
+        <div class="pmNext">
+          <div class="pmNote only360"><b>Generator:</b> a 360-native tool such as Blockade Labs Skybox AI gives true seamless 2:1 equirectangular images. General models (Gemini, Imagen, Midjourney) give a wide landscape with pinched poles and a seam; use the plate mode for those.</div>
+          <div class="pmNote onlyPlate" id="pmPlateGen"></div>
+          <div class="btnRow only360"><button id="pmLoad360">Load a 360° file…</button><button id="pmTurn" title="Turn the world so the image centre is where the film camera looks">Turn to the camera</button><button id="pmSize"></button></div>
+          <div class="btnRow onlyPlate"><button id="pmLoadPlate">Add image or video…</button><button id="pmCanvas">Plate canvas…</button></div>
+          <div class="pmNote"><b>Keep the stage out of it.</b> Words like LED, volume, screen, curved wall or studio make generators draw screens and rooms. Describe the place as if you were standing in it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="plateCanvas" class="hidden" role="dialog" aria-labelledby="pcTitle">
     <div class="pcHead" id="pcHead" title="Drag to move this panel">
       <svg class="pcGrip" aria-hidden="true"><use href="#i-canvas"/></svg><b id="pcTitle">Plate canvas</b>
@@ -6378,7 +6472,7 @@
       grpHTML("refl", "Reflections", reflSummary(cur), reflectHTML(cur)) +
       (selected.kind === "rollingWall"
         ? '<label class="setToggle"><input type="checkbox" id="deployChk" ' + (cur.deployed !== false ? "checked" : "") + '><span>Deployed</span></label>' +
-          grpHTML("rollLed", "LED content", "", surfSelectHTML("roll:" + selected.id, "Shows") +
+          grpHTML("rollLed", "Virtual Content", "", surfSelectHTML("roll:" + selected.id, "Shows") +
             '<div class="btnRow"><button class="plateAddBtn" data-platekey="roll:' + selected.id + '">Add image / video…</button></div>', true)
         : "") +
       (selected.type === "human" ? grpHTML("seat", "Seat", "", seatFieldHTML(cur), true) : "") +
@@ -9637,7 +9731,7 @@
       setSurfacePlate(k, i);
     });
     refreshCamPicker();
-    if (!quiet && missing.length) toast("LED content not loaded this session: " + missing.join(", "));
+    if (!quiet && missing.length) toast("Virtual content not loaded this session: " + missing.join(", "));
     return missing;
   }
   function goToFrame(id) {
@@ -10775,6 +10869,10 @@
       (n > 0 ? '<div class="btnRow"><button id="pcOpenBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-canvas"/></svg>Plate canvas…</button></div>' : "") +
       '<div class="hint">A flat plate is stretched across one surface (no perspective). New ones go on the main wall; pick them for other surfaces in the list above. The plate canvas places each one: move, scale, turn or flip it, lined up with what the film camera sees. Video up to 1080p plays smoothly.</div>');
   }
+  function promptMakerHTML() {
+    return grpHTML("ledPrompt", "Prompt maker", "", '<div class="btnRow" style="margin-top:0"><button id="pmOpenBtn"><svg style="width:15px;height:15px;vertical-align:-3px;margin-right:6px"><use href="#i-spark"/></svg>Open the prompt maker…</button></div>' +
+      '<div class="hint">Describe a place and get a prompt for an image generator, written for this volume: a 360° world or a main-wall plate, fitted to the film camera’s height, lens and aim, or to numbers you type.</div>', true);
+  }
   function ceilingControlsHTML() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
     if (!ceil) return "";
@@ -10802,7 +10900,7 @@
     const cb = document.getElementById("ceilBody"), lb = document.getElementById("ledBody");
     if (cb) cb.innerHTML = ceilingControlsHTML();
     if (lb) {
-      lb.innerHTML = ledContentHTML() + envControlsHTML() + platesHTML();
+      lb.innerHTML = ledContentHTML() + envControlsHTML() + platesHTML() + promptMakerHTML();
       lb.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => {
         inspOpenState()[d.dataset.k] = d.open;
         try { localStorage.setItem("lumostage.inspGroups", JSON.stringify(inspOpen)); } catch (err) {}
@@ -10810,6 +10908,7 @@
     }
     wireFixedControls();
     wireEnvControls();
+    const pmb = document.getElementById("pmOpenBtn"); if (pmb) pmb.addEventListener("click", () => openPromptMaker());
     const pob = document.getElementById("pcOpenBtn");
     if (pob) pob.addEventListener("click", () => { const r = ledSurfaceRows().find(r => { const pl = surfacePlateOf(r[0]); return pl && pl.tex && pl.kind !== "env"; }); openPlateCanvas(r ? r[0] : "mainWall"); });
     addSteppers(lb);
@@ -11758,6 +11857,274 @@
     });
     if (inf) inf.addEventListener("click", () => set(e.radius > 0 ? 0 : 60, null));
   }
+  // ==================================================================
+  //  PROMPT MAKER — a generator prompt fitted to this volume and the film camera
+  // ==================================================================
+  // You describe the place; the projection, the horizon, how much of the world the walls cover and
+  // what to leave out are written for you. Camera numbers come live from the film camera, or are
+  // typed in (Manual). The height in the world is separate from the lens height on stage: the lens
+  // may be 5' off the stage floor while the world is seen from a skyscraper window 500' up. The
+  // horizon on the wall follows the lens height; what the bottom of the wall sees follows the world
+  // height. Fields are remembered in this browser.
+  const PM_KEY = "lumostage.promptMaker";
+  const PM_TEXT = ["scene", "hero", "sides", "behind", "above", "ground", "light", "extra"];
+  const PM_EXAMPLE = {
+    scene: "Inside a gorilla enclosure at a modern zoo, seen from just behind the visitor glass: a large naturalistic habitat of dense tropical planting, rock outcrops and climbing structures.",
+    hero: "A mossy rock outcrop beside a shallow stream, with a climbing frame of weathered timber poles and rope netting rising behind it.",
+    sides: "Dense banana palms, ferns and bamboo thickets, more rock faces and fallen logs, the habitat continuing into the distance.",
+    behind: "More of the same planting and rock.",
+    above: "A tall tree canopy with soft sky showing through gaps.",
+    ground: "Packed earth, leaf litter and low ground cover.",
+    light: "Warm late-afternoon light filtering through the trees from the left, gentle haze, humid air, soft shadows.",
+    extra: "zoo visitors, keepers, cages, fences, signage"
+  };
+  const pm = { open: false, timer: 0, sig: "",
+    st: { mode: "360", src: "camera", people: false, res: "", worldSame: true, world: 500, near: 20, feat: 60, man: { eye: 5, dist: 19, fov: 55, aim: 50 }, text: Object.assign({}, PM_EXAMPLE) } };
+  try { const v = JSON.parse(localStorage.getItem(PM_KEY) || "null"); if (v) { Object.assign(pm.st, v); pm.st.man = Object.assign({ eye: 5, dist: 19, fov: 55, aim: 50 }, v.man || {}); pm.st.text = Object.assign({}, v.text || {}); } } catch (e) {}
+  function pmSave() { try { localStorage.setItem(PM_KEY, JSON.stringify(pm.st)); } catch (e) {} }
+
+  // The main wall as a cylinder seen from the lens, and where the film camera's frame lands on it.
+  function pmWall() {
+    const sf = plateSurf("mainWall"), d = mainWallMesh && mainWallMesh.userData.dims;
+    if (!sf || !d) return null;
+    const bottom = sf.at(0.5, 0).y, top = sf.at(0.5, 1).y;
+    return { sf, W: sf.W, H: sf.H, radius: d.radius, bottom, top, arcDeg: radToDeg(Math.PI - 2 * d.delta) };
+  }
+  // Where a lens at (x, z), heading thDeg, seeing fov° across, lands on the wall at lens height:
+  // the frame centre and edges as % across (left to right), and the distance straight ahead.
+  // An edge beyond the end of the wall reads 0 / 100.
+  function pmFrameOnWall(wall, x, z, thDeg, eye, fov) {
+    const th = degToRad(thDeg || 0), fx = -Math.sin(th), fz = -Math.cos(th), rx = Math.cos(th), rz = -Math.sin(th), P = new THREE.Vector3(), N = 360;
+    const best = { c: [1e9], l: [1e9], r: [1e9] }, out = { aim: null, dist: null, left: null, right: null };
+    const v = Math.min(1, Math.max(0, (eye - wall.bottom) / (wall.top - wall.bottom)));
+    let minA = 1e9, maxA = -1e9;
+    for (let i = 0; i <= N; i++) {
+      const su = i / N; wall.sf.at(su, v, P);
+      const dx = P.x - x, dz = P.z - z, ahead = dx * fx + dz * fz; if (ahead <= 0.01) continue;
+      const a = radToDeg(Math.atan2(dx * rx + dz * rz, ahead)), dist = Math.hypot(dx, dz);
+      minA = Math.min(minA, a); maxA = Math.max(maxA, a);
+      [["c", 0], ["l", -fov / 2], ["r", fov / 2]].forEach(([k, t]) => { const e = Math.abs(a - t); if (e < best[k][0]) best[k] = [e, su, dist]; });
+    }
+    if (best.c[0] < 1.5) { out.aim = best.c[1] * 100; out.dist = best.c[2]; }
+    out.left = best.l[0] < 1.5 ? best.l[1] * 100 : (minA > -fov / 2 && out.aim != null ? 0 : null);
+    out.right = best.r[0] < 1.5 ? best.r[1] * 100 : (maxA < fov / 2 && out.aim != null ? 100 : null);
+    return out;
+  }
+  function pmCamera(wall) {
+    const pa = activeCameraPA(); if (!pa) return null;
+    const o = camOptics(pa), eye = camVal(pa, "heightFt");
+    const r = { pa, o, eye, fov: o.hFov, name: pa.name || "Film camera", dist: null, aim: null, left: null, right: null };
+    return wall ? Object.assign(r, pmFrameOnWall(wall, pa.x, pa.z, pa.rotationDeg, eye, r.fov)) : r;
+  }
+  // Manual: a lens square-on to the wall at aim %, backed off dist along the wall's inward normal.
+  function pmManualFrame(wall, aim, dist, eye, fov) {
+    const Pw = wall.sf.at(Math.min(1, Math.max(0, aim / 100)), 0.5), C = new THREE.Vector3(); mainWallMesh.getWorldPosition(C);
+    let nx = C.x - Pw.x, nz = C.z - Pw.z; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+    const x = Pw.x + nx * dist, z = Pw.z + nz * dist, th = radToDeg(Math.atan2(nx, nz));   // forward = -n
+    const f = pmFrameOnWall(wall, x, z, th, eye, fov);
+    return { left: f.left, right: f.right };
+  }
+  // Everything the prompt needs, in feet and degrees.
+  function pmGeom() {
+    const st = pm.st, wall = pmWall(), cam = st.src === "camera" ? pmCamera(wall) : null, live = !!cam;
+    const eye = live ? cam.eye : st.man.eye;
+    const dist = live && cam.dist != null ? cam.dist : (live ? (wall ? wall.radius : 19) : st.man.dist);
+    const fov = live ? cam.fov : st.man.fov, aim = live ? cam.aim : st.man.aim;
+    let left = live ? cam.left : null, right = live ? cam.right : null;
+    if (wall && !live && aim != null) { const f = pmManualFrame(wall, aim, dist, eye, fov); left = f.left; right = f.right; }
+    const world = st.worldSame ? eye : st.world;
+    const e = envCfg(), worldR = e.radius > 0 ? e.radius : 0, feat = live && worldR ? worldR : st.feat;
+    const g = { live, cam, wall, eye, dist, fov, aim, left, right, world, near: st.near, feat, worldR, elevated: world >= 25 && world > eye * 3 };
+    if (wall) {
+      g.horizon = Math.max(0, Math.min(100, (eye - wall.bottom) / wall.H * 100));
+      g.down = radToDeg(Math.atan2(eye - wall.bottom, dist));              // bottom edge, below the horizon
+      g.up = radToDeg(Math.atan2(wall.top - eye, dist));
+      g.groundAt = g.down > 0.2 ? world / Math.tan(degToRad(g.down)) : null;
+      g.aspect = wall.W / wall.H;
+    }
+    return g;
+  }
+  const pmFt = ft => { const v = ft >= 100 ? Math.round(ft) : ft >= 10 ? Math.round(ft * 2) / 2 : Math.round(ft * 10) / 10; return v.toLocaleString("en") + " ft (" + (ft * M_PER_FT).toLocaleString("en", { maximumFractionDigits: ft * M_PER_FT >= 10 ? 0 : 1 }) + " m)"; };
+  const pmPct = v => Math.round(Math.max(0, Math.min(100, v)));
+  function pmResOptions(g) {
+    if (pm.st.mode === "360") return ["8192 × 4096 (best)", "6144 × 3072", "4096 × 2048 (minimum)"];
+    const a = g.aspect || 3.62;
+    return [Math.round(2000 * a) + " × 2000 (target)", Math.round(1600 * a) + " × 1600", "2560 × 1097 at 21:9, then extend to " + a.toFixed(2) + ":1"];
+  }
+  function pmPrompt(g) {
+    const st = pm.st, t = k => (st.text[k] || "").trim();
+    const sentence = x => { x = x.trim(); return x && !/[.!?]$/.test(x) ? x + "." : x; };
+    const or = (x, fb) => x ? x : fb;
+    const extra = t("extra") ? ", " + t("extra").replace(/\s*,\s*/g, ", ").replace(/[.,]+$/, "") : "";
+    const avoid = (st.people ? "" : "people, animals in the foreground, ") + "text, signs, logos, watermarks, borders, frames, screens, displays, studio equipment, a camera or tripod, lens flares, vignetting" + extra;
+    const res = (document.getElementById("pmRes").value || pmResOptions(g)[0]).split(" (")[0].split(" at ")[0];
+    const high = g.elevated ? ", a high vantage point looking out level, with the ground far below and seen from above" : "";
+    const featMax = Math.max(g.feat * 3, g.near * 5);
+    if (st.mode === "360") {
+      const mid = Math.round(Math.min(180, Math.max(60, g.fov * 1.6)));
+      return [
+        "Create a single photorealistic 360° equirectangular panorama, 2:1 aspect ratio, " + res + ", captured from one fixed point with a full spherical camera rig. The left and right edges must wrap seamlessly. Horizon exactly on the horizontal centre line; no tilt or roll.",
+        "",
+        "Scene: " + sentence(or(t("scene"), "[describe the place]")),
+        "Viewpoint: " + pmFt(g.world) + " above the ground" + (g.elevated ? ", a high vantage point with the ground far below" : "") + ", looking out level, straight ahead at the image centre.",
+        "",
+        "Layout by direction (image centre = straight ahead):",
+        "- Straight ahead, the middle " + mid + "° of the image (most detail here): " + sentence(or(t("hero"), "[the hero view]")),
+        "- Left and right (around the 25% and 75% marks): " + sentence(or(t("sides"), "[how the scene continues]")),
+        "- Behind (the far left and right edges): " + sentence(or(t("behind"), "a simple continuation of the scene")),
+        "- Above (top quarter): " + sentence(or(t("above"), "open sky")) + " Soft and even; no harsh sun disc.",
+        "- Below (bottom quarter): " + sentence(or(t("ground"), "the natural ground surface")) + (g.elevated ? " Seen from " + pmFt(g.world) + " up: the ground lies far below, nothing near the viewpoint." : " Plain and continuous, nothing close to the viewpoint."),
+        "",
+        "Depth: nothing closer than " + pmFt(g.near) + " to the viewpoint. Main features sit about " + pmFt(g.feat) + " away, with distance and sky beyond.",
+        "Light: " + sentence(or(t("light"), "[time of day, weather, light direction, mood]")),
+        "Style: photographic, natural lens rendering, deep focus everywhere, no depth-of-field or motion blur, even exposure across the whole sphere with no blown highlights or crushed shadows.",
+        "",
+        "Do not include: " + avoid + ", fisheye circles, stitching seams, or any visible room or enclosure around the viewpoint."
+      ].join("\n");
+    }
+    const a = (g.aspect || 3.62).toFixed(2), arc = g.wall ? Math.round(g.wall.arcDeg) : 177;
+    const L = g.left != null ? pmPct(g.left) : 33, R = g.right != null ? pmPct(g.right) : 67;
+    let ground;
+    if (g.groundAt == null) ground = "The bottom edge sits about level with the viewpoint.";
+    else if (g.groundAt >= g.near) ground = "The bottom edge looks " + g.down.toFixed(1) + "° down and meets the ground about " + pmFt(g.groundAt) + " away.";
+    else ground = "The bottom edge looks " + g.down.toFixed(1) + "° down onto plain, uncluttered ground about " + pmFt(g.groundAt) + " away; objects start about " + pmFt(g.near) + " away.";
+    let scale = "";
+    if (!g.elevated && g.groundAt && g.wall) {
+      const tanSum = Math.tan(degToRad(g.up)) + Math.tan(degToRad(g.down)), d = Math.max(g.groundAt, g.near);
+      scale = " An adult standing " + pmFt(d) + " away would be about " + Math.max(1, Math.round(5.75 / d / tanSum * 100)) + "% of the image height.";
+    }
+    return [
+      "Create a single photorealistic ultra-wide cylindrical panorama, aspect ratio " + a + ":1, " + res + ". It covers " + arc + "° horizontally as seen from one fixed point, like a rotating panoramic camera: vertical lines stay perfectly vertical, and long horizontal edges curve gently as in a cylindrical panorama. No fisheye, and no rectilinear wide-angle stretching at the edges.",
+      "",
+      "Scene: " + sentence(or(t("scene"), "[describe the place]")),
+      "Viewpoint: " + pmFt(g.world) + " above the ground" + high + ".",
+      "Horizon: level, " + pmPct(g.horizon) + "% up from the bottom edge.",
+      "Vertical coverage: from " + g.down.toFixed(1) + "° below the horizon at the bottom edge to " + g.up.toFixed(1) + "° above it at the top edge. " + ground + scale,
+      "Depth: main features sit about " + pmFt(g.feat) + " away, the farthest up to " + pmFt(featMax) + " and beyond.",
+      "",
+      "Most detail between " + L + "% and " + R + "% across the image, left to right: " + sentence(or(t("hero"), "[the hero view]")),
+      "Either side of that, fading in importance toward the ends: " + sentence(or(t("sides"), "[how the scene continues]")),
+      "Top: " + sentence(or(t("above"), "open sky")),
+      "Bottom edge: " + sentence(or(t("ground"), "the natural ground surface")) + (g.elevated ? " Far below, seen from above." : " Continuous and uncluttered so it meets a real floor."),
+      "",
+      "Light: " + sentence(or(t("light"), "[time of day, weather, light direction, mood]")),
+      "Style: photographic, deep focus throughout, even exposure, no motion blur, no depth-of-field blur.",
+      "",
+      "Do not include: " + avoid + ", curved walls, or any visible room around the scene."
+    ].join("\n");
+  }
+
+  function openPromptMaker(mode) {
+    if (mode) pm.st.mode = mode;
+    pm.open = true;
+    const el = document.getElementById("promptMaker"); el.classList.remove("hidden");
+    pmFill(); pmRender(true);
+    clearInterval(pm.timer); pm.timer = setInterval(() => { if (pm.st.src === "camera") pmRender(false); }, 400);   // follows the camera as it moves
+    dismissWelcome();
+  }
+  function closePromptMaker() {
+    pm.open = false; clearInterval(pm.timer);
+    document.getElementById("promptMaker").classList.add("hidden");
+  }
+  // Fields from the saved state (the place text, the manual numbers).
+  function pmFill() {
+    const $ = id => document.getElementById(id), st = pm.st, d = v => Math.round(toDisplay(v) * 100) / 100;
+    PM_TEXT.forEach(k => { const el = $("pm" + k[0].toUpperCase() + k.slice(1)); if (el) el.value = st.text[k] || ""; });
+    $("pmPeople").checked = !!st.people; $("pmWorldSame").checked = !!st.worldSame;
+    $("pmWorld").value = d(st.world); $("pmNear").value = d(st.near); $("pmFeat").value = d(st.feat);
+    document.querySelectorAll("#promptMaker [data-pmu]").forEach(u => { u.textContent = displayUnit; });
+  }
+  // Redraw: mode / source buttons, the live or manual numbers, the prompt. full = also rebuild the size list.
+  function pmRender(full) {
+    const $ = id => document.getElementById(id), st = pm.st, root = $("promptMaker");
+    root.dataset.mode = st.mode;
+    root.querySelectorAll("[data-pmmode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pmmode === st.mode)));
+    root.querySelectorAll("[data-pmsrc]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pmsrc === st.src)));
+    const g = pmGeom(), d = v => v == null ? "" : Math.round(toDisplay(v) * 100) / 100, live = g.live;
+    if (full) {
+      const sel = $("pmRes"), opts = pmResOptions(g);
+      sel.innerHTML = opts.map(o => "<option>" + escapeHtml(o) + "</option>").join("");
+      sel.value = opts.indexOf(st.res) !== -1 ? st.res : opts[0];
+    }
+    // The numbers: live ones show in the fields, read-only; manual ones are yours.
+    const put = (id, v, dp) => { const el = $(id); if (document.activeElement !== el) el.value = v == null ? "" : (dp != null ? (+v).toFixed(dp) : v); };
+    [["pmEye", "eye"], ["pmDist", "dist"], ["pmFov", "fov"], ["pmAim", "aim"]].forEach(([id]) => { $(id).disabled = live; });
+    put("pmEye", d(g.eye)); put("pmDist", d(g.dist)); put("pmFov", g.fov != null ? Math.round(g.fov * 10) / 10 : ""); put("pmAim", g.aim != null ? Math.round(g.aim) : "");
+    $("pmWorld").disabled = st.worldSame; if (st.worldSame) put("pmWorld", d(g.eye));
+    $("pmFeat").disabled = live && g.worldR > 0; if ($("pmFeat").disabled) put("pmFeat", d(g.feat));
+    $("pmFeatC").textContent = g.elevated && g.feat < g.world ? "closer than you are high: try the skyline's distance" : live && g.worldR > 0 ? "= World size" : "";
+    $("pmEyeC").textContent = g.wall && st.mode === "plate" ? "horizon " + pmPct(g.horizon) + "% up the wall" : "";
+    $("pmWorldC").textContent = g.elevated ? "a high vantage point" : "";
+    const fc = $("pmFeatC"); fc.classList.toggle("warn", g.elevated && g.feat < g.world);
+    $("pmAimC").textContent = g.left != null && g.right != null ? "frame " + pmPct(g.left) + "–" + pmPct(g.right) + "%" : "";
+    const cam = $("pmCam");
+    if (st.src === "camera") {
+      cam.innerHTML = g.cam ? "<b>" + escapeHtml(g.cam.name) + "</b> · " + Math.round(g.cam.o.f) + " mm · " + escapeHtml(formatLabel(g.cam.o)) + " · lens " + fmtLen(g.cam.eye) + " up" +
+          (g.cam.dist != null ? ", " + fmtLen(g.cam.dist) + " from the wall" : ", not facing the main wall") + ". Move the camera and these follow."
+        : "No film camera on the stage yet, so these are the manual numbers. Add one from Camera on the left.";
+      cam.hidden = false;
+    } else { cam.innerHTML = "Typed in. <b>From the film camera</b> fills them from the stage again."; cam.hidden = false; }
+    // Next steps
+    const sz = $("pmSize"); sz.textContent = "Set World size to " + fmtLen(g.feat); sz.title = "The world sphere at the distance of the main features, so they sit at the right depth";
+    sz.disabled = Math.abs((g.worldR || 0) - g.feat) < 0.05;
+    $("pmTurn").disabled = !activeCameraPA();
+    $("pmPlateGen").innerHTML = "<b>Generator:</b> Gemini is good here. Its widest ratio is 21:9: generate at 21:9, then ask it to <b>extend the image left and right to " + (g.aspect || 3.62).toFixed(2) + ":1, continuing the scene</b>. Don't stretch it. Upscale to about 8K wide.";
+    // The prompt (only touched when it changes, so a selection in it survives the live refresh)
+    const p = pmPrompt(g), sig = p;
+    if (sig !== pm.sig) {
+      pm.sig = sig;
+      const pre = $("pmText");
+      pre.innerHTML = escapeHtml(p).replace(/\[[^\]]+\]/g, x => '<span class="fill">' + x + "</span>");
+      $("pmCount").textContent = p.split(/\s+/).length + " words";
+    }
+  }
+  function wirePromptMaker() {
+    const $ = id => document.getElementById(id), root = $("promptMaker"), st = pm.st;
+    const changed = () => { pmSave(); pmRender(false); };
+    root.querySelectorAll("[data-pmmode]").forEach(b => b.addEventListener("click", () => { st.mode = b.dataset.pmmode; pmSave(); pmRender(true); }));
+    root.querySelectorAll("[data-pmsrc]").forEach(b => b.addEventListener("click", () => {
+      if (b.dataset.pmsrc === "manual" && st.src === "camera") {      // keep what the camera had, to tweak from
+        const g = pmGeom();
+        st.man = { eye: g.eye, dist: g.dist, fov: Math.round(g.fov * 10) / 10, aim: g.aim != null ? Math.round(g.aim) : 50 };
+        if (g.worldR > 0) st.feat = g.worldR;
+      }
+      st.src = b.dataset.pmsrc; pmFill(); changed();
+    }));
+    PM_TEXT.forEach(k => { const el = $("pm" + k[0].toUpperCase() + k.slice(1)); el.addEventListener("input", () => { st.text[k] = el.value; changed(); }); });
+    $("pmPeople").addEventListener("change", e => { st.people = e.target.checked; changed(); });
+    $("pmWorldSame").addEventListener("change", e => { st.worldSame = e.target.checked; if (!st.worldSame) $("pmWorld").value = Math.round(toDisplay(st.world) * 100) / 100; changed(); });
+    const num = (id, fn) => $(id).addEventListener("input", () => { const v = parseFloat($(id).value); if (!isNaN(v) && v > 0) { fn(v); changed(); } });
+    num("pmEye", v => { st.man.eye = fromDisplay(v); });
+    num("pmDist", v => { st.man.dist = fromDisplay(v); });
+    num("pmFov", v => { st.man.fov = v; });
+    $("pmAim").addEventListener("input", () => { const v = parseFloat($("pmAim").value); if (!isNaN(v)) { st.man.aim = Math.max(0, Math.min(100, v)); changed(); } });
+    num("pmWorld", v => { st.world = fromDisplay(v); });
+    num("pmNear", v => { st.near = fromDisplay(v); });
+    num("pmFeat", v => { st.feat = fromDisplay(v); });
+    $("pmRes").addEventListener("change", e => { st.res = e.target.value; changed(); });
+    $("pmExample").addEventListener("click", () => { st.text = Object.assign({}, PM_EXAMPLE); pmFill(); changed(); });
+    $("pmClear").addEventListener("click", () => { st.text = {}; pmFill(); changed(); $("pmScene").focus(); });
+    $("pmClose").addEventListener("click", closePromptMaker);
+    $("pmCopy").addEventListener("click", () => {
+      const btn = $("pmCopy"), text = pmPrompt(pmGeom());
+      const done = () => { btn.textContent = "Copied"; setTimeout(() => { btn.textContent = "Copy prompt"; }, 1600); };
+      const fallback = () => { const r = document.createRange(); r.selectNodeContents($("pmText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected: press Ctrl+C to copy"); };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+    $("pmLoad360").addEventListener("click", () => $("envFile").click());
+    $("pmTurn").addEventListener("click", () => {                   // yaw = the camera's heading puts the image centre in its view
+      const pa = activeCameraPA(); if (!pa) return;
+      envCfg().yaw = Math.round(normDeg((pa.rotationDeg || 0) + 180) * 10) / 10 - 180;
+      scheduleAutosave(); renderSections(); toast("World turned: the image centre is where " + (pa.name || "the camera") + " looks");
+    });
+    $("pmSize").addEventListener("click", () => {
+      const g = pmGeom(), e = envCfg(); e.radius = Math.min(ENV_R.max, Math.max(ENV_R.min, g.feat));
+      syncEnvRing(); scheduleAutosave(); renderSections(); pmRender(false); toast("World size " + fmtLen(e.radius));
+    });
+    $("pmLoadPlate").addEventListener("click", () => { const b = document.querySelector('.plateAddBtn[data-platekey="mainWall"]'); if (b) b.click(); });
+    $("pmCanvas").addEventListener("click", () => { closePromptMaker(); openPlateCanvas("mainWall"); });
+  }
+
   // The LED section's 360° group.
   function envControlsHTML() {
     const e = envCfg(), p = envPlate();
@@ -13370,7 +13737,7 @@
   const SECTIONS = {
     stage:  { title: "Stage",  sub: "The LED ceiling over the volume." },
     add:    { title: "Add to stage", sub: "The Lumo library, with your uploads. Place a piece, then drag it where you want it." },
-    led:    { title: "LED content", sub: "A 360° world, or flat images and video, on the walls and ceiling." },
+    led:    { title: "Virtual Content", sub: "A 360° world, or flat images and video, on the walls and ceiling." },
     camera: { title: "Camera", sub: "Lens, framing, saved shots and prints." }
   };
   let openSection = null;
@@ -13735,7 +14102,7 @@
 
     // Rail + drawer
     document.querySelectorAll("#rail button[data-sec]").forEach(b => b.addEventListener("click", () => openDrawer(b.dataset.sec)));
-    wireControls();
+    wireControls(); wirePromptMaker();
     document.getElementById("drawerClose").addEventListener("click", () => openDrawer(null));
     document.getElementById("inspClose").addEventListener("click", deselect);
     // Menus
@@ -13816,6 +14183,7 @@
       // Overlays close first on Esc: help, menus. "?" opens the controls reference.
       if (!document.getElementById("help").classList.contains("hidden")) { if (e.key === "Escape") { setHelp(false); e.preventDefault(); } return; }
       if (e.key === "Escape" && document.querySelector(".menu:not(.hidden)")) { closeMenus(); e.preventDefault(); return; }
+      if (e.key === "Escape" && pm.open) { closePromptMaker(); e.preventDefault(); return; }               // the prompt maker sits over everything
       if (e.key === "Escape" && pc.open && !typing) { closePlateCanvas(); e.preventDefault(); return; }   // the plate canvas closes before the view underneath
       if (!typing && e.key === "?") { setControls(!ctl.open); e.preventDefault(); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); return; }
