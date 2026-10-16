@@ -496,6 +496,123 @@
   #planSheet textarea { width: 100%; box-sizing: border-box; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font: 13px Arial, Helvetica, sans-serif; resize: vertical; }
   #planSheet .planNotes { display: block; color: var(--muted); font-size: 12.5px; margin: 4px 0 6px; }
   /* Controls reference (Help) */
+  button.ghost.envInf { padding: 2px 0; width: 28px; margin-left: 6px; font-size: 15px; line-height: 1.1; border: 1px solid var(--line); border-radius: 6px; color: var(--text); justify-content: center; }
+  .envNote { font-size: 11px; margin-top: 4px; }
+  .envNote:empty { display: none; }
+  button.ghost.envInf.on { color: #fff; background: rgba(0,96,254,.25); border-color: var(--accent); }
+  /* Rail: Controls sits at the foot */
+  #rail .railGap { flex: 1; }
+  #rail #ctlBtn.active { color: #fff; background: rgba(0,96,254,.22); }
+  #rail #ctlBtn.active svg { color: var(--accent); }
+  #rail #ctlBtn.pulse svg { animation: ctlPulse 1.2s var(--ease) 2; }
+  @keyframes ctlPulse { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.22); color: var(--accent); } }
+
+  /* Controls card */
+  #ctlPanel { position: absolute; z-index: 32; left: calc(var(--rail) + 12px); bottom: 12px; width: 344px; max-height: calc(100% - var(--top) - 24px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--panelShadow); display: flex; flex-direction: column; overflow: hidden; }
+  #ctlPanel.hidden { display: none; }
+  body.drawerOpen #ctlPanel { left: calc(var(--rail) + 322px); }
+  .ctlHead { display: flex; align-items: flex-start; gap: 8px; padding: 12px 10px 6px 16px; }
+  .ctlTitles { flex: 1; min-width: 0; }
+  .ctlMode { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .ctlHead h2 { margin: 2px 0 0; font-size: 16px; font-weight: 650; }
+  .ctlHead .x { padding: 6px; line-height: 0; } .ctlHead .x svg { width: 16px; height: 16px; }
+  .ctlDev { display: flex; gap: 4px; padding: 0 12px 8px; }
+  .ctlDev button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 4px; font-size: 11.5px; border-radius: 7px; color: var(--muted); background: transparent; border: 1px solid var(--line); }
+  .ctlDev button svg { width: 15px; height: 15px; flex: none; }
+  .ctlDev button[aria-selected="true"] { color: #fff; background: rgba(0,96,254,.22); border-color: var(--accent); }
+  .ctlDev button .live { width: 6px; height: 6px; border-radius: 50%; background: #3ddc84; flex: none; }
+  .ctlBody { overflow-y: auto; padding: 4px 16px 10px; }
+  .ctlSec { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 10px 0 7px; }
+  .ctlFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px 10px 8px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+  .ctlFoot kbd { font-size: 10px; }
+  /* keycaps: the WASD / QE cluster */
+  .kcl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 290px; }
+  .kcl .k { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .cap { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 7px; border-radius: 7px; font: 700 13px/1 "Segoe UI", system-ui, sans-serif; color: var(--text);
+    background: linear-gradient(#2b3238, #20262b); border: 1px solid #3a434a; border-bottom-width: 3px; box-sizing: border-box; transition: transform .06s, background .06s, border-color .06s; }
+  .cap.sm { min-width: 24px; height: 24px; font-size: 11.5px; padding: 0 5px; border-radius: 6px; border-bottom-width: 2px; }
+  .cap.wide { min-width: 58px; }
+  .cap.down { background: var(--accent); border-color: #79b6ff; color: #fff; transform: translateY(2px); border-bottom-width: 1px; }
+  .kcl .k .cap { width: 42px; height: 38px; font-size: 15px; }
+  .kcl .k span { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.2; }
+  .kcl .k.dim .cap { opacity: .35; }
+  .kShift { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .kShift .cap { width: auto; height: 26px; min-width: 64px; font-size: 11.5px; }
+  /* rows: a graphic, then what it does */
+  .crows { display: grid; grid-template-columns: minmax(64px, max-content) 1fr; gap: 7px 14px; align-items: center; font-size: 12.5px; }
+  .crow { display: contents; }
+  .crow .g { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
+  .crow .g i { font-style: normal; font-size: 10px; color: var(--muted); }
+  .crow .d small { display: block; color: var(--muted); font-size: 11px; }
+  .crow svg.mi { width: 26px; height: 34px; flex: none; }
+  .crow svg.ti { width: 30px; height: 30px; flex: none; }
+  .crow .mod { font-size: 10.5px; color: var(--muted); margin-right: 2px; }
+  .arr4 { display: inline-grid; grid-template-columns: repeat(3, 20px); grid-template-rows: 18px 18px; gap: 2px; }
+  .arr4 .cap { min-width: 20px; width: 20px; height: 18px; padding: 0; font-size: 10px; border-bottom-width: 2px; border-radius: 4px; }
+  .arr4 .cap:nth-child(1) { grid-area: 1 / 2; } .arr4 .cap:nth-child(2) { grid-area: 2 / 1; }
+  .arr4 .cap:nth-child(3) { grid-area: 2 / 2; } .arr4 .cap:nth-child(4) { grid-area: 2 / 3; }
+  /* gamepad */
+  .padArt { display: block; width: 100%; max-width: 300px; margin: 2px auto 4px; }
+  .padArt .body { fill: #20262b; stroke: #3a434a; stroke-width: 1.5; }
+  .padArt [data-g] { fill: #2b3238; stroke: #4a545c; stroke-width: 1.2; transition: fill .08s; }
+  .padArt [data-g].used { stroke: var(--accent); stroke-width: 2; }
+  .padArt [data-g].down { fill: var(--accent); }
+  .padArt text { font: 700 8px "Segoe UI", system-ui, sans-serif; fill: #c8d0d6; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .gb { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font: 800 11px/1 "Segoe UI", system-ui, sans-serif; color: #0e1013; }
+  .gb.A { background: #5ec26a; } .gb.B { background: #e5484d; color: #fff; } .gb.X { background: #4c9ffe; color: #fff; } .gb.Y { background: #f2c14e; }
+  .gbump, .gtrig, .gsys, .gstick { display: inline-grid; place-items: center; height: 20px; min-width: 30px; padding: 0 5px; font: 700 10.5px/1 "Segoe UI", system-ui, sans-serif; color: var(--text); background: #2b3238; border: 1px solid #4a545c; box-sizing: border-box; }
+  .gbump { border-radius: 6px 6px 3px 3px; }
+  .gtrig { border-radius: 9px 9px 4px 4px; height: 22px; }
+  .gsys { border-radius: 10px; min-width: 26px; }
+  .gstick { width: 24px; min-width: 24px; height: 24px; border-radius: 50%; padding: 0; box-shadow: inset 0 0 0 3px #20262b; }
+  .gstick.click { box-shadow: inset 0 0 0 3px #20262b, 0 0 0 2px var(--accent); }
+  .gdpad { width: 24px; height: 24px; }
+  .gdpad rect { fill: #2b3238; stroke: #4a545c; } .gdpad rect.on { fill: var(--accent); stroke: #79b6ff; }
+  .g .down, .gb.down { outline: 2px solid #fff; outline-offset: 1px; }
+  .ctlNote { font-size: 11.5px; color: var(--muted); margin: 8px 0 2px; line-height: 1.45; }
+  body.phone #ctlPanel { width: min(320px, calc(100vw - var(--rail) - 16px)); left: calc(var(--rail) + 8px); bottom: 8px; }
+  #navHud .cap { min-width: 18px; height: 18px; font-size: 10.5px; padding: 0 4px; border-bottom-width: 2px; border-radius: 4px; vertical-align: -3px; margin: 0 2px; }
+  #navHud b { color: var(--text); font-weight: 600; }
+
+  /* Plate canvas */
+  #plateCanvas { position: absolute; z-index: 31; left: calc(var(--rail) + 12px); right: 12px; bottom: 12px; margin: 0 auto; max-width: 900px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--panelShadow); display: flex; flex-direction: column; }
+  #plateCanvas.hidden { display: none; }
+  body.drawerOpen #plateCanvas { left: calc(var(--rail) + 322px); }
+  body.camview #plateCanvas { bottom: 86px; }                 /* clear of the lens bar */
+  body #plateCanvas.moved, body.camview #plateCanvas.moved, body.drawerOpen #plateCanvas.moved { bottom: auto; right: auto; margin: 0; width: min(900px, calc(100% - var(--rail) - 24px)); }
+  .pcHead { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; cursor: grab; user-select: none; border-bottom: 1px solid var(--line); }
+  .pcHead.grabbing { cursor: grabbing; }
+  .pcHead b { font-size: 14px; white-space: nowrap; }
+  .pcGrip { width: 18px; height: 18px; color: var(--accent); flex: none; }
+  .pcHead .seg { cursor: default; flex-wrap: wrap; }
+  .pcHead .seg button { padding: 4px 10px; font-size: 12px; }
+  .pcHead .seg button.dim:not(.active) { opacity: .5; }
+  .pcHead .x { padding: 6px; line-height: 0; } .pcHead .x svg { width: 16px; height: 16px; }
+  .pcStage { position: relative; padding: 8px 10px 4px; }
+  #pcCv { display: block; width: 100%; border-radius: 8px; background: #0b0e10; touch-action: none; outline: none; }
+  #pcCv:focus-visible { box-shadow: var(--focus); }
+  .pcMsg { position: absolute; inset: 8px 10px 4px; display: grid; place-items: center; text-align: center; padding: 0 30px; font-size: 13px; color: var(--muted); background: rgba(11,14,16,.72); border-radius: 8px; pointer-events: none; }
+  .pcMsg.hidden { display: none; }
+  .pcFields { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 14px 4px; }
+  .pcFields label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+  .pcFields input { width: 64px; }
+  .pcFields .unit { font-size: 11px; color: var(--muted); min-width: 10px; }
+  .pcSep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
+  button.ghost.pcLink { padding: 4px; line-height: 0; } .pcLink svg { width: 16px; height: 16px; }
+  button.ghost.pcLink[aria-pressed="true"] { color: var(--accent); background: rgba(0,96,254,.16); }
+  .pcTog { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: 12px; }
+  .pcTog svg { width: 16px; height: 16px; }
+  .pcTog[aria-pressed="true"] { background: rgba(0,96,254,.25); border-color: var(--accent); color: #fff; }
+  .pcFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 6px 14px 12px; }
+  .pcFoot .seg button { padding: 5px 10px; font-size: 12px; }
+  .pcFoot .setToggle { margin: 0; font-size: 12px; }
+  #plateCanvas.off .pcFields, #plateCanvas.off .pcFoot { opacity: .45; pointer-events: none; }
+  .field .pcOpen { padding: 4px; line-height: 0; margin-left: 4px; flex: none; }
+  .field .pcOpen svg { width: 17px; height: 17px; }
+  .ledTable .field { gap: 0; }
+  .ledTable .field select { margin-left: auto; }
   #help { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; background: rgba(10,11,13,.6); }
   #help .card { width: min(780px, calc(100% - 32px)); max-height: calc(100% - 64px); overflow: auto; background: var(--panel);
     border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--panelShadow); }
@@ -544,6 +661,7 @@
     transition: opacity .6s var(--ease);
   }
   #navHud.faded { opacity: 0; }
+  body.camview #navHud { bottom: 86px; z-index: 18; }        /* above the lens bar */
   #navHud.hidden { display: none; }
 
   /* Gamepad crosshair: R1 grabs whatever sits under it. Gold + label when over a piece. */
@@ -986,6 +1104,13 @@
       <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-gamepad" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M7.5 7h9a4.5 4.5 0 0 1 4.4 3.6l.9 4.6a2.6 2.6 0 0 1-4.6 2.1L15.5 15h-7l-1.7 2.3a2.6 2.6 0 0 1-4.6-2.1l.9-4.6A4.5 4.5 0 0 1 7.5 7z"/><path d="M8 9.8v3M6.5 11.3h3"/></g><g fill="currentColor"><circle cx="15.6" cy="10.4" r="1.1"/><circle cx="17.6" cy="12.4" r="1.1"/></g></symbol>
+      <symbol id="i-kbd" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 9.5h.01M9 9.5h.01M12 9.5h.01M15 9.5h.01M18 9.5h.01M6 12.3h.01M9 12.3h.01M12 12.3h.01M15 12.3h.01M18 12.3h.01M8 15h8"/></g></symbol>
+      <symbol id="i-touch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M9.5 11V5.5a1.5 1.5 0 0 1 3 0V11l3.6.7a2 2 0 0 1 1.6 2.3l-.7 4A3 3 0 0 1 14 20.5h-2.6a3 3 0 0 1-2.4-1.2L6 15.2a1.5 1.5 0 0 1 2.2-2L9.5 14.5"/><path d="M6.3 7.5a5 5 0 0 1 9.4 0"/></g></symbol>
+      <symbol id="i-canvas" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="7" width="14" height="10" rx="1"/><path d="M8.5 14l2.5-3 2 2 1.5-1.5 2 2.5" stroke-linecap="round"/></g><g fill="currentColor"><rect x="3" y="5" width="4" height="4" rx=".8"/><rect x="17" y="5" width="4" height="4" rx=".8"/><rect x="3" y="15" width="4" height="4" rx=".8"/><rect x="17" y="15" width="4" height="4" rx=".8"/></g></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></g></symbol>
+      <symbol id="i-fliph" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2 2"/><path d="M9 6L3 18h6z"/><path d="M15 6l6 12h-6z" fill="currentColor" fill-opacity=".35"/></g></symbol>
+      <symbol id="i-flipv" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 12h18" stroke-dasharray="2 2"/><path d="M6 9L18 3v6z"/><path d="M6 15l12 6v-6z" fill="currentColor" fill-opacity=".35"/></g></symbol>
       <symbol id="i-snap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></g></symbol>
       <symbol id="i-cube" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></g></symbol>
       <symbol id="i-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></symbol>
@@ -1063,7 +1188,7 @@
           <input type="checkbox" id="padInvert"></label>
       </div>
     </div>
-    <button class="ghost" id="helpBtn" title="Controls for mouse, keyboard, gamepad and touch"><svg><use href="#i-help"/></svg>Help</button>
+    <button class="ghost" id="helpBtn" title="Controls for what you're doing right now (?)"><svg><use href="#i-help"/></svg>Help</button>
   </header>
 
   <!-- Sections: one opens at a time beside the rail -->
@@ -1072,7 +1197,24 @@
     <button data-sec="add" class="editOnly" title="Add decks, glass walls, vehicles, people and your own models"><svg><use href="#i-add"/></svg>Add</button>
     <button data-sec="led" class="editOnly" title="Put images or video on the LED walls and ceiling"><svg><use href="#i-led"/></svg>LED</button>
     <button data-sec="camera" title="Film camera, lens, saved shots and prints"><svg><use href="#i-camera"/></svg>Camera</button>
+    <span class="railGap" aria-hidden="true"></span>
+    <button id="ctlBtn" title="Controls for what you're doing right now (?)" aria-expanded="false" aria-controls="ctlPanel"><svg><use href="#i-gamepad"/></svg>Controls</button>
   </nav>
+
+  <!-- Controls: a live card of the controls for what you're doing (walking, plan, viewfinder…) -->
+  <aside id="ctlPanel" class="hidden" aria-labelledby="ctlTitle">
+    <div class="ctlHead">
+      <div class="ctlTitles"><div class="ctlMode" id="ctlMode"></div><h2 id="ctlTitle">Controls</h2></div>
+      <button class="ghost x" id="ctlClose" aria-label="Close controls"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="ctlDev" role="tablist" aria-label="Show controls for">
+      <button role="tab" data-dev="kb" aria-selected="true"><svg aria-hidden="true"><use href="#i-kbd"/></svg>Keys &amp; mouse</button>
+      <button role="tab" data-dev="pad" aria-selected="false"><svg aria-hidden="true"><use href="#i-gamepad"/></svg>Gamepad</button>
+      <button role="tab" data-dev="touch" aria-selected="false"><svg aria-hidden="true"><use href="#i-touch"/></svg>Touch</button>
+    </div>
+    <div class="ctlBody" id="ctlBody" aria-live="polite"></div>
+    <div class="ctlFoot"><button class="ghost" id="ctlAll">Every control…</button><span><kbd>?</kbd> opens and closes this</span></div>
+  </aside>
 
   <aside id="drawer" class="closed" aria-live="polite">
     <div class="paneHead">
@@ -1226,11 +1368,11 @@
     <img class="wlogo" src="brand/logo-negative.png" alt="Lumostage" width="120"><h3>Welcome to Mock &amp; Roll</h3>
     <p>You're standing on the shooting floor, looking into the LED volume.</p>
     <ol>
-      <li><b>1</b><span>Drag to look around; <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk. <strong>Plan</strong> shows it from above.</span></li>
+      <li><b>1</b><span>Drag to look around; <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk, <kbd>Q</kbd> <kbd>E</kbd> down and up. <strong>Controls</strong> at the foot of the left rail (or <kbd>?</kbd>) shows the keys for whatever you're doing.</span></li>
       <li><b>2</b><span>Open <strong>Add</strong> or <strong>Stage</strong> on the left to bring in decks, sets and props, then drag them into place.</span></li>
       <li><b>3</b><span>Open <strong>Camera</strong> to pick a lens, open the <strong>Viewfinder</strong>, and save or print the shot.</span></li>
     </ol>
-    <div class="btnRow"><button class="ghost" id="welcomeHelp">All controls</button><button class="primary" id="welcomeOk">Got it</button></div>
+    <div class="btnRow"><button class="ghost" id="welcomeHelp">Show controls</button><button class="primary" id="welcomeOk">Got it</button></div>
   </div>
 
   <!-- Controls reference -->
@@ -1311,6 +1453,8 @@
           <dt>Height off floor</dt><dd>Auto stands them on decks, wall bases and the subway floor; type a value to fix it</dd></dl>
           <h3>360° world</h3><dl>
           <dt>LED</dt><dd>Each surface shows Off, a flat plate, or the 360° world</dd>
+          <dt>World size</dt><dd>Shrink the world sphere to fit more of it on the walls (the background reads smaller and further), grow it to zoom in; ∞ = no parallax. The dashed floor ring is its edge</dd>
+          <dt>Plate canvas</dt><dd>The frame icon by a surface places its flat plate: drag to move, corners scale (Shift keeps proportions), edges stretch, the round handle turns (Shift 15°), wheel scales; flip H / V; Fit, Fill or Fill camera view</dd>
           <dt>Library</dt><dd>Ready-made worlds, saved with the layout</dd>
           <dt>Load a file</dt><dd>Plays this session only; reload it after a refresh</dd>
           <dt>Staff</dt><dd>Add worlds to the library with <code>tools/make-360-proxies.ps1</code> (see docs/360-environments.md)</dd></dl></div>
@@ -1392,6 +1536,42 @@
       <div class="btnRow"><button id="newCancel">Cancel</button><button id="newSaveGo">Save, then clear</button><button class="primary" id="newGo">Clear the stage</button></div>
     </div>
   </div>
+  <!-- Plate canvas: where a flat plate sits on its LED surface (non-modal, the stage stays live behind it) -->
+  <div id="plateCanvas" class="hidden" role="dialog" aria-labelledby="pcTitle">
+    <div class="pcHead" id="pcHead" title="Drag to move this panel">
+      <svg class="pcGrip" aria-hidden="true"><use href="#i-canvas"/></svg><b id="pcTitle">Plate canvas</b>
+      <div class="seg" id="pcSurf" role="group" aria-label="LED surface"></div><span class="spacer"></span>
+      <button class="ghost x" id="pcClose" aria-label="Close the plate canvas"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="pcStage"><canvas id="pcCv" tabindex="0" aria-label="The LED surface with its plate: drag to move, corners to scale, edges to stretch, the round handle to rotate. Arrow keys nudge."></canvas><div class="pcMsg hidden" id="pcMsg"></div></div>
+    <div class="pcFields" id="pcFields">
+      <label>X<input type="number" id="pcX" step="0.25"><span class="unit" data-u="len"></span></label>
+      <label>Y<input type="number" id="pcY" step="0.25"><span class="unit" data-u="len"></span></label>
+      <i class="pcSep" aria-hidden="true"></i>
+      <label>Width<input type="number" id="pcW" step="1" min="1"><span class="unit">%</span></label>
+      <button class="ghost pcLink" id="pcLink" title="Keep proportions when typing a width or height" aria-pressed="false"><svg aria-hidden="true"><use href="#i-link"/></svg></button>
+      <label>Height<input type="number" id="pcH" step="1" min="1"><span class="unit">%</span></label>
+      <i class="pcSep" aria-hidden="true"></i>
+      <label>Rotate<input type="number" id="pcR" step="1"><span class="unit">°</span></label>
+      <button class="pcTog" id="pcFH" aria-pressed="false" title="Flip horizontal (mirror left to right)"><svg aria-hidden="true"><use href="#i-fliph"/></svg>Flip H</button>
+      <button class="pcTog" id="pcFV" aria-pressed="false" title="Flip vertical (upside down)"><svg aria-hidden="true"><use href="#i-flipv"/></svg>Flip V</button>
+    </div>
+    <div class="pcFoot">
+      <div class="seg" role="group" aria-label="Size to the surface">
+        <button data-pc="stretch" title="Stretch across the whole surface (the default)">Stretch</button>
+        <button data-pc="fit" title="As big as fits, keeping its proportions">Fit</button>
+        <button data-pc="fill" title="Cover the whole surface, keeping its proportions (edges crop)">Fill</button>
+      </div>
+      <div class="seg" role="group" aria-label="Line up with the film camera">
+        <button data-pc="camCentre" title="Move the plate's centre to the middle of what the film camera sees on this surface">Centre on camera</button>
+        <button data-pc="camFill" title="Size and centre the plate so it covers what the film camera sees, keeping its proportions">Fill camera view</button>
+      </div>
+      <label class="setToggle"><input type="checkbox" id="pcShowCam" checked><span>Camera view</span></label>
+      <span class="spacer"></span>
+      <button class="ghost" data-pc="reset" title="Back to stretched, no turn or flip">Reset</button>
+    </div>
+  </div>
+
   <!-- Snapshot this view -->
   <div id="snapSheet" class="hidden" role="dialog" aria-modal="true" aria-labelledby="snapTitle">
     <div class="card">
@@ -2097,6 +2277,7 @@
     wireNewLayout();
     wireExportSheet();
     wireSnapSheet();
+    wirePlateCanvas();
     document.getElementById("planBtn").addEventListener("click", openPlanSheet);
     document.getElementById("redoBtn").addEventListener("click", () => stepHistory(1));
     applyMode();
@@ -7031,7 +7212,7 @@
     viewCamUid = pa._uid; activeCamUid = pa._uid; refreshCamPicker(); syncMoveBar();
     yawDrag = null; nav.enabled = false; nav.look = null;
     Object.keys(navKeys).forEach(k => delete navKeys[k]);
-    document.getElementById("navHud").classList.add("hidden");
+    document.getElementById("navHud").classList.add("faded");
     updateYawRing(false);
     document.activeElement && document.activeElement.blur && document.activeElement.blur(); // keys go to the view, not a focused control
     document.getElementById("vf").classList.remove("hidden");
@@ -7053,7 +7234,7 @@
     viewCamUid = null; camLook = null;
     Object.keys(camKeys).forEach(k => delete camKeys[k]);
     nav.enabled = true;
-    document.getElementById("navHud").classList.remove("hidden");
+
     document.getElementById("camHud").classList.add("hidden");
     document.getElementById("vf").classList.add("hidden");
     document.body.classList.remove("camview");
@@ -7196,8 +7377,7 @@
     syncVfBar(pa);
     if (vfPop === "focus" && performance.now() - lensWall.t > 150) syncFocusPanel(pa);
     set(".blx", "<span data-pop='focus' title='Focus &amp; iris'>focus " + fmtFocus(camVal(pa, "focusFt")) + " · " + stopLabel(camStop(pa)) + " · sharp " + dofRangeText(pa, o) + "</span>" + (lw ? "<br>" + lw : "") +
-      "<br>lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "° · x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°" +
-      (isPhone ? "" : "<br><span class='keys'>W/S move · A/D strafe · Q/E height · drag/arrows look · double-click or [ ] focus · Esc exit</span>"));
+      "<br>lens h " + fmtLen(camVal(pa, "heightFt")) + " · tilt " + Math.round(camVal(pa, "tiltDeg")) + "° · x " + fmtLen(pa.x) + " · z " + fmtLen(pa.z) + " · heading " + Math.round(pa.rotationDeg || 0) + "°");
     const fr = Math.floor((performance.now() - vfStart) / 1000 * VF_FPS), p2 = n => String(n).padStart(2, "0");
     set(".tc", p2(Math.floor(fr / (VF_FPS * 3600))) + ":" + p2(Math.floor(fr / (VF_FPS * 60)) % 60) + ":" + p2(Math.floor(fr / VF_FPS) % 60) + ":" + p2(fr % VF_FPS));
   }
@@ -8920,7 +9100,7 @@
     if (tags) cam.layers.enable(1); else cam.layers.disable(1);
     const hid = mainViewHide();
     try {
-      return renderOffscreen(cam, w, h, [yawRing, collOutline, pivotMark].concat(multiMarks), null, w > 2400 ? 1.5 : 2);
+      return renderOffscreen(cam, w, h, [yawRing, collOutline, pivotMark, envRing].concat(multiMarks), null, w > 2400 ? 1.5 : 2);
     } finally { hid.forEach(c => { c.visible = true; }); }
   }
   function openSnapSheet() {
@@ -10541,10 +10721,13 @@
     const ei = envPlateIndex(), p = envPlate(), cur = surfacePlateIdx[k] != null ? surfacePlateIdx[k] : 0, id = "surf_" + k.replace(":", "_");
     const opts = wallPlates.map((pl, i) => i === ei ? "" : '<option value="' + i + '"' + (i === cur ? " selected" : "") + '>' + escapeHtml(i === 0 ? "Off" : pl.name) + '</option>').join("") +
       '<option value="env"' + (ei >= 0 && cur === ei ? " selected" : "") + (p ? "" : " disabled") + '>' + (p ? "360° world" : "360° world (load one in LED)") + '</option>';
-    return '<div class="field"><label for="' + id + '">' + label + '</label><select class="surfSel" id="' + id + '" data-k="' + k + '">' + opts + '</select></div>';
+    const flat = cur > 0 && cur !== ei && wallPlates[cur] && wallPlates[cur].tex;
+    return '<div class="field"><label for="' + id + '">' + label + '</label><select class="surfSel" id="' + id + '" data-k="' + k + '">' + opts + '</select>' +
+      (flat ? '<button class="ghost pcOpen" data-k="' + k + '" title="Place the plate: move, scale, turn or flip it on this surface (plate canvas)" aria-label="Place the plate on ' + escapeHtml(label) + '"><svg><use href="#i-canvas"/></svg></button>' : "") + '</div>';
   }
   // Idempotent: the LED drawer and a rolling wall's inspector both carry these.
   function wireSurfSelects() {
+    document.querySelectorAll(".pcOpen:not([data-wired])").forEach(b => { b.dataset.wired = "1"; b.addEventListener("click", () => openPlateCanvas(b.dataset.k)); });
     document.querySelectorAll(".surfSel:not([data-wired])").forEach(c => {
       c.dataset.wired = "1";
       c.addEventListener("change", () => {
@@ -10564,7 +10747,8 @@
     const n = wallPlates.filter(pl => pl.kind !== "env").length - 1;
     return grpHTML("ledPlates", "Flat plates", n > 0 ? n + " loaded" : "",
       '<div class="btnRow" style="margin-top:0"><button class="plateAddBtn" data-platekey="mainWall">Add image or video…</button></div>' +
-      '<div class="hint">A flat plate is stretched across one surface (no perspective). New ones go on the main wall; pick them for other surfaces in the list above. Video up to 1080p plays smoothly.</div>');
+      (n > 0 ? '<div class="btnRow"><button id="pcOpenBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#i-canvas"/></svg>Plate canvas…</button></div>' : "") +
+      '<div class="hint">A flat plate is stretched across one surface (no perspective). New ones go on the main wall; pick them for other surfaces in the list above. The plate canvas places each one: move, scale, turn or flip it, lined up with what the film camera sees. Video up to 1080p plays smoothly.</div>');
   }
   function ceilingControlsHTML() {
     const ceil = config.fixedElements.find(e => e.id === "ceiling");
@@ -10601,6 +10785,8 @@
     }
     wireFixedControls();
     wireEnvControls();
+    const pob = document.getElementById("pcOpenBtn");
+    if (pob) pob.addEventListener("click", () => { const r = ledSurfaceRows().find(r => { const pl = surfacePlateOf(r[0]); return pl && pl.tex && pl.kind !== "env"; }); openPlateCanvas(r ? r[0] : "mainWall"); });
     addSteppers(lb);
   }
 
@@ -10708,10 +10894,10 @@
     const px = volPixels(plate, cache); if (!px) return out;
     let n = 0;
     if (plate.kind === "env") {
-      const e = envCfg(), o = envUniforms.origin.value, yaw = degToRad(e.yaw || 0), pitch = degToRad(e.pitch || 0), r = envUniforms.range.value;
+      const e = envCfg(), yaw = degToRad(e.yaw || 0), pitch = degToRad(e.pitch || 0), r = envUniforms.range.value;
       const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
       pts.forEach(P => {
-        _vd.copy(P).sub(o).normalize();
+        envLookDir(P, _vd);
         let x = cy * _vd.x - sy * _vd.z, y = _vd.y, z = sy * _vd.x + cy * _vd.z;   // same turn + tilt as the LED shader
         const y2 = cp * y + sp * z, z2 = -sp * y + cp * z;
         const lon = Math.atan2(x, -z2), lat = Math.asin(Math.max(-1, Math.min(1, y2)));
@@ -10720,7 +10906,10 @@
       });
       out.multiplyScalar(e.brightness != null ? e.brightness : 1);
     } else {
-      for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { pxAt(px, uBox[0] + (uBox[1] - uBox[0]) * (i + 0.5) / 6, (j + 0.5) / 4, out); n++; }
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+        const uv = plateUVAt(key, uBox[0] + (uBox[1] - uBox[0]) * (i + 0.5) / 6, (j + 0.5) / 4);
+        if (uv) pxAt(px, uv[0], uv[1], out); n++;          // off the plate the panel is dark
+      }
     }
     return n ? out.multiplyScalar(1 / n) : out;
   }
@@ -10831,7 +11020,7 @@
     if (!key || i < 0 || i >= wallPlates.length) return;
     surfacePlateIdx[key] = i;
     const s = ledSurfaces().find(s => s.key === key);
-    if (s) applyPlateToMesh(s.mesh, wallPlates[i]);
+    if (s) applyPlateToMesh(s.mesh, wallPlates[i], key);
     reconcilePlateVideos();
     // Remember which surfaces show the 360° environment, so a saved layout brings it back there.
     if (config.environment || wallPlates[i].kind === "env") {
@@ -10840,13 +11029,14 @@
     }
     // The same surface can be edited from the LED section and a rolling wall's inspector — keep both in step.
     document.querySelectorAll('.surfSel[data-k="' + key + '"]').forEach(el => { el.value = wallPlates[i].kind === "env" ? "env" : String(i); });
+    if (pc.open) renderPlateCanvas();
   }
 
   function surfacePlateOf(key) { const i = surfacePlateIdx[key]; return wallPlates[i != null ? i : 0]; }
 
   // Re-assert every surface's chosen plate (meshes are swapped out on a rebuild).
   function reapplyAllSurfacePlates() {
-    ledSurfaces().forEach(s => applyPlateToMesh(s.mesh, surfacePlateOf(s.key)));
+    ledSurfaces().forEach(s => applyPlateToMesh(s.mesh, surfacePlateOf(s.key), s.key));
     reconcilePlateVideos();
   }
 
@@ -10857,9 +11047,89 @@
     wallPlates.forEach((pl, i) => { if (pl.video) { if (used[i] && !pl.userPaused) pl.video.play().catch(() => {}); else pl.video.pause(); } });
   }
 
+  // ---- Plate placement ------------------------------------------------------------------
+  // Each surface places its flat plate on its own (session-only, like the plates): the centre's offset
+  // and the size as fractions of the surface, a turn in degrees (counter-clockwise as you face it) and
+  // flips. The default stretches it across the whole face. The maths runs in the surface's own feet,
+  // so turning a plate on the long main wall doesn't shear it, and "as you face it" is from the stage:
+  // the main wall's cylinder runs its UVs right to left seen from inside, which used to mirror plates.
+  const surfaceXf = {};
+  const XF_DEFAULT = { px: 0, py: 0, sx: 1, sy: 1, rot: 0, fh: false, fv: false };
+  function plateXfOf(key) { return surfaceXf[key] || (surfaceXf[key] = Object.assign({}, XF_DEFAULT)); }
+  // A surface as the canvas sees it: its size in feet and at(su, v) → the stage point there
+  // (su runs left to right as you face it, v bottom to top).
+  function plateSurf(key) {
+    if (key === "mainWall" && mainWallMesh && mainWallMesh.userData.dims) {
+      const d = mainWallMesh.userData.dims, span = Math.PI - 2 * d.delta;
+      return { key, label: "Main wall", W: d.radius * span, H: d.wallH, mirror: true,
+        at: (su, v, out) => { const th = Math.PI / 2 + d.delta + (1 - su) * span; return mainWallMesh.localToWorld((out || new THREE.Vector3()).set(d.radius * Math.sin(th), (v - 0.5) * d.wallH, d.radius * Math.cos(th))); } };
+    }
+    if (key === "ceiling" && ceilingMesh && ceilingMesh.userData.dims) {
+      const d = ceilingMesh.userData.dims;
+      return { key, label: "Ceiling", W: d.ceilW, H: d.ceilL, mirror: false, top: "stage front", bottom: "the curve",
+        at: (su, v, out) => ceilingMesh.localToWorld((out || new THREE.Vector3()).set((su - 0.5) * d.ceilW, 0, (v - 0.5) * d.ceilL)) };
+    }
+    const g = key.indexOf("roll:") === 0 && selectableObjects.find(o => o.userData.kind === "rollingWall" && o.userData.id === key.slice(5));
+    if (g && g.userData.ledMesh && g.userData.dims) {
+      const d = g.userData.dims, m = g.userData.ledMesh;
+      return { key, label: "Rolling wall · " + (((config.rollingWalls || []).find(r => r.id === g.userData.id) || {}).defaultSide || g.userData.id), W: d.wallLen, H: d.wallH, mirror: false,
+        at: (su, v, out) => m.localToWorld((out || new THREE.Vector3()).set(d.thickness / 2, (v - 0.5) * d.wallH, (0.5 - su) * d.wallLen)) };
+    }
+    return null;
+  }
+  // Surface UV (as the mesh carries it) → plate UV, as one affine matrix (the LED shader's plateXf).
+  const _pmA = new THREE.Matrix3(), _pmB = new THREE.Matrix3();
+  function plateMatrix(key, out) {
+    out = out || new THREE.Matrix3();
+    const sf = plateSurf(key); if (!sf) return out.identity();
+    const x = plateXfOf(key), W = sf.W, H = sf.H, w = Math.max(0.01, x.sx * W), h = Math.max(0.01, x.sy * H);
+    const th = degToRad(x.rot || 0), c = Math.cos(th), sn = Math.sin(th), fx = x.fh ? -1 : 1, fy = x.fv ? -1 : 1;
+    out.set(fx / w, 0, 0.5, 0, fy / h, 0.5, 0, 0, 1);                                     // plate feet → plate UV
+    out.multiply(_pmA.set(c, sn, 0, -sn, c, 0, 0, 0, 1));                                 // undo the turn
+    out.multiply(_pmA.set(1, 0, -x.px * W, 0, 1, -x.py * H, 0, 0, 1));                    // from the plate's centre
+    out.multiply(_pmA.set(W, 0, -W / 2, 0, H, -H / 2, 0, 0, 1));                          // surface UV → surface feet
+    if (sf.mirror) out.multiply(_pmB.set(-1, 0, 1, 0, 1, 0, 0, 0, 1));                    // the main wall's UVs run right to left
+    return out;
+  }
+  const _pmC = new THREE.Matrix3();
+  function plateUVAt(key, u, v) {                            // null when (u, v) is outside the plate
+    const e = plateMatrix(key, _pmC).elements, pu = e[0] * u + e[3] * v + e[6], pv = e[1] * u + e[4] * v + e[7];
+    return pu >= 0 && pu <= 1 && pv >= 0 && pv <= 1 ? [pu, pv] : null;
+  }
+  // The LED material's hook: UVs go through plateXf, and outside the plate the panel stays dark.
+  function platePatch(m) {
+    if (m.userData.plateXf) return m.userData.plateXf;
+    const U = m.userData.plateXf = { value: new THREE.Matrix3() };
+    m.onBeforeCompile = sh => {
+      sh.uniforms.plateXf = U;
+      sh.vertexShader = "uniform mat3 plateXf;\n" + sh.vertexShader.replace("#include <uv_vertex>", "#ifdef USE_UV\n  vUv = ( plateXf * vec3( uv, 1 ) ).xy;\n#endif");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <map_fragment>", ["#ifdef USE_MAP",
+          "  float plateIn = step(0.0, vUv.x) * step(vUv.x, 1.0) * step(0.0, vUv.y) * step(vUv.y, 1.0);",
+          "  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );",
+          "  diffuseColor *= mix( vec4( 1.0 ), texelColor, plateIn );",
+          "#endif"].join("\n"))
+        .replace("#include <emissivemap_fragment>", ["#ifdef USE_EMISSIVEMAP",
+          "  float plateInE = step(0.0, vUv.x) * step(vUv.x, 1.0) * step(0.0, vUv.y) * step(vUv.y, 1.0);",
+          "  vec4 emissiveColor = texture2D( emissiveMap, vUv );",
+          "  emissiveColor.rgb = emissiveMapTexelToLinear( emissiveColor ).rgb;",
+          "  totalEmissiveRadiance *= emissiveColor.rgb * plateInE;",
+          "#endif"].join("\n"));
+    };
+    m.customProgramCacheKey = () => "ledPlate";
+    m.needsUpdate = true;
+    return U;
+  }
+  // Push a surface's placement to its LED material.
+  function syncPlateXf(key) {
+    const s = ledSurfaces().find(x => x.key === key); if (!s || !s.mesh) return;
+    const m = s.mesh.userData.flatMat || s.mesh.material; if (!m || !m.isMeshStandardMaterial) return;
+    plateMatrix(key, platePatch(m).value);
+  }
+
   // Show a plate self-lit (emissive) on a mesh — the way an LED surface reads, independent of
   // scene lighting. "None" restores that mesh's dark base emissive.
-  function applyPlateToMesh(mesh, p) {
+  function applyPlateToMesh(mesh, p, key) {
     if (!mesh || !mesh.parent || !mesh.material) return;  // may be detached after a model swap
     // 360° environment: swap in the shared projection material (keeps the panel's own material aside).
     if (p && p.kind === "env") {
@@ -10871,12 +11141,327 @@
     const m = mesh.material;
     if (p && p.tex) {
       m.map = p.tex; m.emissiveMap = p.tex; m.emissive.setHex(0xffffff);
+      if (key) plateMatrix(key, platePatch(m).value);
       if (p.video) p.video.play().catch(() => {});
     } else {
       m.map = null; m.emissiveMap = null;
       m.emissive.setHex(mesh.userData.baseEmissive != null ? mesh.userData.baseEmissive : 0x0a0d12);
     }
     m.needsUpdate = true;
+  }
+
+  // ==================================================================
+  //  PLATE CANVAS (place a flat plate on its surface, like Live FX's plate transform)
+  // ==================================================================
+  // The surface unrolled flat as you face it from the stage (the main wall's curve opened out), the
+  // plate drawn where it sits, with handles: drag the body to move it, a corner to scale (Shift keeps
+  // proportions), an edge to stretch one way, the round handle to turn it (Shift = 15° steps); the
+  // wheel scales about the centre, arrows nudge. Gold cells are what the film camera sees on that
+  // surface, so a plate can be lined up with the frame. Non-modal: the stage and viewfinder stay live.
+  const pc = { open: false, key: "mainWall", drag: null, raf: 0, camT: 0, cells: null, lock: false, showCam: true, L: null, panel: null };
+  function pcSurfaceKeys() { return ledSurfaceRows().map(r => r[0]); }
+  function pcPlate(key) { const pl = surfacePlateOf(key); return pl && pl.tex && pl.kind !== "env" ? pl : null; }
+  function openPlateCanvas(key) {
+    closeMenus();
+    pc.key = key && pcSurfaceKeys().indexOf(key) !== -1 ? key : "mainWall";
+    pc.open = true; pc.cells = null; pc.camT = 0;
+    document.getElementById("plateCanvas").classList.remove("hidden");
+    renderPlateCanvas();
+    if (!pc.raf) pc.raf = requestAnimationFrame(pcTick);
+    document.getElementById("pcCv").focus({ preventScroll: true });
+  }
+  function closePlateCanvas() {
+    pc.open = false; pc.drag = null;
+    document.getElementById("plateCanvas").classList.add("hidden");
+  }
+  function pcTick(t) {
+    pc.raf = 0;
+    if (!pc.open) return;
+    if (t - pc.camT > 250) { pc.camT = t; pc.cells = pc.showCam ? pcCamCells(pc.key) : null; }
+    pcDraw();
+    pc.raf = requestAnimationFrame(pcTick);
+  }
+  // Header tabs + field values for the current surface.
+  function renderPlateCanvas() {
+    if (!pc.open) return;
+    const sf = plateSurf(pc.key), pl = pcPlate(pc.key), root = document.getElementById("plateCanvas");
+    document.getElementById("pcSurf").innerHTML = ledSurfaceRows().map(r => {
+      const on = r[0] === pc.key, has = !!pcPlate(r[0]);
+      return '<button data-k="' + r[0] + '" class="' + (on ? "active" : "") + (has ? "" : " dim") + '" aria-pressed="' + on + '" title="' + (has ? r[1] : r[1] + ": no flat plate on it yet") + '">' + escapeHtml(r[1].replace("Rolling wall · ", "Roll · ")) + '</button>';
+    }).join("");
+    document.querySelectorAll("#pcSurf button").forEach(b => b.addEventListener("click", () => { pc.key = b.dataset.k; pc.cells = null; pc.camT = 0; renderPlateCanvas(); }));
+    const msg = document.getElementById("pcMsg"), cur = surfacePlateOf(pc.key);
+    const why = !sf ? "This surface can't be placed on here." : pl ? "" : cur && cur.kind === "env"
+      ? sf.label + " shows the 360° world. Pick a flat plate for it in the LED list to place one here."
+      : sf.label + " is off. Pick a flat plate for it in the LED list (or add an image or video) to place it here.";
+    msg.textContent = why; msg.classList.toggle("hidden", !why);
+    root.classList.toggle("off", !!why);
+    pcLayout(); pcSyncFields();
+  }
+  // Canvas size and the feet → pixels view for the current surface.
+  function pcLayout() {
+    const cv = document.getElementById("pcCv"), sf = plateSurf(pc.key); if (!sf) return;
+    const cw = cv.clientWidth || 860, pad = 36, maxH = Math.min(250, Math.max(170, window.innerHeight * 0.27));
+    const k = Math.min((cw - 2 * pad) / sf.W, (maxH - 2 * pad) / sf.H), ch = Math.round(sf.H * k + 2 * pad);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.style.height = ch + "px"; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    pc.L = { k, cx: cw / 2, cy: ch / 2, dpr, cw, ch, sf };
+  }
+  const pcFt = v => Math.round(toDisplay(v) * 100) / 100;
+  function pcSyncFields() {
+    const x = plateXfOf(pc.key), sf = plateSurf(pc.key); if (!sf) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (document.activeElement !== el) el.value = v; };
+    set("pcX", pcFt(x.px * sf.W)); set("pcY", pcFt(x.py * sf.H));
+    set("pcW", Math.round(x.sx * 1000) / 10); set("pcH", Math.round(x.sy * 1000) / 10);
+    set("pcR", Math.round((x.rot || 0) * 10) / 10);
+    document.querySelectorAll('#pcFields .unit[data-u="len"]').forEach(u => { u.textContent = displayUnit; });
+    [["pcFH", x.fh], ["pcFV", x.fv]].forEach(([id, on]) => document.getElementById(id).setAttribute("aria-pressed", String(!!on)));
+    document.getElementById("pcLink").setAttribute("aria-pressed", String(pc.lock));
+  }
+  // A change to the current surface's placement: push it to the LED and the fields.
+  function pcChanged(fields) {
+    syncPlateXf(pc.key);
+    if (fields !== false) pcSyncFields();
+    volNextT = 0;                                          // re-light from where the plate now sits
+  }
+  // The plate's own aspect (width / height) in pixels, or null before it has loaded.
+  function pcAspect(pl) {
+    const im = pl && pl.tex && pl.tex.image; if (!im) return null;
+    const w = im.videoWidth || im.naturalWidth || im.width, h = im.videoHeight || im.naturalHeight || im.height;
+    return w && h ? w / h : null;
+  }
+  // Which cells of the surface the film camera sees: a grid in (su, v), true where the cell's centre
+  // lands inside the delivery frame (not checked for anything standing in the way).
+  function pcCamCells(key) {
+    const sf = plateSurf(key), pa = activeCameraPA(), g = pa && placedGroupByUid[pa._uid];
+    if (!sf || !g || !g.userData.rig) return null;
+    const o = camOptics(pa), cam = new THREE.PerspectiveCamera(o.vFov, o.aspect, 0.1, 5000);
+    g.updateMatrixWorld(true); g.userData.rig.getWorldPosition(cam.position); g.userData.rig.getWorldQuaternion(cam.quaternion);
+    cam.updateMatrixWorld(true);
+    const nx = Math.round(clamp(sf.W / 0.9, 24, 110)), ny = Math.round(clamp(sf.H / 0.9, 10, 60)), on = new Uint8Array(nx * ny);
+    const P = new THREE.Vector3(), Q = new THREE.Vector3();
+    let n = 0, su0 = 1, su1 = 0, v0 = 1, v1 = 0, ssu = 0, sv = 0;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const su = (i + 0.5) / nx, v = (j + 0.5) / ny;
+      sf.at(su, v, P);
+      Q.copy(P).applyMatrix4(cam.matrixWorldInverse); if (Q.z > -0.1) continue;
+      P.project(cam); if (Math.abs(P.x) > 1 || Math.abs(P.y) > 1) continue;
+      on[j * nx + i] = 1; n++; ssu += su; sv += v;
+      su0 = Math.min(su0, i / nx); su1 = Math.max(su1, (i + 1) / nx); v0 = Math.min(v0, j / ny); v1 = Math.max(v1, (j + 1) / ny);
+    }
+    return { nx, ny, on, n, name: camLabel(pa), cu: n ? ssu / n : 0.5, cv: n ? sv / n : 0.5, box: n ? [su0, su1, v0, v1] : null };
+  }
+  function pcDraw() {
+    const cv = document.getElementById("pcCv"), L = pc.L; if (!L || !cv.width) return;
+    const sf = L.sf, ctx = cv.getContext("2d"), k = L.k, x = plateXfOf(pc.key), pl = pcPlate(pc.key);
+    ctx.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
+    ctx.clearRect(0, 0, L.cw, L.ch);
+    const sx0 = L.cx - sf.W * k / 2, sy0 = L.cy - sf.H * k / 2, sw = sf.W * k, sh = sf.H * k;
+    // the surface, with its panel grid
+    ctx.fillStyle = "#151b20"; ctx.fillRect(sx0, sy0, sw, sh);
+    const pnl = panelsToFt(1);
+    if (pnl * k > 4) {
+      ctx.strokeStyle = "rgba(255,255,255,.05)"; ctx.lineWidth = 1; ctx.beginPath();
+      for (let a = pnl; a < sf.W - 0.01; a += pnl) { ctx.moveTo(sx0 + a * k + 0.5, sy0); ctx.lineTo(sx0 + a * k + 0.5, sy0 + sh); }
+      for (let a = pnl; a < sf.H - 0.01; a += pnl) { ctx.moveTo(sx0, sy0 + sh - a * k + 0.5); ctx.lineTo(sx0 + sw, sy0 + sh - a * k + 0.5); }
+      ctx.stroke();
+    }
+    // the plate: dim where it hangs off the surface, full inside it
+    const w = x.sx * sf.W * k, h = x.sy * sf.H * k, pxC = L.cx + x.px * sf.W * k, pyC = L.cy - x.py * sf.H * k, th = degToRad(x.rot || 0);
+    const src = pl && pl.tex && pl.tex.image, ready = src && (!src.readyState || src.readyState >= 2) && (src.width || src.videoWidth);
+    const drawPlate = () => {
+      ctx.save(); ctx.translate(pxC, pyC); ctx.rotate(-th); ctx.scale(x.fh ? -1 : 1, x.fv ? -1 : 1);
+      if (ready) { try { ctx.drawImage(src, -w / 2, -h / 2, w, h); } catch (err) {} }
+      else { ctx.fillStyle = "#2a3540"; ctx.fillRect(-w / 2, -h / 2, w, h); }
+      ctx.restore();
+    };
+    if (pl) {
+      ctx.globalAlpha = 0.28; drawPlate(); ctx.globalAlpha = 1;
+      ctx.save(); ctx.beginPath(); ctx.rect(sx0, sy0, sw, sh); ctx.clip(); drawPlate(); ctx.restore();
+    }
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1; ctx.strokeRect(sx0 + 0.5, sy0 + 0.5, sw - 1, sh - 1);
+    // what the film camera sees
+    const C = pc.cells;
+    if (C && C.n) {
+      const cw = sw / C.nx, chh = sh / C.ny, at = (i, j) => i >= 0 && j >= 0 && i < C.nx && j < C.ny && C.on[j * C.nx + i];
+      ctx.fillStyle = "rgba(255,210,74,.13)";
+      for (let j = 0; j < C.ny; j++) for (let i = 0; i < C.nx; i++) if (at(i, j)) ctx.fillRect(sx0 + i * cw, sy0 + sh - (j + 1) * chh, cw + 0.4, chh + 0.4);
+      ctx.strokeStyle = "rgba(255,210,74,.95)"; ctx.lineWidth = 1.5; ctx.beginPath();
+      for (let j = 0; j < C.ny; j++) for (let i = 0; i < C.nx; i++) {
+        if (!at(i, j)) continue;
+        const X0 = sx0 + i * cw, X1 = X0 + cw, Y1 = sy0 + sh - j * chh, Y0 = Y1 - chh;
+        if (!at(i - 1, j)) { ctx.moveTo(X0, Y0); ctx.lineTo(X0, Y1); }
+        if (!at(i + 1, j)) { ctx.moveTo(X1, Y0); ctx.lineTo(X1, Y1); }
+        if (!at(i, j - 1)) { ctx.moveTo(X0, Y1); ctx.lineTo(X1, Y1); }
+        if (!at(i, j + 1)) { ctx.moveTo(X0, Y0); ctx.lineTo(X1, Y0); }
+      }
+      ctx.stroke();
+      const lx = sx0 + C.box[0] * sw + 4, ly = sy0 + sh - C.box[3] * sh - 6;
+      ctx.font = "600 11px Segoe UI, system-ui, sans-serif"; ctx.fillStyle = "#ffd24a";
+      ctx.fillText(C.name + " sees", Math.max(4, lx), Math.max(12, ly));
+    }
+    // handles
+    if (pl) {
+      ctx.save(); ctx.translate(pxC, pyC); ctx.rotate(-th);
+      ctx.strokeStyle = "#4c9ffe"; ctx.lineWidth = 1.5; ctx.strokeRect(-w / 2, -h / 2, w, h);
+      ctx.beginPath(); ctx.moveTo(0, -h / 2); ctx.lineTo(0, -h / 2 - 22); ctx.stroke();
+      ctx.fillStyle = "#0e1013";
+      pcHandles(w, h).forEach(hd => {
+        ctx.beginPath();
+        if (hd.r) ctx.arc(hd.x, hd.y, 6, 0, Math.PI * 2); else ctx.rect(hd.x - 4.5, hd.y - 4.5, 9, 9);
+        ctx.fill(); ctx.stroke();
+      });
+      ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.moveTo(0, -6); ctx.lineTo(0, 6); ctx.stroke();
+      ctx.restore();
+    }
+    // labels
+    ctx.font = "600 11px Segoe UI, system-ui, sans-serif"; ctx.fillStyle = "rgba(255,255,255,.62)"; ctx.textBaseline = "alphabetic";
+    ctx.fillText(sf.label + " · " + fmtLen(sf.W) + " × " + fmtLen(sf.H) + (sf.mirror ? " · unrolled, as seen from the stage" : " · as seen from the stage"), 8, 15);
+    if (sf.top) {
+      ctx.textAlign = "right"; ctx.fillStyle = "rgba(255,255,255,.45)";
+      ctx.fillText("▲ " + sf.top, sx0 + sw, sy0 - 6); ctx.fillText("▼ " + sf.bottom, sx0 + sw, sy0 + sh + 14);
+      ctx.textAlign = "left";
+    }
+  }
+  // Handle positions in the plate's (canvas, y-down) frame: 8 squares + the turn handle.
+  function pcHandles(w, h) {
+    const out = [];
+    [-1, 0, 1].forEach(a => [-1, 0, 1].forEach(b => { if (a || b) out.push({ x: a * w / 2, y: b * h / 2, hx: a, hy: -b }); }));
+    out.push({ x: 0, y: -h / 2 - 22, r: true });
+    return out;
+  }
+  // Pointer → feet on the surface (from its centre, y up), and into the plate's own frame.
+  function pcPoint(e) {
+    const r = document.getElementById("pcCv").getBoundingClientRect(), L = pc.L;
+    return { X: (e.clientX - r.left - L.cx) / L.k, Y: (L.cy - (e.clientY - r.top)) / L.k, mx: e.clientX - r.left, my: e.clientY - r.top };
+  }
+  function pcLocal(P, x, sf) {
+    const th = degToRad(x.rot || 0), c = Math.cos(th), sn = Math.sin(th), dx = P.X - x.px * sf.W, dy = P.Y - x.py * sf.H;
+    return { x: c * dx + sn * dy, y: -sn * dx + c * dy };     // feet, y up, in the plate's frame
+  }
+  function pcHit(e) {
+    const sf = plateSurf(pc.key), x = plateXfOf(pc.key), k = pc.L.k, P = pcPoint(e), lp = pcLocal(P, x, sf);
+    const w = x.sx * sf.W * k, h = x.sy * sf.H * k, lx = lp.x * k, ly = -lp.y * k;
+    let best = null;
+    pcHandles(w, h).forEach(hd => { const d = Math.hypot(lx - hd.x, ly - hd.y); if (d < 10 && (!best || d < best.d)) best = Object.assign({ d }, hd); });
+    if (best) return best.r ? { kind: "rot" } : { kind: "scale", hx: best.hx, hy: best.hy };
+    if (Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2) return { kind: "move" };
+    return { kind: "move", outside: true };
+  }
+  function wirePlateCanvas() {
+    const root = document.getElementById("plateCanvas"), cv = document.getElementById("pcCv"), head = document.getElementById("pcHead");
+    document.getElementById("pcClose").addEventListener("click", closePlateCanvas);
+    // drag the panel by its header
+    head.addEventListener("pointerdown", e => {
+      if (e.target.closest("button")) return;
+      const r = root.getBoundingClientRect(), pr = root.offsetParent.getBoundingClientRect();
+      pc.panel = { dx: e.clientX - r.left, dy: e.clientY - r.top, pr };
+      root.classList.add("moved"); root.style.left = (r.left - pr.left) + "px"; root.style.top = (r.top - pr.top) + "px";
+      head.classList.add("grabbing"); head.setPointerCapture(e.pointerId);
+    });
+    head.addEventListener("pointermove", e => {
+      if (!pc.panel) return;
+      const pr = pc.panel.pr, r = root.getBoundingClientRect();
+      root.style.left = clamp(e.clientX - pr.left - pc.panel.dx, 0, pr.width - r.width) + "px";
+      root.style.top = clamp(e.clientY - pr.top - pc.panel.dy, 0, pr.height - 60) + "px";
+    });
+    const endPanel = () => { pc.panel = null; head.classList.remove("grabbing"); };
+    head.addEventListener("pointerup", endPanel); head.addEventListener("pointercancel", endPanel);
+    // the plate itself
+    cv.addEventListener("pointermove", e => {
+      if (pc.drag || !pcPlate(pc.key)) return;
+      const h = pcHit(e);
+      cv.style.cursor = h.kind === "rot" ? "alias" : h.kind === "scale" ? (h.hx && h.hy ? "nwse-resize" : h.hx ? "ew-resize" : "ns-resize") : h.outside ? "default" : "move";
+    });
+    cv.addEventListener("pointerdown", e => {
+      if (!pcPlate(pc.key)) return;
+      cv.focus({ preventScroll: true });
+      const h = pcHit(e); if (h.outside) return;
+      const sf = plateSurf(pc.key), x = plateXfOf(pc.key), P = pcPoint(e);
+      pc.drag = Object.assign({ P0: P, x0: Object.assign({}, x), sf, a0: Math.atan2(P.Y - x.py * sf.H, P.X - x.px * sf.W) }, h);
+      cv.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    cv.addEventListener("pointermove", e => {
+      const d = pc.drag; if (!d) return;
+      const sf = d.sf, x = plateXfOf(pc.key), x0 = d.x0, P = pcPoint(e);
+      if (d.kind === "move") {
+        let dx = P.X - d.P0.X, dy = P.Y - d.P0.Y;
+        if (e.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+        x.px = x0.px + dx / sf.W; x.py = x0.py + dy / sf.H;
+      } else if (d.kind === "rot") {
+        let a = x0.rot + radToDeg(Math.atan2(P.Y - x0.py * sf.H, P.X - x0.px * sf.W) - d.a0);
+        a = ((a + 180) % 360 + 360) % 360 - 180;
+        x.rot = e.shiftKey ? Math.round(a / 15) * 15 : Math.round(a * 10) / 10;
+      } else {
+        // scale from the opposite handle, in the plate's frame at the start of the drag
+        const lp = pcLocal(P, x0, sf), w0 = x0.sx * sf.W, h0 = x0.sy * sf.H;
+        const ax = -d.hx * w0 / 2, ay = -d.hy * h0 / 2;
+        let w = d.hx ? Math.max(0.25, (lp.x - ax) * d.hx) : w0, h = d.hy ? Math.max(0.25, (lp.y - ay) * d.hy) : h0;
+        if (d.hx && d.hy && (e.shiftKey || pc.lock)) { const f = Math.max(w / w0, h / h0); w = w0 * f; h = h0 * f; }
+        const cxL = d.hx ? ax + d.hx * w / 2 : 0, cyL = d.hy ? ay + d.hy * h / 2 : 0;
+        const th = degToRad(x0.rot || 0), c = Math.cos(th), sn = Math.sin(th);
+        x.px = x0.px + (c * cxL - sn * cyL) / sf.W; x.py = x0.py + (sn * cxL + c * cyL) / sf.H;
+        x.sx = w / sf.W; x.sy = h / sf.H;
+      }
+      pcChanged();
+    });
+    const endDrag = () => { pc.drag = null; };
+    cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+    cv.addEventListener("wheel", e => {
+      if (!pcPlate(pc.key)) return;
+      e.preventDefault();
+      const x = plateXfOf(pc.key), f = Math.pow(1.06, -Math.sign(e.deltaY) * (e.shiftKey ? 3 : 1));
+      x.sx = Math.max(0.01, x.sx * f); x.sy = Math.max(0.01, x.sy * f); pcChanged();
+    }, { passive: false });
+    cv.addEventListener("keydown", e => {
+      if (e.key === "Escape") { closePlateCanvas(); e.stopPropagation(); e.preventDefault(); return; }
+      const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+      e.stopPropagation();                                   // WASD / arrows stay with the canvas, not the stage
+      if (!dir || !pcPlate(pc.key)) return;
+      e.preventDefault();
+      const sf = plateSurf(pc.key), x = plateXfOf(pc.key), st = e.shiftKey ? 2 : 0.25;
+      x.px += dir[0] * st / sf.W; x.py += dir[1] * st / sf.H; pcChanged();
+    });
+    root.addEventListener("keydown", e => { if (e.key === "Escape") { closePlateCanvas(); e.stopPropagation(); } else if (e.target.tagName === "INPUT") e.stopPropagation(); });
+    // fields
+    const num = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+    const onField = (id, fn) => document.getElementById(id).addEventListener("change", () => { const v = num(id); if (v == null) { pcSyncFields(); return; } fn(v, plateXfOf(pc.key), plateSurf(pc.key)); pcChanged(); });
+    onField("pcX", (v, x, sf) => { x.px = fromDisplay(v) / sf.W; });
+    onField("pcY", (v, x, sf) => { x.py = fromDisplay(v) / sf.H; });
+    onField("pcW", (v, x) => { const n = Math.max(1, v) / 100; if (pc.lock) x.sy *= n / x.sx; x.sx = n; });
+    onField("pcH", (v, x) => { const n = Math.max(1, v) / 100; if (pc.lock) x.sx *= n / x.sy; x.sy = n; });
+    onField("pcR", (v, x) => { x.rot = ((v + 180) % 360 + 360) % 360 - 180; });
+    document.getElementById("pcLink").addEventListener("click", () => { pc.lock = !pc.lock; pcSyncFields(); });
+    document.getElementById("pcFH").addEventListener("click", () => { const x = plateXfOf(pc.key); x.fh = !x.fh; pcChanged(); });
+    document.getElementById("pcFV").addEventListener("click", () => { const x = plateXfOf(pc.key); x.fv = !x.fv; pcChanged(); });
+    document.getElementById("pcShowCam").addEventListener("change", e => { pc.showCam = e.target.checked; pc.camT = 0; });
+    root.querySelectorAll("[data-pc]").forEach(b => b.addEventListener("click", () => platePreset(b.dataset.pc)));
+    window.addEventListener("resize", () => { if (pc.open) pcLayout(); });
+  }
+  function platePreset(what) {
+    const sf = plateSurf(pc.key), pl = pcPlate(pc.key); if (!sf || !pl) return;
+    const x = plateXfOf(pc.key), a = pcAspect(pl);
+    const sizeTo = (bw, bh, cover) => {                       // keep the plate's proportions inside / over a box (feet)
+      if (!a) { toast("The plate is still loading"); return false; }
+      const wide = a > bw / bh;
+      const w = (wide !== !!cover) ? bw : bh * a, h = w / a;
+      x.sx = w / sf.W; x.sy = h / sf.H; return true;
+    };
+    if (what === "reset") Object.assign(x, XF_DEFAULT);
+    else if (what === "stretch") Object.assign(x, { px: 0, py: 0, sx: 1, sy: 1, rot: 0 });
+    else if (what === "fit" || what === "fill") { if (!sizeTo(sf.W, sf.H, what === "fill")) return; x.px = 0; x.py = 0; x.rot = 0; }
+    else {
+      const C = pcCamCells(pc.key);
+      if (!C || !C.n) { toast(activeCameraPA() ? "The film camera doesn't see this surface from where it is" : "Place a film camera first"); return; }
+      if (what === "camCentre") { x.px = C.cu - 0.5; x.py = C.cv - 0.5; }
+      else {
+        const bw = (C.box[1] - C.box[0]) * sf.W, bh = (C.box[3] - C.box[2]) * sf.H;
+        if (!sizeTo(bw, bh, true)) return;
+        x.px = (C.box[0] + C.box[1]) / 2 - 0.5; x.py = (C.box[2] + C.box[3]) / 2 - 0.5; x.rot = 0;
+      }
+      pc.cells = C;
+    }
+    pcChanged();
   }
 
   // ==================================================================
@@ -10892,14 +11477,22 @@
   // the shader which part of the sphere the frame covers. Outside that range the panel shows black.
   // Only one environment is loaded at a time; it's a plate in the shared pool (kind "env") so every
   // surface's content dropdown can pick it, and the LED section offers a one-click "show on" list.
-  const ENV_DEFAULT = { libraryId: null, surfaces: ["mainWall", "ceiling"], follow: "camera", yaw: 0, pitch: 0, brightness: 1, fixed: { x: 0, y: 5, z: 4 } };
+  // radius: the world sphere's size in ft (0 = infinitely far, the default). A finite sphere is centred
+  // on the volume (centre.x / centre.z, at lens height) and every LED pixel shows the point where the
+  // line from the eye through it meets the sphere: shrink it and the world comes in closer and bigger
+  // behind the set, grow it and it falls away. The same trick as scaling the 360 sphere in Live FX
+  // or Unreal to cheat perspective. From the sphere's own centre the size makes no difference.
+  const ENV_DEFAULT = { libraryId: null, surfaces: ["mainWall", "ceiling"], follow: "camera", yaw: 0, pitch: 0, brightness: 1, fixed: { x: 0, y: 5, z: 4 }, radius: 0, centre: { x: 0, z: 0 } };
+  const ENV_R = { min: 10, max: 1000 };                     // ft: the World size dial's range (past max = infinite)
   const envUniforms = {
     map: { value: null },
     origin: { value: new THREE.Vector3(0, 5, 4) },
     yaw: { value: 0 },
     pitch: { value: 0 },
     brightness: { value: 1 },
-    range: { value: new THREE.Vector4(-Math.PI, Math.PI, -Math.PI / 2, Math.PI / 2) }   // lonMin, lonMax, latMin, latMax
+    range: { value: new THREE.Vector4(-Math.PI, Math.PI, -Math.PI / 2, Math.PI / 2) },  // lonMin, lonMax, latMin, latMax
+    radius: { value: 0 },                                                                // world sphere, ft (0 = infinite)
+    centre: { value: new THREE.Vector3(0, 5, 0) }
   };
   const envMats = {};
   const ENV_VERT = [
@@ -10911,10 +11504,16 @@
     "}"].join("\n");
   const ENV_FRAG = [
     "uniform sampler2D map; uniform vec3 origin; uniform float yaw; uniform float pitch;",
-    "uniform float brightness; uniform vec4 range;",
+    "uniform float brightness; uniform vec4 range; uniform float radius; uniform vec3 centre;",
     "varying vec3 vWorld;",
     "void main() {",
     "  vec3 d = normalize(vWorld - origin);",
+    "  if (radius > 0.0) {",                          // finite world: where the eye's line through this pixel meets the sphere
+    "    vec3 oc = origin - centre;",
+    "    float r = max(radius, length(oc) + 1.0);",   // never smaller than the eye's distance: the eye stays inside it
+    "    float b = dot(oc, d), h = b * b - dot(oc, oc) + r * r;",
+    "    d = normalize(oc + d * (-b + sqrt(max(h, 0.0))));",
+    "  }",
     "  float cy = cos(yaw), sy = sin(yaw);",          // turn the world about the vertical axis
     "  d = vec3(cy * d.x - sy * d.z, d.y, sy * d.x + cy * d.z);",
     "  float cp = cos(pitch), sp = sin(pitch);",      // tilt the horizon
@@ -10938,13 +11537,25 @@
     if (!config.environment) config.environment = deepClone(ENV_DEFAULT);
     return config.environment;
   }
+  // The direction a 360° lookup uses for a stage point P (the shader's maths, for the volume lights).
+  const _envOc = new THREE.Vector3();
+  function envLookDir(P, out) {
+    const o = envUniforms.origin.value, R = envUniforms.radius.value;
+    out.copy(P).sub(o).normalize();
+    if (R > 0) {
+      const oc = _envOc.copy(o).sub(envUniforms.centre.value), r = Math.max(R, oc.length() + 1);
+      const b = oc.dot(out), h = b * b - oc.lengthSq() + r * r;
+      out.multiplyScalar(-b + Math.sqrt(Math.max(h, 0))).add(oc).normalize();
+    }
+    return out;
+  }
   function envPlateIndex() { return wallPlates.findIndex(p => p.kind === "env"); }
   function envPlate() { const i = envPlateIndex(); return i < 0 ? null : wallPlates[i]; }
 
   // Per frame: put the eyepoint where it should be and push the look controls.
   const _envTmp = new THREE.Vector3();
   function updateEnvironment() {
-    if (envPlateIndex() < 0) return;
+    if (envPlateIndex() < 0) { if (envRing) envRing.visible = false; return; }
     const e = envCfg();
     let o = null;
     if (e.follow === "camera" || viewCamUid != null) {
@@ -10958,6 +11569,29 @@
     envUniforms.yaw.value = degToRad(e.yaw || 0);
     envUniforms.pitch.value = degToRad(e.pitch || 0);
     envUniforms.brightness.value = e.brightness != null ? e.brightness : 1;
+    const c = e.centre || ENV_DEFAULT.centre;
+    envUniforms.radius.value = e.radius > 0 ? e.radius : 0;
+    envUniforms.centre.value.set(c.x, envUniforms.origin.value.y, c.z);   // at lens height: scaling never moves the horizon
+    syncEnvRing();
+  }
+  // The world's circle on the floor, while the LED section is open and the world has a size.
+  let envRing = null;
+  function syncEnvRing() {
+    const e = config.environment, R = e && e.radius > 0 ? e.radius : 0, on = !!R && openSection === "led" && envPlateIndex() >= 0;
+    if (!on) { if (envRing) envRing.visible = false; return; }
+    if (!envRing) {
+      const pts = []; for (let i = 0; i <= 128; i++) { const a = i / 128 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a), 0, Math.sin(a))); }
+      envRing = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: 0x5fd0ff, dashSize: 0.012, gapSize: 0.008, transparent: true, opacity: 0.9, depthTest: false }));
+      envRing.computeLineDistances(); envRing.renderOrder = 996; envRing.raycast = function () {}; envRing.layers.set(1);
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.012, 20), new THREE.MeshBasicMaterial({ color: 0x5fd0ff, depthTest: false }));
+      dot.rotation.x = -Math.PI / 2; dot.renderOrder = 996; dot.layers.set(1); envRing.add(dot);    // the world's centre
+      scene.add(envRing);
+    }
+    const c = e.centre || ENV_DEFAULT.centre, o = envUniforms.origin.value, d = Math.hypot(o.x - c.x, o.z - c.z);
+    const eff = Math.max(R, d + 1);                          // the shader keeps the eye inside the world
+    envRing.position.set(c.x, 0.08, c.z); envRing.scale.setScalar(eff); envRing.visible = true;
+    const nt = document.getElementById("envSizeNote");
+    if (nt) { const t = eff > R + 0.05 ? "The eye is " + fmtLen(d) + " from the world's centre, so the world can't be smaller than that: showing " + fmtLen(eff) + "." : ""; if (nt.textContent !== t) nt.textContent = t; }
   }
 
   // Library: environments/library.json (written by tools/make-360-proxies.ps1, local) plus
@@ -11065,6 +11699,40 @@
       '<span class="unit">' + unit + '</span></span></div>' +
       '<input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v + '" aria-label="' + label + '"></div>';
   }
+  // World size: a log slider from ENV_R.min to ENV_R.max, its last notch = infinitely far. The number
+  // box shows the radius (blank = infinite; type one in, or clear it).
+  const envSizePos = R => !(R > 0) ? 1000 : Math.round(Math.log(Math.min(ENV_R.max, Math.max(ENV_R.min, R)) / ENV_R.min) / Math.log(ENV_R.max / ENV_R.min) * 990);
+  const envSizeR = pos => pos >= 995 ? 0 : Math.round(ENV_R.min * Math.pow(ENV_R.max / ENV_R.min, Math.min(990, pos) / 990) * 10) / 10;
+  function envSizeHTML(e) {
+    const R = e.radius > 0 ? e.radius : 0, d = v => Math.round(toDisplay(v) * 10) / 10;
+    return '<div class="dial" title="The size of the world sphere around the volume. Smaller pulls the background in closer and bigger; the far end of the slider is infinitely far (no parallax)">' +
+      '<div class="dialTop"><label for="envSizeN">World size</label><span class="inl">' +
+      '<input type="number" id="envSizeN" min="' + d(ENV_R.min) + '" max="' + d(ENV_R.max) + '" step="' + (displayUnit === "m" ? 0.5 : 1) + '" placeholder="∞" value="' + (R ? d(R) : "") + '" aria-label="World radius">' +
+      '<span class="unit">' + displayUnit + ' radius</span><button class="ghost envInf' + (R ? "" : " on") + '" id="envInf" title="Infinitely far: no parallax, the classic 360° look" aria-pressed="' + !R + '">∞</button></span></div>' +
+      '<input type="range" id="envSize" min="0" max="1000" step="1" value="' + envSizePos(R) + '" aria-label="World size"><div class="warnTxt envNote" id="envSizeNote"></div></div>';
+  }
+  function wireEnvSize() {
+    const e = envCfg(), sl = document.getElementById("envSize"), nb = document.getElementById("envSizeN"), inf = document.getElementById("envInf");
+    if (!sl || !nb) return;
+    const set = (R, from) => {
+      R = R > 0 ? Math.min(ENV_R.max, Math.max(ENV_R.min, R)) : 0;
+      e.radius = R;
+      if (from !== sl) sl.value = envSizePos(R);
+      if (from !== nb) nb.value = R ? Math.round(toDisplay(R) * 10) / 10 : "";
+      if (inf) { inf.classList.toggle("on", !R); inf.setAttribute("aria-pressed", String(!R)); }
+      syncEnvRing(); scheduleAutosave();
+    };
+    sl.addEventListener("input", () => set(envSizeR(parseFloat(sl.value)), sl));
+    nb.addEventListener("change", () => { const v = parseFloat(nb.value); set(isNaN(v) || v <= 0 ? 0 : fromDisplay(v), null); });
+    nb.addEventListener("keydown", ev => {
+      ev.stopPropagation();
+      if (ev.key !== "ArrowUp" && ev.key !== "ArrowDown") return;            // arrows: ±5% (Shift ±25%), from ∞ starts at the max
+      ev.preventDefault();
+      const R = e.radius > 0 ? e.radius : ENV_R.max, k = ev.shiftKey ? 1.25 : 1.05;
+      set(ev.key === "ArrowUp" ? R * k : R / k, null);
+    });
+    if (inf) inf.addEventListener("click", () => set(e.radius > 0 ? 0 : 60, null));
+  }
   // The LED section's 360° group.
   function envControlsHTML() {
     const e = envCfg(), p = envPlate();
@@ -11084,13 +11752,14 @@
     h += '<div class="dims" style="margin:8px 0 6px">Showing <b>' + escapeHtml(p.name.replace(/^360° · /, "")) + '</b>' +
       (local ? '<br><span class="warnTxt">Local file — not saved with the project; load it again after a refresh.</span>' : "") + '</div>';
     h += '<div class="field"><label for="envFollow">Seen from</label><select id="envFollow">' + opt("camera", "Film camera (tracked)", e.follow) + opt("viewer", "You (walk view)", e.follow) + opt("fixed", "Fixed stage point", e.follow) + '</select></div>' +
+      envSizeHTML(e) +
       envDialHTML("envYaw", "Turn", -180, 180, 0.1, e.yaw || 0, "°", 1, "Rotate the world left / right") +
       envDialHTML("envLift", "Horizon height", displayUnit === "m" ? -6 : -20, displayUnit === "m" ? 6 : 20, 0.1, toDisplay(e.lift || 0), displayUnit, displayUnit === "m" ? FT_PER_M : 1, "Move the horizon up (+) or down (−) on the walls") +
       (e.pitch ? envDialHTML("envPitch", "Tilt", -45, 45, 0.1, e.pitch, "°", 1, "Tilts the horizon about the stage centre (set by an older layout) — 0 removes it") : "") +
       envDialHTML("envBright", "Brightness", 20, 200, 1, (e.brightness != null ? e.brightness : 1) * 100, "%", 0.01, "LED output");
     h += '<div class="btnRow">' + (p.video ? '<button id="envPlay">' + (p.video.paused ? "Play" : "Pause") + '</button><button id="envRestart">Restart</button>' : "") +
       '<button id="envRemove" class="danger">Remove</button></div>';
-    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. Turn lines up a street with the set; Horizon height puts the horizon where the set needs it. Choose which surfaces show it in the list above.</div>';
+    h += '<div class="hint">“Film camera” is how a tracked volume behaves: move the camera and the world shifts with it. World size cheats perspective: shrink the world and more of it fits on the walls, so the background reads smaller and further off; grow it and the background zooms in, up to ∞ (no parallax). Set it near how far away the background really is: a street wants tens of feet, skies and skylines stay at ∞. The dashed ring on the floor is its edge. Turn lines up a street with the set; Horizon height puts the horizon where the set needs it. Choose which surfaces show it in the list above.</div>';
     const on = ledSurfaceRows().filter(r => surfacePlateIdx[r[0]] === envPlateIndex()).length;
     return grpHTML("led360", "360° world", (local ? "local file · " : "") + "on " + on + " of " + ledSurfaceRows().length, h, true);
   }
@@ -11123,6 +11792,7 @@
     dial("envLift", "lift");
     dial("envPitch", "pitch");
     dial("envBright", "brightness");
+    wireEnvSize();
     const fo = $("envFollow"); if (fo) fo.addEventListener("change", () => { e.follow = fo.value; scheduleAutosave(); });
     const p = envPlate();
     const pl = $("envPlay"); if (pl && p && p.video) pl.addEventListener("click", () => {
@@ -11356,14 +12026,9 @@
   // ==================================================================
   // Main view: "fly" is an FPS camera (position + yaw/pitch, no pivot point); "top" looks
   // straight down and only translates (pan) or changes height (zoom) — it never rotates.
-  const NAV_HINT = {
-    fly: "Drag to look · W A S D to walk · Q / E down and up · ? for all controls",
-    top: "Drag to pan · scroll to zoom · ? for all controls"
-  };
+  // (The one-line control hint is the Controls card's: see ctlTick.)
   function applyNavPose() {
     camera.rotation.set(nav.pitch, nav.yaw, 0);   // order is YXZ
-    const h = document.getElementById("navHud"), t = pad.connected ? PAD_HINT[nav.mode] : NAV_HINT[nav.mode];
-    if (h && h.textContent !== t) h.textContent = t;
   }
   function setNavButtons() {
     document.getElementById("camOrbit").classList.toggle("active", nav.mode === "fly");
@@ -11923,10 +12588,6 @@
   const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
   const PAD_DEAD = 0.15;
   const PAD_NEAR = 2.5;   // ft — the crosshair ignores anything closer (e.g. a camera parked at your eye)
-  const PAD_HINT = {
-    fly: "Gamepad: sticks move & look · R1 grab · A plan view · X camera here · Y viewfinder · ? all buttons",
-    top: "Gamepad: left stick pans · triggers zoom · R1 grab · A back to walk · ? all buttons"
-  };
   // invertY: flight-style look (stick up = look down). A personal preference, so it's remembered
   // per browser (localStorage), not saved into the shared layout.
   const PAD_INVERT_KEY = "lumostage.padInvertY";
@@ -12054,6 +12715,8 @@
     const b = gp.buttons.map(x => x.pressed), v = gp.buttons.map(x => x.value || 0), ax = gp.axes;
     const down = i => b[i] && !pad.prev[i];
     const lx = padAxis(ax[0] || 0), ly = padAxis(ax[1] || 0), rx = padAxis(ax[2] || 0), ry = padAxis(ax[3] || 0);
+    pad.axes = [lx, ly, rx, ry];
+    if (lx || ly || rx || ry || b.some(x => x)) noteInput("pad");
     const lift = (v[PAD_BTN.RT] > 0.05 ? v[PAD_BTN.RT] : 0) - (v[PAD_BTN.LT] > 0.05 ? v[PAD_BTN.LT] : 0);
     if (down(PAD_BTN.L3)) pad.sprint = true;
     if (!lx && !ly) pad.sprint = false;                     // sprint latches until the stick returns
@@ -12688,7 +13351,7 @@
     if (key && key === openSection) key = null;            // clicking the open section closes it
     openSection = key;
     const dr = document.getElementById("drawer");
-    document.querySelectorAll("#rail button").forEach(b => {
+    document.querySelectorAll("#rail button[data-sec]").forEach(b => {
       const on = b.dataset.sec === key;
       b.classList.toggle("active", on); b.setAttribute("aria-expanded", on ? "true" : "false");
     });
@@ -12721,6 +13384,251 @@
     document.getElementById(btnId).setAttribute("aria-expanded", open ? "true" : "false");
   }
 
+  // ---- Controls card -------------------------------------------------------------------------
+  // Like a game's controls overlay: it shows the controls for what you're doing right now (walking the
+  // stage, the plan, moving a piece, operating the camera, a lens menu, the board), drawn as keycaps,
+  // a mouse, a gamepad and touch gestures, for whichever you last used. Keys light up as you press
+  // them. When what you're doing changes, the one-line hint at the foot of the view says so.
+  // Rows: [graphic, what it does, flags]. Flags: "e" = edit mode only.
+  //   keys:  W A S D Q E captions (null = the cluster isn't used here); shift: its caption
+  //   mouse: [kind, text, flags, modifier]  kind = drag | click | dbl | wheel | ring
+  //   more:  ["Ctrl+Z/Y", text] — + joins a combo, / separates alternatives, "Arrows" = ←→↑↓
+  //   pad:   ["A", text] — A B X Y LB RB LT RT LS RS L3 R3 DLR DUD BACK START, spaces = alternatives
+  //   touch: [gesture, text] — tap | drag1 | drag2 | pinch | twist | hold | joy
+  const CTL = {
+    walk: { mode: "Walk view", title: "Walking the stage",
+      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run",
+      mouse: [["drag", "Look around"], ["wheel", "Step forward / back"], ["click", "Select a piece", "e"], ["dbl", "Pick a piece out of its group", "e"]],
+      more: [["Arrows", "Look around"], ["H", "House lights on / off"], ["L", "Lens menu"], ["Ctrl+Z/Y", "Undo / redo", "e"], ["Ctrl+A", "Select every person", "e"]],
+      pad: [["LS", "Walk"], ["RS", "Look around"], ["LT RT", "Down / up"], ["L3", "Run (click the stick)"], ["A", "Plan view"], ["RB", "Hold: grab what's under the crosshair", "e"], ["X", "Put the film camera here", "e"], ["Y", "Viewfinder"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"]],
+      touch: [["joy", "Walk (on-screen stick)"], ["drag1", "Look around"], ["pinch", "Move in and out"], ["drag2", "Slide and rise"], ["tap", "Select a piece", "e"], ["hold", "Quick menu", "e"]] },
+    walkSel: { mode: "Walk view · piece selected", title: "Moving a piece",
+      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run",
+      mouse: [["drag", "Slide it along the floor"], ["ring", "Turn it", "", "drag the blue ring"], ["click", "Add to / drop from the selection", "", "Ctrl"], ["dbl", "Pick it out of its group"]],
+      more: [["Shift+←/→", "Turn 15° (add Alt for 1°)"], ["1/2", "Move / Rotate tool"], ["Ctrl+G", "Group (Ctrl Shift G ungroups)"], ["Del", "Remove"], ["Ctrl+Z", "Undo"], ["Esc", "Deselect"]],
+      pad: [["RB", "Hold: carry it with your view"], ["DLR", "With RB held: turn it"], ["LS", "Walk"], ["RS", "Look around"], ["B", "Drop / deselect"]],
+      touch: [["drag1", "Tap it again, then drag: move it"], ["twist", "Turn it"], ["hold", "Quick menu: duplicate, turn ±90°, remove"], ["tap", "Tap empty floor: deselect"]] },
+    carry: { mode: "Gamepad · carrying", title: "Carrying a piece",
+      keys: null, mouse: [], more: [],
+      pad: [["RB", "Keep holding to carry; let go to drop"], ["LS", "Walk it somewhere"], ["RS", "Aim where it goes"], ["DLR", "Turn it a snap step"], ["B", "Drop it here"]],
+      touch: [] },
+    plan: { mode: "Plan view", title: "Looking down on the plan",
+      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster",
+      mouse: [["drag", "Pan (drag the floor)"], ["wheel", "Zoom, towards the pointer"], ["click", "Select a piece", "e"], ["drag", "Drag a piece to move it", "e"]],
+      more: [["F", "3D / flat footprints (true scale)"], ["Tab", "Pieces list: pick overlapping pieces by name", "e"], ["Ctrl+P", "Stage plan to print"], ["H", "House lights"]],
+      pad: [["LS", "Pan"], ["LT RT", "Zoom out / in"], ["RS", "Zoom (up = in)"], ["A", "Back to walking"], ["RB", "Hold: grab a piece", "e"], ["B", "Deselect", "e"]],
+      touch: [["drag1", "Pan"], ["pinch", "Zoom"], ["tap", "Select a piece", "e"], ["hold", "Quick menu", "e"]] },
+    planSel: { mode: "Plan view · piece selected", title: "Arranging the plan",
+      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster",
+      mouse: [["drag", "Move it"], ["ring", "Turn it", "", "drag the blue ring"], ["click", "Add to / drop from the selection", "", "Ctrl"], ["dbl", "Pick it out of its group"]],
+      more: [["Arrows", "Nudge one snap step (Shift: 1″ / 1 cm)"], ["Ctrl+←/→", "Turn 15° (Ctrl Shift: 1°)"], ["Ctrl+G", "Group (Ctrl Shift G ungroups)"], ["Tab", "Pieces list"], ["Del", "Remove"], ["Ctrl+Z", "Undo"], ["Esc", "Deselect"]],
+      pad: [["RB", "Hold: carry it"], ["DLR", "With RB held: turn it"], ["LS", "Pan"], ["B", "Deselect"]],
+      touch: [["drag1", "Tap it again, then drag: move it"], ["twist", "Turn it"], ["hold", "Quick menu"]] },
+    vf: { mode: "Viewfinder", title: "Operating the camera",
+      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold for faster",
+      mouse: [["drag", "Pan and tilt"], ["dbl", "Focus where you click"]],
+      more: [["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further (Shift: fine)"], ["L", "Lens"], ["I", "Focus and iris rings"], ["F", "Next frame line (Shift: back)"], ["M", "Camera menu"], ["B", "Add this frame to the board", "e"], ["K", "Add a camera-move point here", "e"], ["Space", "Play the move"], ["Esc", "Close a menu, then exit"]],
+      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["L3", "Faster (click the stick)"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"], ["R3", "Print the shot"], ["A", "Plan view"], ["Y B", "Exit the viewfinder"]],
+      touch: [["joy", "Drive the camera (on-screen stick)"], ["drag1", "Pan and tilt"], ["pinch", "Dolly in and out"], ["drag2", "Truck and boom"]] },
+    move: { mode: "Viewfinder · camera move", title: "Plotting a camera move",
+      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold for faster",
+      mouse: [["drag", "Pan and tilt"], ["dbl", "Focus where you click"]],
+      more: [["K", "Add a point (A, B, C…) here", "e"], ["Space", "Play / pause the move"], ["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further"], ["Esc", "Close a menu, then exit"]],
+      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["Y B", "Exit the viewfinder"]],
+      touch: [["joy", "Drive the camera"], ["drag1", "Pan and tilt"], ["pinch", "Dolly"], ["drag2", "Truck and boom"]],
+      note: "Line up each point, press K, then Space to play it back. Blocked people walk between their marks." },
+    lens: { mode: "Lens menu", title: "Picking a lens", keys: null,
+      mouse: [["click", "Pick a lens"]],
+      more: [["↑/↓", "Shorter / longer lens"], ["Enter/L/Esc", "Done"]],
+      pad: [["DUD", "Shorter / longer lens"], ["A B BACK", "Done"]],
+      touch: [["tap", "Pick a lens"]] },
+    board: { mode: "Storyboard", title: "Working the board", keys: null,
+      mouse: [["drag", "Drag a frame to reorder it", "e"], ["click", "Open a frame's camera and stage to adjust it"]],
+      more: [["Esc", "Close the board"], ["Ctrl+P", "Stage plan to print"]],
+      pad: [], touch: [["tap", "Use a frame's buttons"]],
+      note: "The gamepad rests while the board is open." },
+    canvas: { mode: "Plate canvas", title: "Placing a plate", keys: null,
+      mouse: [["drag", "Move the plate", "", "on the plate"], ["drag", "Scale it (Shift keeps proportions)", "", "a corner"], ["drag", "Stretch one way", "", "an edge"], ["drag", "Turn it (Shift: 15° steps)", "", "the round handle"], ["wheel", "Scale about its centre"]],
+      more: [["Arrows", "Nudge 3″ (Shift: 2′)"], ["Esc", "Close the canvas"]],
+      pad: [], touch: [["drag1", "Move, scale or turn by the handles"]],
+      note: "Gold cells are what the film camera sees on that surface." }
+  };
+  const ctl = { open: false, ctx: null, dev: null, devPinned: null, last: isTouch ? "touch" : "kb", key: "" };
+  function noteInput(dev) {
+    if (ctl.last === dev) return;
+    ctl.last = dev;
+  }
+  function ctlDev() { return ctl.devPinned || ctl.last; }
+  // What you're doing right now.
+  function ctlContext() {
+    if (boardOpen) return "board";
+    if (pc.open && document.activeElement && document.activeElement.closest && document.activeElement.closest("#plateCanvas")) return "canvas";
+    if (lensMenu.open) return "lens";
+    if (viewCamUid != null) return mvUI.open ? "move" : "vf";
+    if (pad.held) return "carry";
+    const sel = mode === "edit" && (selected || multi.length > 1);
+    if (nav.mode === "top") return sel ? "planSel" : "plan";
+    return sel ? "walkSel" : "walk";
+  }
+  function setControls(on) {
+    ctl.open = !!on;
+    document.getElementById("ctlPanel").classList.toggle("hidden", !on);
+    const b = document.getElementById("ctlBtn"); b.classList.toggle("active", !!on); b.setAttribute("aria-expanded", String(!!on));
+    if (on) { dismissWelcome(); ctl.key = ""; ctlTick(); document.getElementById("navHud").classList.add("faded"); }
+  }
+  function wireControls() {
+    // The card is a HUD: its buttons hand focus straight back, so Space / Esc / WASD keep driving the stage.
+    document.getElementById("ctlBtn").addEventListener("click", e => { e.stopPropagation(); setControls(!ctl.open); e.currentTarget.blur(); });
+    document.getElementById("ctlClose").addEventListener("click", () => setControls(false));
+    document.getElementById("ctlAll").addEventListener("click", () => setHelp(true));
+    document.querySelectorAll(".ctlDev button").forEach(b => b.addEventListener("click", () => { ctl.devPinned = b.dataset.dev; ctl.key = ""; ctlTick(); b.blur(); }));
+    window.addEventListener("keydown", () => noteInput("kb"), true);
+    window.addEventListener("pointerdown", e => noteInput(e.pointerType === "touch" ? "touch" : "kb"), true);
+    window.addEventListener("gamepadconnected", () => { ctl.devPinned = null; noteInput("pad"); toast("Gamepad connected · Controls on the left rail shows its buttons"); });
+  }
+  // Every frame: follow the context; redraw the card when it changes, light the keys being pressed.
+  function ctlTick() {
+    const cx = ctlContext();
+    if (cx !== ctl.ctx) {
+      const was = ctl.ctx; ctl.ctx = cx;
+      if (was && !ctl.open && cx !== "canvas") ctlHint(cx);
+    }
+    if (!ctl.open) return;
+    const k = cx + "|" + ctlDev() + "|" + mode;
+    if (k !== ctl.key) { ctl.key = k; renderControls(); }
+    ctlLight();
+  }
+  // The hint at the foot of the view: what you're now doing, and where the controls are.
+  function ctlHint(cx) {
+    const h = document.getElementById("navHud"), c = CTL[cx]; if (!h || !c || isTouch) return;
+    h.innerHTML = '<b>' + escapeHtml(c.title) + '</b> · <span class="cap">?</span> or Controls on the left for the keys';
+    const b = document.getElementById("ctlBtn"); b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");
+    nudgeNavHud(3500);
+  }
+  const ctlFlag = f => !f || f.indexOf("e") === -1 || mode === "edit";
+  function renderControls() {
+    const c = CTL[ctl.ctx] || CTL.walk, dev = ctlDev(), body = document.getElementById("ctlBody");
+    document.getElementById("ctlMode").textContent = c.mode;
+    document.getElementById("ctlTitle").textContent = c.title;
+    document.querySelectorAll(".ctlDev button").forEach(b => {
+      const on = b.dataset.dev === dev; b.setAttribute("aria-selected", String(on));
+      const live = b.querySelector(".live"); if (b.dataset.dev === "pad" && pad.connected && !live) b.insertAdjacentHTML("beforeend", '<i class="live" title="Gamepad connected"></i>'); else if (live && !pad.connected) live.remove();
+    });
+    let h = "";
+    if (dev === "kb") {
+      if (c.keys) h += '<div class="ctlSec">Move</div>' + ctlCluster(c.keys, c.shift);
+      const ms = (c.mouse || []).filter(r => ctlFlag(r[2]));
+      if (ms.length) h += '<div class="ctlSec">Mouse</div><div class="crows">' + ms.map(r => {
+        const key = r[3] === "Ctrl" || r[3] === "Shift" || r[3] === "Alt";
+        return '<div class="crow"><div class="g">' + (key ? ctlCap(r[3], "sm") + '<i>+</i>' : "") + ctlMouse(r[0]) + '</div><div class="d">' + escapeHtml(r[1]) + (r[3] && !key ? '<small>' + escapeHtml(r[3]) + '</small>' : "") + '</div></div>';
+      }).join("") + '</div>';
+      const mo = (c.more || []).filter(r => ctlFlag(r[2]));
+      if (mo.length) h += '<div class="ctlSec">Keys</div><div class="crows">' + mo.map(r => '<div class="crow"><div class="g">' + ctlCaps(r[0]) + '</div><div class="d">' + escapeHtml(r[1]) + '</div></div>').join("") + '</div>';
+    } else if (dev === "pad") {
+      const rows = (c.pad || []).filter(r => ctlFlag(r[2]));
+      if (!rows.length) h += '<div class="ctlNote">' + escapeHtml(c.note || "Nothing on the gamepad here.") + '</div>';
+      else {
+        if (!pad.connected) h += '<div class="ctlNote">No gamepad connected. Plug one in (Xbox or standard layout) and press a button.</div>';
+        h += ctlPadArt(rows) + '<div class="crows">' + rows.map(r => '<div class="crow"><div class="g">' + r[0].split(" ").map(ctlPadGlyph).join('<i>/</i>') + '</div><div class="d">' + escapeHtml(r[1]) + '</div></div>').join("") + '</div>';
+      }
+    } else {
+      const rows = (c.touch || []).filter(r => ctlFlag(r[2]));
+      h += rows.length ? '<div class="crows" style="margin-top:6px">' + rows.map(r => '<div class="crow"><div class="g">' + ctlTouch(r[0]) + '</div><div class="d">' + escapeHtml(r[1]) + '</div></div>').join("") + '</div>' : '<div class="ctlNote">Nothing to touch here.</div>';
+    }
+    if (c.note && !(dev === "pad" && !(c.pad || []).length)) h += '<div class="ctlNote">' + escapeHtml(c.note) + '</div>';
+    body.innerHTML = h;
+  }
+  const CAP_CODE = { "←": "ArrowLeft", "→": "ArrowRight", "↑": "ArrowUp", "↓": "ArrowDown", Shift: "ShiftLeft", Space: "Space" };
+  function ctlCap(t, cls) {
+    const code = CAP_CODE[t] || (/^[A-Z]$/.test(t) ? "Key" + t : "");
+    return '<kbd class="cap' + (cls ? " " + cls : "") + (t.length > 2 ? " wide" : "") + '"' + (code ? ' data-code="' + code + '"' : "") + '>' + escapeHtml(t) + '</kbd>';
+  }
+  function ctlCaps(spec) {
+    if (spec === "Arrows") return '<span class="arr4">' + ["↑", "←", "↓", "→"].map(t => ctlCap(t)).join("") + '</span>';
+    return spec.split("+").map(part => part.split("/").map(t => ctlCap(t, "sm")).join('<i>/</i>')).join("");
+  }
+  function ctlCluster(k, shift) {
+    const cell = (key) => '<div class="k">' + ctlCap(key) + '<span>' + escapeHtml(k[key] || "") + '</span></div>';
+    return '<div class="kcl">' + ["Q", "W", "E", "A", "S", "D"].map(cell).join("") +
+      (shift ? '<div class="kShift">' + ctlCap("Shift") + '<span>' + escapeHtml(shift) + '</span></div>' : "") + '</div>';
+  }
+  // A mouse, with the part in use lit.
+  function ctlMouse(kind) {
+    const A = "var(--accent)", left = kind === "wheel" ? "none" : A;
+    let extra = "";
+    if (kind === "drag") extra = '<path d="M19 6h3M20.5 4.5v3" stroke="' + A + '" stroke-width="1.4" stroke-linecap="round"/>';
+    if (kind === "dbl") extra = '<text x="20.5" y="8" font-size="7" font-weight="800" fill="' + A + '" text-anchor="middle">2×</text>';
+    if (kind === "ring") extra = '<circle cx="19.5" cy="6" r="3" fill="none" stroke="#4c9ffe" stroke-width="1.4"/>';
+    return '<svg class="mi" viewBox="0 0 24 32" aria-hidden="true"><rect x="2" y="3" width="15" height="25" rx="7.5" fill="#20262b" stroke="#5a656e" stroke-width="1.3"/>' +
+      '<path d="M2 12.5h15M9.5 3v9.5" stroke="#5a656e" stroke-width="1.1"/>' +
+      '<path d="M9.5 3.1A7.4 7.4 0 0 0 2.1 10.5v2h7.4z" fill="' + left + '" opacity=".95"/>' +
+      '<rect x="8.1" y="5.5" width="2.8" height="5" rx="1.4" fill="' + (kind === "wheel" ? A : "#3a434a") + '"/>' +
+      (kind === "wheel" ? '<path d="M20.5 3.5l-2 2.5h4zM20.5 13l-2-2.5h4z" fill="' + A + '"/>' : "") + extra + '</svg>';
+  }
+  // Gamepad glyphs and the pad drawing.
+  function ctlPadGlyph(id) {
+    if ("ABXY".indexOf(id) !== -1 && id.length === 1) return '<span class="gb ' + id + '" data-pb="' + id + '">' + id + '</span>';
+    if (id === "LB" || id === "RB") return '<span class="gbump" data-pb="' + id + '">' + id + '</span>';
+    if (id === "LT" || id === "RT") return '<span class="gtrig" data-pb="' + id + '">' + id + '</span>';
+    if (id === "LS" || id === "RS") return '<span class="gstick" data-pb="' + id + '">' + id[0] + '</span>';
+    if (id === "L3" || id === "R3") return '<span class="gstick click" data-pb="' + id + '">' + id[0] + '</span>';
+    if (id === "BACK") return '<span class="gsys" data-pb="BACK" title="View / Select">⧉</span>';
+    if (id === "START") return '<span class="gsys" data-pb="START" title="Menu / Start">≡</span>';
+    const arm = id === "DLR" ? ["l", "r"] : id === "DUD" ? ["u", "d"] : [];
+    return '<svg class="gdpad" viewBox="0 0 24 24" aria-label="D-pad" data-pb="' + id + '"><rect x="8.5" y="1.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("u") !== -1 ? "on" : "") + '"/><rect x="8.5" y="15.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("d") !== -1 ? "on" : "") + '"/>' +
+      '<rect x="1.5" y="8.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("l") !== -1 ? "on" : "") + '"/><rect x="15.5" y="8.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("r") !== -1 ? "on" : "") + '"/><rect x="8.5" y="8.5" width="7" height="7"/></svg>';
+  }
+  function ctlPadArt(rows) {
+    const used = {};
+    rows.forEach(r => r[0].split(" ").forEach(id => {
+      if (id === "DLR" || id === "DUD") used.DPAD = 1; else if (id === "L3") used.LS = 1; else if (id === "R3") used.RS = 1; else used[id] = 1;
+    }));
+    const u = id => used[id] ? " used" : "";
+    return '<svg class="padArt" viewBox="0 0 260 150" aria-hidden="true">' +
+      '<rect data-g="LT" class="' + u("LT") + '" x="46" y="2" width="40" height="13" rx="6"/><rect data-g="RT" class="' + u("RT") + '" x="174" y="2" width="40" height="13" rx="6"/>' +
+      '<rect data-g="LB" class="' + u("LB") + '" x="40" y="18" width="54" height="9" rx="4"/><rect data-g="RB" class="' + u("RB") + '" x="166" y="18" width="54" height="9" rx="4"/>' +
+      '<path class="body" d="M62 30h136c22 0 34 22 40 52 7 34 4 58-14 62-17 4-26-16-40-28H76c-14 12-23 32-40 28-18-4-21-28-14-62 6-30 18-52 40-52z"/>' +
+      '<circle data-g="LS" class="' + u("LS") + '" cx="78" cy="66" r="15"/><circle cx="78" cy="66" r="8" fill="#1a1f23"/>' +
+      '<circle data-g="RS" class="' + u("RS") + '" cx="162" cy="98" r="15"/><circle cx="162" cy="98" r="8" fill="#1a1f23"/>' +
+      '<g data-g="DPAD" class="' + u("DPAD") + '"><path d="M95 90h8v-8h8v8h8v8h-8v8h-8v-8h-8z"/></g>' +
+      '<circle data-g="BACK" class="' + u("BACK") + '" cx="114" cy="62" r="5"/><circle data-g="START" class="' + u("START") + '" cx="146" cy="62" r="5"/>' +
+      '<circle cx="130" cy="44" r="7" fill="#2b3238" stroke="#4a545c"/>' +
+      [["Y", 186, 50], ["X", 172, 64], ["B", 200, 64], ["A", 186, 78]].map(([id, x, y]) => '<circle data-g="' + id + '" class="' + u(id) + '" cx="' + x + '" cy="' + y + '" r="7.5"/><text x="' + x + '" y="' + y + '">' + id + '</text>').join("") +
+      '<text x="66" y="9">LT</text><text x="194" y="9">RT</text><text x="67" y="22.5">LB</text><text x="193" y="22.5">RB</text></svg>';
+  }
+  // Touch gestures.
+  function ctlTouch(g) {
+    const A = "var(--accent)", dot = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="3.6" fill="' + A + '"/>';
+    const arr = (x1, y1, x2, y2) => '<path d="M' + x1 + ' ' + y1 + 'L' + x2 + ' ' + y2 + '" stroke="#c8d0d6" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ctlArr)"/>';
+    let b = "";
+    if (g === "tap") b = dot(15, 15) + '<circle cx="15" cy="15" r="8" fill="none" stroke="' + A + '" stroke-width="1.3" opacity=".6"/>';
+    if (g === "drag1") b = dot(9, 15) + arr(13, 15, 25, 15);
+    if (g === "drag2") b = dot(8, 10) + dot(8, 20) + arr(12, 10, 24, 10) + arr(12, 20, 24, 20);
+    if (g === "pinch") b = dot(12, 18) + dot(18, 12) + arr(10, 20, 4, 26) + arr(20, 10, 26, 4);
+    if (g === "twist") b = dot(9, 21) + dot(21, 9) + '<path d="M6 13A10 10 0 0 1 17 5" fill="none" stroke="#c8d0d6" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ctlArr)"/>';
+    if (g === "hold") b = dot(15, 15) + '<circle cx="15" cy="15" r="9" fill="none" stroke="#3a434a" stroke-width="2.2"/><path d="M15 6a9 9 0 0 1 9 9" fill="none" stroke="' + A + '" stroke-width="2.2" stroke-linecap="round"/>';
+    if (g === "joy") b = '<circle cx="15" cy="15" r="12" fill="#20262b" stroke="#4a545c" stroke-width="1.3"/><circle cx="18" cy="12" r="5" fill="' + A + '"/>';
+    return '<svg class="ti" viewBox="0 0 30 30" aria-hidden="true"><defs><marker id="ctlArr" viewBox="0 0 6 6" refX="4" refY="3" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L6 3L0 6z" fill="#c8d0d6"/></marker></defs>' + b + '</svg>';
+  }
+  // Light what's being pressed: keys (walk / camera keys), gamepad buttons and sticks.
+  const PB_INDEX = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11 };
+  function ctlLight() {
+    const body = document.getElementById("ctlBody"); if (!body) return;
+    const keys = viewCamUid != null ? camKeys : navKeys;
+    body.querySelectorAll(".cap[data-code]").forEach(el => {
+      const c = el.dataset.code, on = !!(keys[c] || (c === "ShiftLeft" && keys.ShiftRight));
+      if (el.classList.contains("down") !== on) el.classList.toggle("down", on);
+    });
+    if (ctlDev() !== "pad") return;
+    const b = pad.prev || [], ax = pad.axes || [0, 0, 0, 0];
+    const isOn = id => id === "LS" ? !!(ax[0] || ax[1]) : id === "RS" ? !!(ax[2] || ax[3]) : id === "DPAD" ? !!(b[12] || b[13] || b[14] || b[15]) : !!b[PB_INDEX[id]];
+    body.querySelectorAll("[data-g]").forEach(el => { const on = isOn(el.dataset.g); if (el.classList.contains("down") !== on) el.classList.toggle("down", on); });
+    body.querySelectorAll("[data-pb]").forEach(el => {
+      const id = el.dataset.pb, on = id === "DLR" ? !!(b[14] || b[15]) : id === "DUD" ? !!(b[12] || b[13]) : isOn(id);
+      if (el.classList.contains("down") !== on) el.classList.toggle("down", on);
+    });
+  }
+
   // ---- First-run welcome + help --------------------------------------
   const WELCOME_KEY = "lumostage.welcomed";
   function showWelcomeIfNew() {
@@ -12740,14 +13648,15 @@
   }
   function setHelp(on) { document.getElementById("help").classList.toggle("hidden", !on); if (on) document.getElementById("helpClose").focus(); }
 
-  // The one-line control hint shows on arrival, then fades once you've started moving
-  // (a connected gamepad keeps it, since its mapping is less discoverable).
+  // The one-line hint names what you're doing and points at the Controls card; it shows on arrival
+  // and whenever that changes (walk → viewfinder…), then fades. The card itself has the controls.
   let hudFadeTimer = null;
-  function nudgeNavHud() {
+  function nudgeNavHud(ms) {
     const h = document.getElementById("navHud"); if (!h) return;
+    if (ctl.open) { h.classList.add("faded"); return; }
     h.classList.remove("faded");
     clearTimeout(hudFadeTimer);
-    if (!pad.connected) hudFadeTimer = setTimeout(() => h.classList.add("faded"), 6000);
+    hudFadeTimer = setTimeout(() => h.classList.add("faded"), ms || 4000);
   }
   function toggleMode() { mode = mode === "edit" ? "view" : "edit"; applyMode(); }
 
@@ -12781,7 +13690,8 @@
     });
 
     // Rail + drawer
-    document.querySelectorAll("#rail button").forEach(b => b.addEventListener("click", () => openDrawer(b.dataset.sec)));
+    document.querySelectorAll("#rail button[data-sec]").forEach(b => b.addEventListener("click", () => openDrawer(b.dataset.sec)));
+    wireControls();
     document.getElementById("drawerClose").addEventListener("click", () => openDrawer(null));
     document.getElementById("inspClose").addEventListener("click", deselect);
     // Menus
@@ -12790,7 +13700,7 @@
     document.querySelectorAll(".menu").forEach(m => m.addEventListener("click", e => { e.stopPropagation(); if (e.target.closest("button.item")) closeMenus(); }));
     document.addEventListener("click", () => closeMenus());
     // Help + welcome
-    document.getElementById("helpBtn").addEventListener("click", () => setHelp(true));
+    document.getElementById("helpBtn").addEventListener("click", e => { e.stopPropagation(); setControls(!ctl.open); e.currentTarget.blur(); });
     document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
     wireBoard();
     wirePackSheet(); wireLibManager();
@@ -12800,7 +13710,7 @@
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));
     document.getElementById("help").addEventListener("click", e => { if (e.target.id === "help") setHelp(false); });
     document.getElementById("welcomeOk").addEventListener("click", dismissWelcome);
-    document.getElementById("welcomeHelp").addEventListener("click", () => { dismissWelcome(); setHelp(true); });
+    document.getElementById("welcomeHelp").addEventListener("click", () => { dismissWelcome(); setControls(true); });
     // Camera section
     document.getElementById("lensBtn").addEventListener("click", () => lensMenu.open ? closeLensMenu() : openLensMenu());
     document.getElementById("lookBtn").addEventListener("click", () => { openDrawer(null); enterCameraView(); });
@@ -12824,9 +13734,8 @@
     // One shared file picker for LED content (buttons set the target surface first)
     document.getElementById("plateFile").addEventListener("change", e => { if (e.target.files[0]) addWallPlate(e.target.files[0], _plateTargetKey); e.target.value = ""; });
     document.getElementById("envFile").addEventListener("change", e => { if (e.target.files[0]) loadEnvironment(e.target.files[0]); e.target.value = ""; });
-    // Control hint: show on arrival / after switching view, fade once moving
-    ["camOrbit", "camTop"].forEach(id => document.getElementById(id).addEventListener("click", nudgeNavHud));
-    nudgeNavHud();
+    // Control hint: shown on arrival and when what you're doing changes (ctlTick), fades once moving
+    nudgeNavHud(7000);
     showWelcomeIfNew();   // after nudgeNavHud: the welcome card mutes the hint while it's up
 
     renderer.domElement.addEventListener("pointerdown", onCanvasDownCapture, true);
@@ -12857,7 +13766,8 @@
       // Overlays close first on Esc: help, menus. "?" opens the controls reference.
       if (!document.getElementById("help").classList.contains("hidden")) { if (e.key === "Escape") { setHelp(false); e.preventDefault(); } return; }
       if (e.key === "Escape" && document.querySelector(".menu:not(.hidden)")) { closeMenus(); e.preventDefault(); return; }
-      if (!typing && e.key === "?") { setHelp(true); e.preventDefault(); return; }
+      if (e.key === "Escape" && pc.open && !typing) { closePlateCanvas(); e.preventDefault(); return; }   // the plate canvas closes before the view underneath
+      if (!typing && e.key === "?") { setControls(!ctl.open); e.preventDefault(); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "p") { openPlanSheet(); e.preventDefault(); return; }
       if (!document.getElementById("planSheet").classList.contains("hidden")) return;    // the plan sheet keeps its own keys
       if (!typing && e.key === "Escape" && projectPanelOpen()) { closeProjectPanel(); e.preventDefault(); return; }
@@ -12872,7 +13782,7 @@
         if (k === "y") { stepHistory(1); e.preventDefault(); return; }
         if (k === "a" && mode === "edit" && viewCamUid == null) { selectAllPeople(); e.preventDefault(); return; }
       }
-      if (!typing && NAV_KEYS.indexOf(e.code) !== -1) { const h = document.getElementById("navHud"); if (h && !pad.connected) { clearTimeout(hudFadeTimer); hudFadeTimer = setTimeout(() => h.classList.add("faded"), 1500); } }
+      if (!typing && NAV_KEYS.indexOf(e.code) !== -1) { const h = document.getElementById("navHud"); if (h && !h.classList.contains("faded")) { clearTimeout(hudFadeTimer); hudFadeTimer = setTimeout(() => h.classList.add("faded"), 1500); } }
       // Lens menu: L toggles; while open, ↑/↓ lens, Enter/Esc close.
       if (!typing && lensMenu.open) {
         const k = e.key;
@@ -12943,6 +13853,7 @@
   function animate(t) {
     requestAnimationFrame(animate);
     const dt = Math.min(0.1, _lastT ? (t - _lastT) / 1000 : 0.016); _lastT = t;
+    ctlTick();
     if (boardOpen) return;                                   // the board covers the stage: don't render behind it
     pollGamepad(dt);
     updatePhone(dt);
