@@ -661,6 +661,15 @@
     transition: opacity .6s var(--ease);
   }
   #navHud.faded { opacity: 0; }
+  /* Which speed the moves are at, when it isn't the normal one */
+  #speedChip { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 18; pointer-events: none;
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+    background: rgba(20,22,26,.85); color: #ffd24a; border: 1px solid rgba(255,210,74,.45); transition: opacity .2s var(--ease); }
+  #speedChip.run { color: #8fc2ff; border-color: rgba(76,159,254,.5); }
+  #speedChip.off { opacity: 0; }
+  #speedChip svg { width: 14px; height: 14px; }
+  body.camview #speedChip { top: 104px; }   /* clear of the shot strip and lens bar */
+  body.touch #speedChip { display: none; }
   body.camview #navHud { bottom: 86px; z-index: 18; }        /* above the lens bar */
   #navHud.hidden { display: none; }
 
@@ -1308,6 +1317,7 @@
   </div>
   <div id="lensMenu" class="hidden"></div>
   <div id="navHud"></div>
+  <div id="speedChip" class="off" aria-live="polite"></div>
   <div id="padReticle" class="hidden"><span class="lbl"></span></div>
   <div id="collHud" class="hidden"></div>
 
@@ -1386,7 +1396,8 @@
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move and strafe</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Down / up</dd>
           <dt>Scroll</dt><dd>Move forward / back</dd>
-          <dt><kbd>Shift</kbd></dt><dd>Move faster</dd>
+          <dt><kbd>Shift</kbd></dt><dd>Run</dd>
+          <dt><kbd>Space</kbd> held</dt><dd>Fine moves (slow and precise)</dd>
           <dt><kbd>H</kbd></dt><dd>House lights on / off (off = lit only by the LED volume)</dd></dl>
           <h3>Plan view</h3><dl>
           <dt>Drag or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Pan</dd>
@@ -1409,6 +1420,7 @@
           <h3>Viewfinder</h3><dl>
           <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · drag</dt><dd>Move / aim the camera</dd>
           <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Lens height</dd>
+          <dt><kbd>Shift</kbd> · <kbd>Space</kbd> held</dt><dd>Faster · fine moves and aim (tap <kbd>Space</kbd> to play a camera move)</dd>
           <dt><kbd>L</kbd></dt><dd>Lens</dd>
           <dt><kbd>I</kbd></dt><dd>Focus &amp; iris rings</dd>
           <dt><kbd>[</kbd> <kbd>]</kbd> · double-click</dt><dd>Pull focus closer / further · focus on what you click</dd>
@@ -1420,6 +1432,7 @@
           <dt>Left stick</dt><dd>Move</dd>
           <dt>Right stick</dt><dd>Look (invert in Settings)</dd>
           <dt>LT / RT</dt><dd>Down / up</dd>
+          <dt>L3 · D-pad ↓</dt><dd>Run · fine moves on / off</dd>
           <dt>A</dt><dd>Walk ↔ Plan</dd>
           <dt>R1 hold</dt><dd>Grab what's under the crosshair</dd>
           <dt>R1 + D-pad ← →</dt><dd>Turn the held piece</dd>
@@ -2120,6 +2133,13 @@
   const nav = { enabled: true, mode: "fly", yaw: 0, pitch: 0, look: null };
   const navKeys = {};
   const NAV_KEYS = ["KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE", "ShiftLeft", "ShiftRight", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+  // Three speeds for walking and for the film camera: normal, run (Shift / L3) and fine (hold Space /
+  // D-pad down toggles). Run is the old walking pace; normal is a third of it; fine is for the last
+  // half-inch, where a hair of lens height changes the whole perspective. move scales travel, turn
+  // the arrow-key / stick aim, look the mouse drag. Plan view keeps its own pan scale (planMul).
+  const SPEED = { fine: { move: 0.05, turn: 0.12, look: 0.2, plan: 0.25 }, normal: { move: 0.33, turn: 0.5, look: 1, plan: 1 }, run: { move: 1, turn: 1, look: 1, plan: 3 } };
+  function keySpeed(k) { return k.Space || pad.fine ? "fine" : (k.ShiftLeft || k.ShiftRight) ? "run" : "normal"; }
+  let spaceTap = null;   // Space: a quick tap plays a camera move, a hold is the fine modifier
   let gltfLoader = null;        // Phase 2: loads real glTF/GLB models when present
   let selectableObjects = [];   // groups the user can click/move (placed non-humans + rolling walls)
   let placedGroupByUid = {};    // uid -> Object3D
@@ -7092,6 +7112,7 @@
   function numOr(v, d) { const n = parseFloat(v); return isNaN(n) ? d : n; }
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   function round2(v) { return Math.round(v * 100) / 100; }
+  function round4(v) { return Math.round(v * 1e4) / 1e4; }   // live camera moves: round2 would swallow a fine step
 
   function wireCameraFields() {
     const lens = document.getElementById("camLens");
@@ -7270,27 +7291,31 @@
 
   function lookCamera(dxPx, dyPx) {
     const pa = getPlacedByUid(viewCamUid); if (!pa) return;
-    const k = 0.2 * clamp(camOptics(pa).vFov / 45, 0.15, 1.5);   // narrower lens = finer aim
+    const k = 0.2 * clamp(camOptics(pa).vFov / 45, 0.15, 1.5) * SPEED[keySpeed(camKeys)].look;   // narrower lens = finer aim
+    if (camKeys.Space && spaceTap) spaceTap.moved = true;
     pa.rotationDeg = normDeg((pa.rotationDeg || 0) - dxPx * k);  // drag right = look right
-    pa.tiltDeg = clamp(round2(camVal(pa, "tiltDeg") - dyPx * k), -85, 85);
+    pa.tiltDeg = clamp(round4(camVal(pa, "tiltDeg") - dyPx * k), -85, 85);
     applyCamPose(pa);
   }
 
   function updateCameraFPS(dt) {
     const pa = getPlacedByUid(viewCamUid); if (!pa) return;
-    const k = camKeys, fast = k.ShiftLeft || k.ShiftRight;
+    const k = camKeys, S = SPEED[keySpeed(k)];
     let fwd = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0), side = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0);
     const up = (k.KeyE ? 1 : 0) - (k.KeyQ ? 1 : 0);
     const turn = (k.ArrowLeft ? 1 : 0) - (k.ArrowRight ? 1 : 0), pitch = (k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0);
     if (!fwd && !side && !up && !turn && !pitch) return;
-    if (turn) pa.rotationDeg = normDeg((pa.rotationDeg || 0) + turn * 60 * dt * (fast ? 2 : 1));
-    if (pitch) pa.tiltDeg = clamp(round2(camVal(pa, "tiltDeg") + pitch * 45 * dt * (fast ? 2 : 1)), -85, 85);
+    if (k.Space && spaceTap) spaceTap.moved = true;
+    // Run = 8 ft/s, normal ≈ 2.6, fine ≈ 5″/s. Aim follows the lens: a long lens turns slower.
+    const aim = S.turn * clamp(camOptics(pa).vFov / 45, 0.15, 1.5);
+    if (turn) pa.rotationDeg = normDeg((pa.rotationDeg || 0) + turn * 60 * aim * dt);
+    if (pitch) pa.tiltDeg = clamp(round4(camVal(pa, "tiltDeg") + pitch * 45 * aim * dt), -85, 85);
     if (fwd || side) {
-      const len = Math.hypot(fwd, side), sp = (fast ? 24 : 8) * dt / len, th = degToRad(pa.rotationDeg || 0);
-      pa.x = round2(pa.x + (-Math.sin(th) * fwd + Math.cos(th) * side) * sp);
-      pa.z = round2(pa.z + (-Math.cos(th) * fwd - Math.sin(th) * side) * sp);
+      const len = Math.hypot(fwd, side), sp = 8 * S.move * dt / len, th = degToRad(pa.rotationDeg || 0);
+      pa.x = round4(pa.x + (-Math.sin(th) * fwd + Math.cos(th) * side) * sp);
+      pa.z = round4(pa.z + (-Math.cos(th) * fwd - Math.sin(th) * side) * sp);
     }
-    if (up) pa.heightFt = clamp(round2(camVal(pa, "heightFt") + up * (fast ? 12 : 4) * dt), 0.5, 40);
+    if (up) pa.heightFt = clamp(round4(camVal(pa, "heightFt") + up * 4 * S.move * dt), 0.5, 40);
     applyCamPose(pa);
   }
 
@@ -12362,7 +12387,7 @@
   }
 
   function lookNav(dx, dy) {
-    const k = 0.25 * Math.PI / 180;
+    const k = 0.25 * Math.PI / 180 * SPEED[keySpeed(navKeys)].look;
     nav.yaw -= dx * k;                                   // drag right = look right
     nav.pitch = clamp(nav.pitch - dy * k, -1.48, 1.48);  // drag up = look up
     applyNavPose();
@@ -12382,7 +12407,7 @@
   }
 
   function updateNav(dt) {
-    const k = navKeys, fast = k.ShiftLeft || k.ShiftRight, mul = fast ? 3 : 1;
+    const k = navKeys, S = SPEED[keySpeed(k)], mul = S.plan;
     const fwd = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0), side = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0);
     const up = (k.KeyE ? 1 : 0) - (k.KeyQ ? 1 : 0);
     if (!fwd && !side && !up && !(nav.mode === "fly" && (k.ArrowLeft || k.ArrowRight || k.ArrowUp || k.ArrowDown))) return;
@@ -12394,21 +12419,21 @@
       return;
     }
     const turn = (k.ArrowLeft ? 1 : 0) - (k.ArrowRight ? 1 : 0), pitch = (k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0);
-    if (turn) nav.yaw += turn * degToRad(60) * dt;
-    if (pitch) nav.pitch = clamp(nav.pitch + pitch * degToRad(45) * dt, -1.48, 1.48);
+    if (turn) nav.yaw += turn * degToRad(60) * S.turn * dt;
+    if (pitch) nav.pitch = clamp(nav.pitch + pitch * degToRad(45) * S.turn * dt, -1.48, 1.48);
     if (fwd || side) {
-      const len = Math.hypot(fwd, side), sp = 25 * mul * dt / len;
+      const len = Math.hypot(fwd, side), sp = 25 * S.move * dt / len;   // run 25 ft/s, normal ≈ 8, fine ≈ 1
       p.x += (-Math.sin(nav.yaw) * fwd + Math.cos(nav.yaw) * side) * sp;
       p.z += (-Math.cos(nav.yaw) * fwd - Math.sin(nav.yaw) * side) * sp;
     }
-    if (up) p.y = clamp(p.y + up * 15 * mul * dt, 0.5, 200);
+    if (up) p.y = clamp(p.y + up * 15 * S.move * dt, 0.5, 200);
     applyNavPose();
   }
 
   function onNavWheel(e) {
     if (viewCamUid != null) return;
     e.preventDefault();
-    const dy = clamp(e.deltaY, -300, 300), mul = e.shiftKey ? 3 : 1;
+    const dy = clamp(e.deltaY, -300, 300), mul = navKeys.Space ? 0.2 : e.shiftKey ? 3 : 1;
     if (nav.mode === "top") {
       const r = renderer.domElement.getBoundingClientRect();
       setTopHeight(camera.position.y * Math.exp(dy * 0.0015 * mul),
@@ -12580,7 +12605,7 @@
   // ==================================================================
   //  GAMEPAD (XInput / "standard" mapping) — polled once per frame
   // ==================================================================
-  // Left stick move/strafe · right stick look · LT/RT down/up · L3 sprint · A overhead toggle ·
+  // Left stick move/strafe · right stick look · LT/RT down/up · L3 run · D-pad ↓ fine on/off · A overhead toggle ·
   // R1 hold = grab what's under the crosshair (it follows your view) · R1 + D-pad ←/→ = rotate it ·
   // X = put the film camera here · Y = look through it · B = drop / deselect · Start = save shot ·
   // LB = save mark · Back/Select = lens menu · R3 = print shot. In Camera View the sticks drive the
@@ -12591,7 +12616,7 @@
   // invertY: flight-style look (stick up = look down). A personal preference, so it's remembered
   // per browser (localStorage), not saved into the shared layout.
   const PAD_INVERT_KEY = "lumostage.padInvertY";
-  const pad = { connected: false, prev: [], sprint: false, held: false, rotT: 0, hoverT: 0, flyPose: null, topStart: null,
+  const pad = { connected: false, prev: [], sprint: false, fine: false, held: false, rotT: 0, hoverT: 0, flyPose: null, topStart: null,
                 invertY: (function () { try { return localStorage.getItem(PAD_INVERT_KEY) === "1"; } catch (e) { return false; } })() };
 
   // Right-stick Y as used for looking/tilting; inverted when the player prefers flight-style.
@@ -12718,9 +12743,9 @@
     pad.axes = [lx, ly, rx, ry];
     if (lx || ly || rx || ry || b.some(x => x)) noteInput("pad");
     const lift = (v[PAD_BTN.RT] > 0.05 ? v[PAD_BTN.RT] : 0) - (v[PAD_BTN.LT] > 0.05 ? v[PAD_BTN.LT] : 0);
-    if (down(PAD_BTN.L3)) pad.sprint = true;
-    if (!lx && !ly) pad.sprint = false;                     // sprint latches until the stick returns
-    const mul = pad.sprint ? 3 : 1;
+    if (down(PAD_BTN.L3)) { pad.sprint = true; pad.fine = false; }
+    if (!lx && !ly) pad.sprint = false;                     // run latches until the stick returns
+    const mul = pad.fine || navKeys.Space || camKeys.Space ? "fine" : pad.sprint ? "run" : "normal";
 
     // --- buttons (edges) ---
     if (lensMenu.open) {                                    // the lens menu owns the buttons while it's up
@@ -12732,6 +12757,7 @@
       return;
     }
     if (down(PAD_BTN.BACK)) { openLensMenu(); }
+    if (down(PAD_BTN.DOWN) && !b[PAD_BTN.RB]) { pad.fine = !pad.fine; pad.sprint = false; padRumble(gp, 0, pad.fine ? 0.35 : 0.15, 50); }
     if (down(PAD_BTN.LB)) saveShot("mark");
     if (down(PAD_BTN.R3)) printShot();
     if (down(PAD_BTN.A)) padToggleTop();
@@ -12776,23 +12802,24 @@
   }
 
   // Shared stick → motion for the gamepad and the phone's on-screen joystick. Sticks are -1..1
-  // (up = negative Y, like the Gamepad API); lift is -1..1 (down/up or zoom).
-  function driveSticks(lx, ly, rx, ry, lift, mul, dt) {
+  // (up = negative Y, like the Gamepad API); lift is -1..1 (down/up or zoom). speed = a SPEED tier.
+  function driveSticks(lx, ly, rx, ry, lift, speed, dt) {
+    const S = SPEED[speed] || SPEED.normal, aimK = speed === "fine" ? 0.15 : 1;
     if (viewCamUid != null) {                               // drive the film camera body
       const pa = getPlacedByUid(viewCamUid);
       if (pa && (lx || ly || rx || ry || lift)) {
-        const lens = clamp(camOptics(pa).vFov / 45, 0.15, 1.5);   // narrower lens = finer aim
+        const lens = clamp(camOptics(pa).vFov / 45, 0.15, 1.5) * aimK;   // narrower lens = finer aim
         pa.rotationDeg = normDeg((pa.rotationDeg || 0) - rx * 100 * lens * dt);
-        pa.tiltDeg = clamp(round2(camVal(pa, "tiltDeg") - ry * 70 * lens * dt), -85, 85);
-        const th = degToRad(pa.rotationDeg || 0), sp = 8 * mul * dt;
-        pa.x = round2(pa.x + (-Math.sin(th) * -ly + Math.cos(th) * lx) * sp);
-        pa.z = round2(pa.z + (-Math.cos(th) * -ly - Math.sin(th) * lx) * sp);
-        if (lift) pa.heightFt = clamp(round2(camVal(pa, "heightFt") + lift * 4 * mul * dt), 0.5, 40);
+        pa.tiltDeg = clamp(round4(camVal(pa, "tiltDeg") - ry * 70 * lens * dt), -85, 85);
+        const th = degToRad(pa.rotationDeg || 0), sp = 8 * S.move * dt;
+        pa.x = round4(pa.x + (-Math.sin(th) * -ly + Math.cos(th) * lx) * sp);
+        pa.z = round4(pa.z + (-Math.cos(th) * -ly - Math.sin(th) * lx) * sp);
+        if (lift) pa.heightFt = clamp(round4(camVal(pa, "heightFt") + lift * 4 * S.move * dt), 0.5, 40);
         applyCamPose(pa);
       }
       return;
     }
-    const p = camera.position;
+    const p = camera.position, mul = S.plan;
     if (nav.mode === "top") {
       const sp = p.y * 0.6 * mul * dt;
       p.x += lx * sp; p.z += ly * sp;                       // stick up = up the screen = -Z
@@ -12800,15 +12827,15 @@
       if (zoom) setTopHeight(p.y * Math.exp(-zoom * 1.4 * dt));
     } else {
       if (rx || ry) {
-        nav.yaw -= rx * degToRad(120) * dt;
-        nav.pitch = clamp(nav.pitch - ry * degToRad(90) * dt, -1.48, 1.48);
+        nav.yaw -= rx * degToRad(120) * aimK * dt;
+        nav.pitch = clamp(nav.pitch - ry * degToRad(90) * aimK * dt, -1.48, 1.48);
       }
       if (lx || ly) {
-        const sp = 18 * mul * dt;
+        const sp = 18 * S.move * dt;
         p.x += (-Math.sin(nav.yaw) * -ly + Math.cos(nav.yaw) * lx) * sp;
         p.z += (-Math.cos(nav.yaw) * -ly - Math.sin(nav.yaw) * lx) * sp;
       }
-      if (lift) p.y = clamp(p.y + lift * 12 * mul * dt, 0.5, 200);
+      if (lift) p.y = clamp(p.y + lift * 12 * S.move * dt, 0.5, 200);
       if (rx || ry || lx || ly || lift) applyNavPose();
     }
   }
@@ -12911,7 +12938,7 @@
     }
     if (touch.gest === "turn") { turnSelectionBy(-radToDeg(dA)); return; }   // screen clockwise = clockwise from above
     if (viewCamUid != null) {                                    // pinch = dolly; two-finger drag = truck / boom
-      driveSticks(dx * 0.03, -(scale - 1) * 40, 0, 0, -dy * 0.02, 1, 1 / 60);
+      driveSticks(dx * 0.03, -(scale - 1) * 40, 0, 0, -dy * 0.02, "run", 1 / 60);
       return;
     }
     if (nav.mode === "top") {
@@ -13043,7 +13070,7 @@
   // Joystick each frame: walk (first-person), pan (plan), or drive the film camera.
   function updatePhone(dt) {
     if (!isTouch) return;
-    if (touch.jx || touch.jy) driveSticks(touch.jx, touch.jy, 0, 0, 0, 1, dt);
+    if (touch.jx || touch.jy) driveSticks(touch.jx, touch.jy, 0, 0, 0, "normal", dt);
   }
 
   // Desktop → phone: write the layout (and any imported models it uses) to published/ via serve.py.
@@ -13393,48 +13420,49 @@
   //   keys:  W A S D Q E captions (null = the cluster isn't used here); shift: its caption
   //   mouse: [kind, text, flags, modifier]  kind = drag | click | dbl | wheel | ring
   //   more:  ["Ctrl+Z/Y", text] — + joins a combo, / separates alternatives, "Arrows" = ←→↑↓
-  //   pad:   ["A", text] — A B X Y LB RB LT RT LS RS L3 R3 DLR DUD BACK START, spaces = alternatives
+  //   pad:   ["A", text] — A B X Y LB RB LT RT LS RS L3 R3 DLR DUD DD BACK START, spaces = alternatives
+  //   fine:  the Space caption (the fine-move modifier)
   //   touch: [gesture, text] — tap | drag1 | drag2 | pinch | twist | hold | joy
   const CTL = {
     walk: { mode: "Walk view", title: "Walking the stage",
-      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run",
+      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run", fine: "Hold for fine moves",
       mouse: [["drag", "Look around"], ["wheel", "Step forward / back"], ["click", "Select a piece", "e"], ["dbl", "Pick a piece out of its group", "e"]],
       more: [["Arrows", "Look around"], ["H", "House lights on / off"], ["L", "Lens menu"], ["Ctrl+Z/Y", "Undo / redo", "e"], ["Ctrl+A", "Select every person", "e"]],
-      pad: [["LS", "Walk"], ["RS", "Look around"], ["LT RT", "Down / up"], ["L3", "Run (click the stick)"], ["A", "Plan view"], ["RB", "Hold: grab what's under the crosshair", "e"], ["X", "Put the film camera here", "e"], ["Y", "Viewfinder"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"]],
+      pad: [["LS", "Walk"], ["RS", "Look around"], ["LT RT", "Down / up"], ["L3", "Run (click the stick)"], ["DD", "Fine moves on / off"], ["A", "Plan view"], ["RB", "Hold: grab what's under the crosshair", "e"], ["X", "Put the film camera here", "e"], ["Y", "Viewfinder"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"]],
       touch: [["joy", "Walk (on-screen stick)"], ["drag1", "Look around"], ["pinch", "Move in and out"], ["drag2", "Slide and rise"], ["tap", "Select a piece", "e"], ["hold", "Quick menu", "e"]] },
     walkSel: { mode: "Walk view · piece selected", title: "Moving a piece",
-      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run",
+      keys: { W: "Forward", A: "Left", S: "Back", D: "Right", Q: "Down", E: "Up" }, shift: "Hold to run", fine: "Hold for fine moves",
       mouse: [["drag", "Slide it along the floor"], ["ring", "Turn it", "", "drag the blue ring"], ["click", "Add to / drop from the selection", "", "Ctrl"], ["dbl", "Pick it out of its group"]],
       more: [["Shift+←/→", "Turn 15° (add Alt for 1°)"], ["1/2", "Move / Rotate tool"], ["Ctrl+G", "Group (Ctrl Shift G ungroups)"], ["Del", "Remove"], ["Ctrl+Z", "Undo"], ["Esc", "Deselect"]],
-      pad: [["RB", "Hold: carry it with your view"], ["DLR", "With RB held: turn it"], ["LS", "Walk"], ["RS", "Look around"], ["B", "Drop / deselect"]],
+      pad: [["RB", "Hold: carry it with your view"], ["DLR", "With RB held: turn it"], ["DD", "Fine moves on / off"], ["LS", "Walk"], ["RS", "Look around"], ["B", "Drop / deselect"]],
       touch: [["drag1", "Tap it again, then drag: move it"], ["twist", "Turn it"], ["hold", "Quick menu: duplicate, turn ±90°, remove"], ["tap", "Tap empty floor: deselect"]] },
     carry: { mode: "Gamepad · carrying", title: "Carrying a piece",
       keys: null, mouse: [], more: [],
       pad: [["RB", "Keep holding to carry; let go to drop"], ["LS", "Walk it somewhere"], ["RS", "Aim where it goes"], ["DLR", "Turn it a snap step"], ["B", "Drop it here"]],
       touch: [] },
     plan: { mode: "Plan view", title: "Looking down on the plan",
-      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster",
+      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster", fine: "Hold for slower",
       mouse: [["drag", "Pan (drag the floor)"], ["wheel", "Zoom, towards the pointer"], ["click", "Select a piece", "e"], ["drag", "Drag a piece to move it", "e"]],
       more: [["F", "3D / flat footprints (true scale)"], ["Tab", "Pieces list: pick overlapping pieces by name", "e"], ["Ctrl+P", "Stage plan to print"], ["H", "House lights"]],
-      pad: [["LS", "Pan"], ["LT RT", "Zoom out / in"], ["RS", "Zoom (up = in)"], ["A", "Back to walking"], ["RB", "Hold: grab a piece", "e"], ["B", "Deselect", "e"]],
+      pad: [["LS", "Pan"], ["LT RT", "Zoom out / in"], ["RS", "Zoom (up = in)"], ["DD", "Slow pan on / off"], ["A", "Back to walking"], ["RB", "Hold: grab a piece", "e"], ["B", "Deselect", "e"]],
       touch: [["drag1", "Pan"], ["pinch", "Zoom"], ["tap", "Select a piece", "e"], ["hold", "Quick menu", "e"]] },
     planSel: { mode: "Plan view · piece selected", title: "Arranging the plan",
-      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster",
+      keys: { W: "Pan up", A: "Pan left", S: "Pan down", D: "Pan right", Q: "Zoom in", E: "Zoom out" }, shift: "Hold for faster", fine: "Hold for slower",
       mouse: [["drag", "Move it"], ["ring", "Turn it", "", "drag the blue ring"], ["click", "Add to / drop from the selection", "", "Ctrl"], ["dbl", "Pick it out of its group"]],
       more: [["Arrows", "Nudge one snap step (Shift: 1″ / 1 cm)"], ["Ctrl+←/→", "Turn 15° (Ctrl Shift: 1°)"], ["Ctrl+G", "Group (Ctrl Shift G ungroups)"], ["Tab", "Pieces list"], ["Del", "Remove"], ["Ctrl+Z", "Undo"], ["Esc", "Deselect"]],
       pad: [["RB", "Hold: carry it"], ["DLR", "With RB held: turn it"], ["LS", "Pan"], ["B", "Deselect"]],
       touch: [["drag1", "Tap it again, then drag: move it"], ["twist", "Turn it"], ["hold", "Quick menu"]] },
     vf: { mode: "Viewfinder", title: "Operating the camera",
-      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold for faster",
+      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold to move faster", fine: "Hold for fine moves and aim",
       mouse: [["drag", "Pan and tilt"], ["dbl", "Focus where you click"]],
-      more: [["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further (Shift: fine)"], ["L", "Lens"], ["I", "Focus and iris rings"], ["F", "Next frame line (Shift: back)"], ["M", "Camera menu"], ["B", "Add this frame to the board", "e"], ["K", "Add a camera-move point here", "e"], ["Space", "Play the move"], ["Esc", "Close a menu, then exit"]],
-      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["L3", "Faster (click the stick)"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"], ["R3", "Print the shot"], ["A", "Plan view"], ["Y B", "Exit the viewfinder"]],
+      more: [["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further (Shift: fine)"], ["L", "Lens"], ["I", "Focus and iris rings"], ["F", "Next frame line (Shift: back)"], ["M", "Camera menu"], ["B", "Add this frame to the board", "e"], ["K", "Add a camera-move point here", "e"], ["Space", "Tap: play the move"], ["Esc", "Close a menu, then exit"]],
+      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["L3", "Faster (click the stick)"], ["DD", "Fine moves and aim on / off"], ["BACK", "Lens menu"], ["START LB", "Save shot / mark", "e"], ["R3", "Print the shot"], ["A", "Plan view"], ["Y B", "Exit the viewfinder"]],
       touch: [["joy", "Drive the camera (on-screen stick)"], ["drag1", "Pan and tilt"], ["pinch", "Dolly in and out"], ["drag2", "Truck and boom"]] },
     move: { mode: "Viewfinder · camera move", title: "Plotting a camera move",
-      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold for faster",
+      keys: { W: "Push in", A: "Truck left", S: "Pull back", D: "Truck right", Q: "Boom down", E: "Boom up" }, shift: "Hold to move faster", fine: "Hold for fine moves and aim",
       mouse: [["drag", "Pan and tilt"], ["dbl", "Focus where you click"]],
-      more: [["K", "Add a point (A, B, C…) here", "e"], ["Space", "Play / pause the move"], ["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further"], ["Esc", "Close a menu, then exit"]],
-      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["Y B", "Exit the viewfinder"]],
+      more: [["K", "Add a point (A, B, C…) here", "e"], ["Space", "Tap: play / pause (hold: fine moves)"], ["Arrows", "Pan and tilt"], ["[/]", "Focus closer / further"], ["Esc", "Close a menu, then exit"]],
+      pad: [["LS", "Push in, pull back, truck"], ["RS", "Pan and tilt"], ["LT RT", "Boom down / up"], ["L3", "Faster"], ["DD", "Fine moves and aim on / off"], ["Y B", "Exit the viewfinder"]],
       touch: [["joy", "Drive the camera"], ["drag1", "Pan and tilt"], ["pinch", "Dolly"], ["drag2", "Truck and boom"]],
       note: "Line up each point, press K, then Space to play it back. Blocked people walk between their marks." },
     lens: { mode: "Lens menu", title: "Picking a lens", keys: null,
@@ -13487,7 +13515,22 @@
     window.addEventListener("gamepadconnected", () => { ctl.devPinned = null; noteInput("pad"); toast("Gamepad connected · Controls on the left rail shows its buttons"); });
   }
   // Every frame: follow the context; redraw the card when it changes, light the keys being pressed.
+  // The speed chip: Fine (Space held / pad toggle) or Run (while moving with Shift or L3).
+  let speedShown = "";
+  function speedChipTick() {
+    const k = viewCamUid != null ? camKeys : navKeys, moving = k.KeyW || k.KeyA || k.KeyS || k.KeyD || k.KeyQ || k.KeyE || !!(pad.axes && (pad.axes[0] || pad.axes[1]));
+    const t = pad.fine || k.Space ? "fine" : moving && (k.ShiftLeft || k.ShiftRight || pad.sprint) ? "run" : "";
+    if (t === speedShown) return;
+    speedShown = t;
+    const el = document.getElementById("speedChip"); if (!el) return;
+    if (t) el.innerHTML = t === "fine"
+      ? '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>FINE' + (pad.fine ? ' <span style="font-weight:500;opacity:.75">· D-pad ↓ to leave</span>' : "")
+      : '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4l5 4-5 4M8 4l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>RUN';
+    el.classList.toggle("run", t === "run");
+    el.classList.toggle("off", !t);
+  }
   function ctlTick() {
+    speedChipTick();
     const cx = ctlContext();
     if (cx !== ctl.ctx) {
       const was = ctl.ctx; ctl.ctx = cx;
@@ -13516,7 +13559,7 @@
     });
     let h = "";
     if (dev === "kb") {
-      if (c.keys) h += '<div class="ctlSec">Move</div>' + ctlCluster(c.keys, c.shift);
+      if (c.keys) h += '<div class="ctlSec">Move</div>' + ctlCluster(c.keys, c.shift, c.fine);
       const ms = (c.mouse || []).filter(r => ctlFlag(r[2]));
       if (ms.length) h += '<div class="ctlSec">Mouse</div><div class="crows">' + ms.map(r => {
         const key = r[3] === "Ctrl" || r[3] === "Shift" || r[3] === "Alt";
@@ -13547,10 +13590,11 @@
     if (spec === "Arrows") return '<span class="arr4">' + ["↑", "←", "↓", "→"].map(t => ctlCap(t)).join("") + '</span>';
     return spec.split("+").map(part => part.split("/").map(t => ctlCap(t, "sm")).join('<i>/</i>')).join("");
   }
-  function ctlCluster(k, shift) {
+  function ctlCluster(k, shift, fine) {
     const cell = (key) => '<div class="k">' + ctlCap(key) + '<span>' + escapeHtml(k[key] || "") + '</span></div>';
     return '<div class="kcl">' + ["Q", "W", "E", "A", "S", "D"].map(cell).join("") +
-      (shift ? '<div class="kShift">' + ctlCap("Shift") + '<span>' + escapeHtml(shift) + '</span></div>' : "") + '</div>';
+      (shift ? '<div class="kShift">' + ctlCap("Shift") + '<span>' + escapeHtml(shift) + '</span></div>' : "") +
+      (fine ? '<div class="kShift">' + ctlCap("Space") + '<span>' + escapeHtml(fine) + '</span></div>' : "") + '</div>';
   }
   // A mouse, with the part in use lit.
   function ctlMouse(kind) {
@@ -13574,14 +13618,14 @@
     if (id === "L3" || id === "R3") return '<span class="gstick click" data-pb="' + id + '">' + id[0] + '</span>';
     if (id === "BACK") return '<span class="gsys" data-pb="BACK" title="View / Select">⧉</span>';
     if (id === "START") return '<span class="gsys" data-pb="START" title="Menu / Start">≡</span>';
-    const arm = id === "DLR" ? ["l", "r"] : id === "DUD" ? ["u", "d"] : [];
+    const arm = id === "DLR" ? ["l", "r"] : id === "DUD" ? ["u", "d"] : id === "DD" ? ["d"] : [];
     return '<svg class="gdpad" viewBox="0 0 24 24" aria-label="D-pad" data-pb="' + id + '"><rect x="8.5" y="1.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("u") !== -1 ? "on" : "") + '"/><rect x="8.5" y="15.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("d") !== -1 ? "on" : "") + '"/>' +
       '<rect x="1.5" y="8.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("l") !== -1 ? "on" : "") + '"/><rect x="15.5" y="8.5" width="7" height="7" rx="1.5" class="' + (arm.indexOf("r") !== -1 ? "on" : "") + '"/><rect x="8.5" y="8.5" width="7" height="7"/></svg>';
   }
   function ctlPadArt(rows) {
     const used = {};
     rows.forEach(r => r[0].split(" ").forEach(id => {
-      if (id === "DLR" || id === "DUD") used.DPAD = 1; else if (id === "L3") used.LS = 1; else if (id === "R3") used.RS = 1; else used[id] = 1;
+      if (id === "DLR" || id === "DUD" || id === "DD") used.DPAD = 1; else if (id === "L3") used.LS = 1; else if (id === "R3") used.RS = 1; else used[id] = 1;
     }));
     const u = id => used[id] ? " used" : "";
     return '<svg class="padArt" viewBox="0 0 260 150" aria-hidden="true">' +
@@ -13624,7 +13668,7 @@
     const isOn = id => id === "LS" ? !!(ax[0] || ax[1]) : id === "RS" ? !!(ax[2] || ax[3]) : id === "DPAD" ? !!(b[12] || b[13] || b[14] || b[15]) : !!b[PB_INDEX[id]];
     body.querySelectorAll("[data-g]").forEach(el => { const on = isOn(el.dataset.g); if (el.classList.contains("down") !== on) el.classList.toggle("down", on); });
     body.querySelectorAll("[data-pb]").forEach(el => {
-      const id = el.dataset.pb, on = id === "DLR" ? !!(b[14] || b[15]) : id === "DUD" ? !!(b[12] || b[13]) : isOn(id);
+      const id = el.dataset.pb, on = id === "DLR" ? !!(b[14] || b[15]) : id === "DUD" ? !!(b[12] || b[13]) : id === "DD" ? (!!b[13] || pad.fine) : isOn(id);
       if (el.classList.contains("down") !== on) el.classList.toggle("down", on);
     });
   }
@@ -13755,8 +13799,14 @@
     window.addEventListener("pointermove", onWindowPointerMove);
     window.addEventListener("pointerup", onWindowPointerUp);
     window.addEventListener("pointercancel", onWindowPointerUp);
-    window.addEventListener("blur", () => { Object.keys(camKeys).forEach(k => delete camKeys[k]); Object.keys(navKeys).forEach(k => delete navKeys[k]); });
-    window.addEventListener("keyup", (e) => { delete camKeys[e.code]; delete navKeys[e.code]; });
+    window.addEventListener("blur", () => { Object.keys(camKeys).forEach(k => delete camKeys[k]); Object.keys(navKeys).forEach(k => delete navKeys[k]); spaceTap = null; });
+    window.addEventListener("keyup", (e) => {
+      delete camKeys[e.code]; delete navKeys[e.code];
+      if (e.code !== "Space" || !spaceTap) return;
+      const tap = !spaceTap.moved && performance.now() - spaceTap.t < 260; spaceTap = null;
+      // A quick tap in the viewfinder plays / pauses the camera move (a hold was the fine modifier).
+      if (tap && viewCamUid != null && moveOf(activeCameraPA()) && moveOf(activeCameraPA()).keys.length > 1) { if (!mvUI.open) openMovePanel(); mvUI.playing ? stopMove() : playMove(); }
+    });
 
 
     document.getElementById("shotPrint").addEventListener("click", printShot);
@@ -13794,7 +13844,7 @@
       if (!typing && (e.key === "l" || e.key === "L") && !e.ctrlKey && !e.metaKey) { openLensMenu(); e.preventDefault(); return; }
       if (!typing && (e.key === "h" || e.key === "H") && !e.ctrlKey && !e.metaKey && !e.altKey) { setHouseLights(!houseLightsOn()); e.preventDefault(); return; }
       if (viewCamUid != null) {
-        // FPS controls: WASD move (A/D strafe), Q/E height, arrows look, Shift = fast.
+        // FPS controls: WASD move (A/D strafe), Q/E height, arrows look, Shift = run, Space held = fine.
         if (e.key === "Escape") { if (vfPop) { closeVfPop(); e.preventDefault(); return; } exitCameraView(); return; }
         if (typing) return;
         if ((e.key === "m" || e.key === "M") && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleVfPop("menu"); e.preventDefault(); return; }
@@ -13811,7 +13861,7 @@
         }
         if ((e.key === "b" || e.key === "B") && !e.ctrlKey && !e.metaKey && mode === "edit") { openAddToBoard(); e.preventDefault(); return; }
         if ((e.key === "k" || e.key === "K") && !e.ctrlKey && !e.metaKey && mode === "edit") { if (!mvUI.open) openMovePanel(); addMoveKey(); e.preventDefault(); return; }
-        if (e.code === "Space" && moveOf(activeCameraPA()) && moveOf(activeCameraPA()).keys.length > 1) { if (!mvUI.open) openMovePanel(); mvUI.playing ? stopMove() : playMove(); e.preventDefault(); return; }
+        if (e.code === "Space" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); if (!e.repeat) { camKeys.Space = true; spaceTap = { t: performance.now(), moved: false }; } return; }   // hold = fine, tap = play (on keyup)
         if (CAM_KEYS.indexOf(e.code) !== -1) { camKeys[e.code] = true; e.preventDefault(); }
         return;
       }
@@ -13821,6 +13871,8 @@
       // Main-view navigation keys (Shift+←/→ with a selection is the rotate nudge, handled below).
       const rotNudge = mode === "edit" && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && (selected || multi.length > 1);
       if (!e.ctrlKey && !e.metaKey && !e.altKey && !rotNudge && NAV_KEYS.indexOf(e.code) !== -1) { navKeys[e.code] = true; e.preventDefault(); }
+      // Space held = fine moves (only when nothing focused would take the Space as a click).
+      if (e.code === "Space" && !e.ctrlKey && !e.metaKey && (e.target === document.body || e.target.tagName === "CANVAS")) { navKeys.Space = true; e.preventDefault(); }
       if (mode !== "edit") return;
       if (rotNudge && multi.length > 1) { multiRotateGroup((e.key === "ArrowLeft" ? 1 : -1) * (e.altKey ? 1 : ROT_SNAP_DEG)); e.preventDefault(); }
       else if (rotNudge) {
