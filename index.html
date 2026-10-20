@@ -2894,6 +2894,30 @@
       else sharedTextures[t.name] = t;
     });
   }
+  // Many exports (Sketchfab especially) mark every material "blend" though nothing is see-through.
+  // Drawn as blended, a solid piece writes no depth: it shows through itself, and the floor grid
+  // and anything behind draw over it, so it looks sunk into the stage. Opaque factor and no alpha
+  // in the colour texture: draw it solid. Holes in the texture (lattice, leaves): a clean cut-out.
+  const _alphaSeen = new WeakMap();
+  function imageHasAlpha(img) {
+    if (!img || !img.width) return false;
+    if (_alphaSeen.has(img)) return _alphaSeen.get(img);
+    let has = true;
+    try {
+      const c = document.createElement("canvas"), s = 128; c.width = c.height = s;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0, s, s);
+      const d = x.getImageData(0, 0, s, s).data; has = false;
+      for (let i = 3; i < d.length; i += 4) if (d[i] < 250) { has = true; break; }
+    } catch (err) { has = true; }                         // unreadable: leave it blended
+    _alphaSeen.set(img, has);
+    return has;
+  }
+  function solidifyBlend(mt) {
+    if (mt.opacity < 0.99) return;
+    const img = mt.map && mt.map.image, alpha = mt.alphaMap || imageHasAlpha(img);
+    mt.transparent = false; mt.depthWrite = true;
+    if (alpha) mt.alphaTest = Math.max(mt.alphaTest || 0, 0.5);
+  }
   function fixModelColors(root) {
     root.traverse(n => {
       if (!n.isMesh) return;
@@ -2905,6 +2929,7 @@
         if (mt.color) mt.color.convertLinearToSRGB();
         if (mt.emissive) mt.emissive.convertLinearToSRGB();
         if (isGlassMaterial(mt, n)) makeSeeThroughGlass(mt);
+        else if (mt.transparent) solidifyBlend(mt);
         mt.needsUpdate = true;
       });
     });
