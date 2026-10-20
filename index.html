@@ -1117,7 +1117,16 @@
   .castChip i, .bdCast i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
   .castChip[aria-checked="true"] { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); font-weight: 600; }
   .castList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-  .castRow { display: grid; grid-template-columns: 20px minmax(0, 1.1fr) minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+  .castRow { display: grid; grid-template-columns: 20px 30px minmax(0, 1.1fr) minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+  .castPic { width: 30px; height: 36px; min-width: 0; padding: 0; border-radius: 6px; overflow: hidden; display: grid; place-items: center;
+    background: #0e1314; border: 1px dashed var(--line); color: var(--muted); }
+  .castPic:hover:not(:disabled) { border-color: var(--text); color: var(--text); }
+  .castPic.has { border-style: solid; }
+  .castPic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .castPic svg { width: 16px; height: 16px; }
+  .hsRow { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+  .hsRow .castPic { width: 44px; height: 54px; }
+  .hsRow .btnRow { margin: 0; flex-wrap: wrap; }
   .castDot { width: 18px; height: 18px; min-width: 0; padding: 0; border-radius: 50%; background: var(--c); border: 2px solid rgba(255,255,255,.18); }
   .castDot:hover { border-color: #fff; }
   .castRow input { width: 100%; min-width: 0; padding: 5px 7px; }
@@ -1176,6 +1185,7 @@
       <symbol id="i-rings" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2.5 9h3v6h-3z"/><rect x="5.5" y="6" width="7" height="12" rx="1"/><rect x="12.5" y="7.5" width="5" height="9" rx="1"/><path d="M17.5 9.5h4v5h-4"/></g><g stroke="currentColor" stroke-width="1" opacity=".7"><path d="M7.5 6v12M9 6v12M10.5 6v12M14.5 7.5v9"/></g></symbol>
       <symbol id="i-path" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="17.5" r="2.2"/><circle cx="19" cy="6.5" r="2.2"/><path d="M7 16c3-6 7.5-1.5 10-7.6" stroke-dasharray="2.2 2.4"/></g></symbol>
       <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6.5 3.5h11v17L12 16.2l-5.5 4.3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-face" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20.5c1.2-3.8 4-5.5 7.5-5.5s6.3 1.7 7.5 5.5"/></g></symbol>
       <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-6.2-5.6-6.2-10.6a6.2 6.2 0 0 1 12.4 0C18.2 15.4 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.2"/></g></symbol>
       <symbol id="i-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/></g></symbol>
       <symbol id="i-print" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3.5h10V8"/><rect x="3.5" y="8" width="17" height="8.5" rx="1.5"/><path d="M7 14h10v6.5H7z"/></g></symbol>
@@ -1559,6 +1569,7 @@
   <!-- Shared pickers for LED images/video and 360° environments -->
   <input id="plateFile" type="file" accept="image/*,video/*" class="hidden">
   <input id="envFile" type="file" accept="image/*,video/*" class="hidden">
+  <input id="headshotFile" type="file" accept="image/*" class="hidden">
 
   <div id="toast"></div>
   <div id="tabSync" class="hidden" role="alert">
@@ -3249,6 +3260,9 @@
       const mesh = new THREE.Mesh(geo, m.material); mesh.name = m.name;
       out.add(mesh);
     });
+    // Where the head is in this pose (rig units), for a headshot card pinned over the face.
+    const hb = rig.bones[boneKey("Head")];
+    if (hb) out.userData.head = hb.getWorldPosition(new THREE.Vector3()).toArray();
     return out;
   }
   // { tpl: static Group in rig units, standH: the figure's standing height in rig units, standC: its
@@ -3295,8 +3309,44 @@
     const g = buildBox({ lengthFt: (entry.widthFt || 2) * k, widthFt: (entry.depthFt || 1.2) * k, heightFt: h }, role ? parseInt(role.color.slice(1), 16) : 0x8a909a);
     g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.3; o.material.depthWrite = false; } });
     if (role && role.name) { const tg = makeNameTag(role.name, role.color); tg.position.y = h + 0.7; g.add(tg); }
+    const c = role && role.castId && castById(role.castId);
+    if (c && c.photo && config.headshots !== false) g.add(makeHeadshot(c, h));
     fillPersonModel(g, entry, pa);
     return g;
+  }
+  // The actor's headshot, pinned over the figure's face: a flat card that turns to whichever camera
+  // is looking (main view, viewfinder, prints, the board), lifted toward that camera so the head
+  // never cuts through it, and still hidden by walls in front. About a head and a bit tall.
+  const headshotTex = {};
+  function headshotTexture(c) {
+    const k = c.id + "|" + c.photo.length + "|" + c.photo.slice(-24);
+    if (!headshotTex[k]) {
+      const t = new THREE.Texture(), im = new Image();
+      im.onload = () => { t.image = im; t.needsUpdate = true; };
+      im.src = c.photo;
+      headshotTex[k] = { tex: t, im: im };
+    }
+    return headshotTex[k];
+  }
+  const _hsDir = new THREE.Vector3(), _hsAt = new THREE.Vector3();
+  function makeHeadshot(c, h) {
+    const ht = headshotTexture(c), size = h * 0.19;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: ht.tex, transparent: true }));
+    const fit = () => { const im = ht.im, a = im.naturalWidth && im.naturalHeight ? im.naturalWidth / im.naturalHeight : 0.8; sp.scale.set(size * a, size, 1); };
+    fit(); if (!ht.im.complete) ht.im.addEventListener("load", fit, { once: true });
+    sp.userData.headshot = true; sp.userData.at = new THREE.Vector3(0, h * 0.915, 0);
+    sp.userData.sharedGeo = true;
+    sp.raycast = function () {};
+    sp.renderOrder = 2;
+    sp.onBeforeRender = function (rn, sc, cam) {
+      const par = sp.parent; if (!par) return;
+      _hsAt.copy(sp.userData.at); par.localToWorld(_hsAt);
+      _hsDir.setFromMatrixPosition(cam.matrixWorld).sub(_hsAt);
+      const d = _hsDir.length(); if (d > 1e-4) _hsAt.addScaledVector(_hsDir, Math.min(h * 0.09, d * 0.5) / d);
+      sp.position.copy(par.worldToLocal(_hsAt)); sp.updateMatrixWorld(true);
+    };
+    sp.position.copy(sp.userData.at);
+    return sp;
   }
   // Load (or re-pose) the figure into its group. Safe to call again on the same group: the newest
   // call wins, so a quick run of pose changes never lands an older pose last.
@@ -3329,10 +3379,18 @@
       // in front of the seat back), scaled with its seated size, whatever its legs are doing.
       if (poseId && rigPose(poseId).kind === "seated") m.position.z = -bb.min.z - 1.3 * (bb.max.y - bb.min.y) / 4.3;
       if (r.walk) { const sc = m.scale.x; m.position.x = -r.standC.x * sc; m.position.z = -r.standC.z * sc; }   // mid-stride: hold the body still
-      g.children.slice().forEach(ch => { if (ch.userData.tag) return; g.remove(ch); disposeObject3D(ch); });
+      g.children.slice().forEach(ch => { if (ch.userData.tag || ch.userData.headshot) return; g.remove(ch); disposeObject3D(ch); });
       g.add(holder);
       const tg = g.children.find(ch => ch.userData.tag);
       if (tg) tg.position.y = bb.max.y - bb.min.y + 0.7;
+      const hs = g.children.find(ch => ch.userData.headshot), head = r.tpl.userData.head;
+      if (hs) {
+        if (head) {
+          // the head bone sits at the base of the skull: the face is a little above it
+          const sc = m.scale.x, up = (r.standH || h / sc) * 0.075;
+          hs.userData.at.set(head[0] * sc + m.position.x, (head[1] + up) * sc + m.position.y, head[2] * sc + m.position.z);
+        } else hs.userData.at.set(0, bb.max.y - bb.min.y - h * 0.085, 0);
+      }
       g.userData.hasModel = true;
     });
   }
@@ -6784,6 +6842,46 @@
     scheduleAutosave();
   }
   function castNames(ids) { return (ids || []).map(castById).filter(Boolean); }
+  // ---- Headshots: an actor's photo on a character, pinned over their figures' faces --------
+  function headshotBtnHTML(c, edit) {
+    const who = escapeHtml(c.actor || c.name);
+    return '<button class="castPic' + (c.photo ? " has" : "") + '" data-hs="' + c.id + '"' + (edit ? "" : " disabled") +
+      ' title="' + (c.photo ? "Replace " + who + "’s headshot" : "Add a headshot for " + who) + '" aria-label="' + (c.photo ? "Replace headshot" : "Add headshot") + " — " + escapeHtml(c.name) + '">' +
+      (c.photo ? '<img src="' + c.photo + '" alt="">' : '<svg><use href="#i-face"/></svg>') + '</button>';
+  }
+  function pickHeadshot(cid) {
+    const inp = document.getElementById("headshotFile"); if (!inp) return;
+    inp.dataset.cid = cid; inp.value = ""; inp.click();
+  }
+  // Stored small in the project (it travels with saves, exports and the board): longest side 360 px.
+  function readHeadshot(file) {
+    return createImageBitmap(file).then(bmp => {
+      const k = Math.min(1, 360 / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+      const x = c.getContext("2d"); x.imageSmoothingQuality = "high"; x.drawImage(bmp, 0, 0, c.width, c.height); bmp.close();
+      return /png|webp|gif/i.test(file.type) ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", 0.86);
+    });
+  }
+  function setHeadshot(c, url) {
+    if (url) c.photo = url; else delete c.photo;
+    if (url) config.headshots = true;
+    castChanged(); if (selected) renderInspector();
+  }
+  function wireHeadshots() {
+    const inp = document.getElementById("headshotFile");
+    inp.addEventListener("change", () => {
+      const f = inp.files && inp.files[0], c = castById(inp.dataset.cid); if (!f || !c) return;
+      if (!/^image\//.test(f.type)) { toast("Use a photo: JPEG, PNG or WebP"); return; }
+      readHeadshot(f).then(url => {
+        const had = c.photo; setHeadshot(c, url);
+        toast((had ? "Replaced " : "Added ") + (c.actor || c.name) + "’s headshot", had ? { label: "Undo", fn: () => setHeadshot(c, had) } : null);
+      }).catch(() => toast("Couldn’t read that picture"));
+    });
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-hs]"); if (!b || b.disabled || mode !== "edit") return;
+      e.preventDefault(); pickHeadshot(b.dataset.hs);
+    });
+  }
   // Characters whose figure is inside the camera's frame (behind a wall still counts).
   function castInFrame(pa) {
     const g = placedGroupByUid[pa._uid]; if (!g || !g.userData.rig) return [];
@@ -6814,11 +6912,13 @@
         const n = castCount(c.id);
         return '<div class="castRow" data-cid="' + c.id + '">' +
           '<button class="castDot" style="--c:' + c.color + '" title="Change colour" aria-label="Colour for ' + escapeHtml(c.name) + ' — ' + escapeHtml(roleColorName(c.color) || "custom") + '"' + (edit ? "" : " disabled") + '></button>' +
+          headshotBtnHTML(c, edit) +
           '<input class="castName" value="' + escapeHtml(c.name) + '" aria-label="Character" maxlength="32"' + (edit ? "" : " readonly") + '>' +
           '<input class="castActor" value="' + escapeHtml(c.actor || "") + '" placeholder="' + (edit ? "Played by" : "") + '" aria-label="Played by" maxlength="40"' + (edit ? "" : " readonly") + '>' +
           '<span class="castN">' + (n ? n + " on stage" : "not placed") + '</span>' +
           (edit ? '<button class="ghost iconBtn castDel" aria-label="Remove ' + escapeHtml(c.name) + ' from the cast"><svg><use href="#i-x"/></svg></button>' : "") + '</div>'; }).join("") + '</div>'
       : '<p class="ppEmpty">No cast yet. Add the characters, then pick one for each figure on stage — the name and colour follow them onto the plan, the board and every export.</p>') +
+      (cast.some(c => c.photo) ? '<label class="setToggle" style="margin-top:10px"><input type="checkbox" id="ppHeadshots"' + (config.headshots !== false ? " checked" : "") + (edit ? "" : " disabled") + '><span>Show headshots over their figures’ faces</span></label>' : "") +
       (edit ? '<div class="castAdd"><input type="text" id="ppCastNew" placeholder="Add a character, e.g. MAYA" maxlength="32" aria-label="New character"><button id="ppCastAdd">Add</button></div>' +
         (fromScript.length ? '<div class="btnRow"><button class="ghost" id="ppCastScript" title="' + escapeHtml(fromScript.slice(0, 12).join(", ") + (fromScript.length > 12 ? "…" : "")) + '">Add ' + plural(fromScript.length, "speaking part") + ' from the script</button></div>' : "") : "");
   }
@@ -6850,6 +6950,7 @@
       }
     });
     box.addEventListener("change", e => {
+      if (e.target.id === "ppHeadshots") { config.headshots = e.target.checked; castChanged(); return; }
       const row = e.target.closest(".castRow"), c = row && castById(row.dataset.cid); if (!c) return;
       if (e.target.classList.contains("castName")) { const v = e.target.value.trim().slice(0, 32); if (v && v !== c.name) { c.name = v; castChanged(); } else e.target.value = c.name; }
       else if (e.target.classList.contains("castActor")) { c.actor = e.target.value.trim().slice(0, 40); scheduleAutosave(); }
@@ -6865,7 +6966,9 @@
         '<button class="roleSw" role="radio" data-c="' + rc[0] + '" aria-checked="' + (c.color === rc[0]) + '" aria-label="' + rc[1] + '" title="' + rc[1] + '" tabindex="' + (c.color === rc[0] ? 0 : -1) + '" style="--c:' + rc[0] + ';--k:' + (lumaOf(rc[0]) < 0.45 ? "#fff" : "#0e1013") + '"><svg><use href="#i-check"/></svg></button>').join("") + '</div>' : "";
     return '<div class="castChips" role="radiogroup" aria-label="Who this is">' + chip("", "Background", "#8a909a") + castList().map(x => chip(x.id, x.name, x.color)).join("") + '</div>' +
       '<div class="field"><label for="castNew">New character</label><input type="text" id="castNew" placeholder="Type a name, Enter" maxlength="32" style="width:150px"></div>' +
-      sw +
+      sw + (c ? '<div class="hsRow">' + headshotBtnHTML(c, true) + '<div><div class="btnRow"><button data-hs="' + c.id + '">' + (c.photo ? "Replace headshot" : "Add headshot…") + '</button>' +
+        (c.photo ? '<button class="ghost" id="hsRemove">Remove</button>' : "") + '</div><div class="hint" style="margin-top:4px">' +
+        (c.photo ? (config.headshots === false ? "Hidden: switch headshots back on in Project → Cast." : "Floats over the face of every " + escapeHtml(c.name) + " figure, in every view.") : "A photo of " + escapeHtml(c.actor || "the actor") + ", pinned over the face of every " + escapeHtml(c.name) + " figure.") + '</div></div></div>' : "") +
       '<div class="hint">' + (c ? escapeHtml(c.name) + "'s colour and name follow them everywhere. Rename or add who plays them in Project → Cast."
         : role.color ? "Colour only. Pick a character to name this figure." : "Background. Pick a character, or type a new one — the cast list lives in Project → Cast.") + '</div>';
   }
@@ -6938,6 +7041,12 @@
       roles.addEventListener("click", ev => { const b = ev.target.closest(".roleSw"); if (b) recolour(b.dataset.c, false); });
       arrows(roles, ".roleSw", b => recolour(b.dataset.c, true));
     }
+    const hr = $("hsRemove");
+    if (hr) hr.addEventListener("click", () => {
+      const pa = cur(), c = pa && pa.role && castById(pa.role.castId); if (!c || !c.photo) return;
+      const had = c.photo; setHeadshot(c, null);
+      toast("Removed " + (c.actor || c.name) + "’s headshot", { label: "Undo", fn: () => setHeadshot(c, had) });
+    });
     const cn = $("castNew");
     if (cn) cn.addEventListener("keydown", ev => {
       if (ev.key !== "Enter") return;
@@ -14127,7 +14236,7 @@
 
     // Rail + drawer
     document.querySelectorAll("#rail button[data-sec]").forEach(b => b.addEventListener("click", () => openDrawer(b.dataset.sec)));
-    wireControls(); wirePromptMaker();
+    wireControls(); wirePromptMaker(); wireHeadshots();
     document.getElementById("drawerClose").addEventListener("click", () => openDrawer(null));
     document.getElementById("inspClose").addEventListener("click", deselect);
     // Menus
