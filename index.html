@@ -141,6 +141,10 @@
   .catItem .name { flex: 1; min-width: 0; font-size: 13px; line-height: 1.3; }
   .catItem .name small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
   .catItem .row { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .catItem.missing { cursor: pointer; }
+  .catItem.missing .thumb { opacity: .35; }
+  .catItem.missing .name small:first-of-type { color: #ffb020; }
+  .catItem.missing .name small.path { color: var(--muted); overflow-wrap: anywhere; }
   .catItem select { max-width: 130px; }
 
   .field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
@@ -2302,7 +2306,7 @@
 
   let toastTimer = null;
   // action: optional { label, fn } — a button in the toast (e.g. Undo); the toast then lingers.
-  function toast(msg, action) {
+  function toast(msg, action, ms) {
     const t = document.getElementById("toast");
     t.textContent = msg;
     if (action) {
@@ -2314,7 +2318,7 @@
     t.classList.toggle("act", !!action);
     t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), action ? 7000 : 2200);
+    toastTimer = setTimeout(() => t.classList.remove("show"), ms || (action ? 7000 : 2200));
   }
 
   function catalogEntry(assetId) {
@@ -2383,6 +2387,7 @@
     initDefaultWallPlate();   // soft gradient so the volume reads as "LED on" in the start view
     rebuildPlaced();
     buildLibrary();
+    checkMissingModels();
     setCamOrbit();
     wireUI();
     wireShotBar();
@@ -3058,6 +3063,100 @@
         .catch(err => { console.warn("Lumostage: imported model " + assetId + " unavailable — " + (err && err.message ? err.message : err)); return null; });
     }
     return customModelCache[assetId];
+  }
+
+  // Every import is also copied into the project, under assets/imports/ (written by serve.py), so the
+  // original file can go. A model this browser has lost (site data cleared…) is listed as "requires
+  // reimport before use", with the copy it traced in assets/imports; clicking it reads that copy back
+  // in, or asks for the file when there's none.
+  const fileSlug = s => String(s || "").replace(/[^\w.\-]+/g, "_").replace(/_+(?=\.glb$)/i, "").replace(/^[_.]+|_+$/g, "") || "model";
+  function copyToImports(buf, rel) {
+    return fetch("api/imports/" + rel.split("/").map(encodeURIComponent).join("/"), { method: "POST", headers: { "Content-Type": "model/gltf-binary" }, body: buf })
+      .then(r => r.ok ? r.json() : null).then(j => (j && j.path) || null).catch(() => null);
+  }
+  const importCopyNote = (path, what) => path
+    ? " Copied to " + path + ", so the original " + (what || "file") + " is safe to delete."
+    : " Couldn't copy it into assets/imports (start the app with serve.py), so keep the original " + (what || "file") + ".";
+  const missingModels = new Set();                         // assetIds whose bytes aren't in this browser
+  let importFiles = null;                                  // [{ path, size }] in assets/imports, from serve.py
+  function checkMissingModels() {
+    const models = config.customModels || [];
+    if (isPhone || !models.length) { missingModels.clear(); return Promise.resolve(); }
+    return modelDbOp("readonly", s => s.getAllKeys()).catch(() => null).then(keys => {
+      if (!keys) return;                                   // storage unreadable: flag nothing
+      const have = new Set(keys);
+      missingModels.clear();
+      models.forEach(e => { if (!have.has(e.assetId)) missingModels.add(e.assetId); });
+      if (!missingModels.size) return;
+      return fetch("api/imports").then(r => r.ok ? r.json() : null).catch(() => null).then(l => { importFiles = l && l.files ? l.files : null; });
+    }).then(() => buildLibrary());
+  }
+  // Where a lost model's copy is: the path recorded at import, else (imports from before copies were
+  // kept) a file in assets/imports with its name and size. { path, found } or null.
+  function tracedFile(e) {
+    const l = importFiles || [];
+    if (e.file) return { path: e.file, found: !importFiles || l.some(f => f.path === e.file) };
+    const base = fileSlug(e.name).toLowerCase() + ".glb";
+    const hit = l.find(f => f.path.split("/").pop().toLowerCase() === base && (!e.bytes || f.size === e.bytes)) ||
+      (e.bytes ? l.find(f => f.size === e.bytes) : null);
+    return hit ? { path: hit.path, found: true } : null;
+  }
+  // Put a model's bytes back in this browser under its own id: every placed copy picks it up.
+  function restoreModel(e, buf, path) {
+    return parseGlb(buf).then(obj => {
+      const holder = new THREE.Group(); holder.add(obj);
+      const bb = new THREE.Box3().setFromObject(holder), sz = bb.getSize(new THREE.Vector3());
+      if (bb.isEmpty() || sz.x <= 0 || sz.y <= 0 || sz.z <= 0) throw new Error("model has no visible geometry");
+      const thumb = subjectToThumb(holder);
+      holder.remove(obj);
+      return modelDbOp("readwrite", s => { s.put(buf, e.assetId); if (thumb) s.put(thumb, "thumb:" + e.assetId); else s.delete("thumb:" + e.assetId); }).then(() => {
+        customModelCache[e.assetId] = Promise.resolve(obj);
+        if (thumb) thumbMem["thumb:" + e.assetId] = thumb; else delete thumbMem["thumb:" + e.assetId];
+        e.native = { x: sz.x, y: sz.y, z: sz.z }; e.bytes = buf.byteLength;
+        if (path) e.file = path;
+        missingModels.delete(e.assetId);
+      });
+    });
+  }
+  function afterRestore() { const uid = selected && selected.uid; rebuildPlaced(); if (uid != null) reselectUid(uid); buildLibrary(); scheduleAutosave(); }
+  // Clicked a model that needs reimporting. Its copy in assets/imports comes back in, along with any
+  // other lost piece on the same shelf that has one; with no copy, pick the file (or the pack it came from).
+  function relinkModel(e) {
+    const t = tracedFile(e);
+    if (!t || !t.found) return openGlbPicker(e.assetId);
+    const batch = (config.customModels || []).filter(x => missingModels.has(x.assetId) && (x === e || shelfOf(x) === shelfOf(e)))
+      .map(x => ({ e: x, t: tracedFile(x) })).filter(x => x.t && x.t.found);
+    toast("Reimporting " + (batch.length > 1 ? plural(batch.length, "piece") + " from assets/imports…" : e.name + " from " + t.path + "…"));
+    let ok = 0, bad = 0;
+    return batch.reduce((p, x) => p.then(() => fetch(x.t.path)
+      .then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error("HTTP " + r.status)))
+      .then(buf => restoreModel(x.e, buf, x.t.path)).then(() => { ok++; })
+      .catch(err => { bad++; console.warn("Lumostage: couldn't reimport " + x.t.path + " — " + (err && err.message ? err.message : err)); })), Promise.resolve())
+      .then(() => {
+        afterRestore();
+        if (missingModels.has(e.assetId)) toast("Couldn't read " + t.path + ". Pick the file instead.", { label: "Pick file", fn: () => openGlbPicker(e.assetId) });
+        else toast("Reimported " + (ok > 1 ? plural(ok, "piece") : e.name) + " from assets/imports" + (bad ? " (" + bad + " couldn't be read)" : ""));
+      });
+  }
+  // The file picker either imports a new model, or (relinkId set) brings back one that was lost.
+  let relinkId = null;
+  function openGlbPicker(id) {
+    relinkId = id || null;
+    if (relinkId) { const e = catalogEntry(relinkId); toast("Pick the .glb for “" + (e ? e.name : "this model") + "”" + (e && e.noProbe ? " (or the pack it came from)" : ""), null, 4000); }
+    document.getElementById("glbInput").click();
+  }
+  function relinkFromFile(file, e) {
+    if (!/\.glb$/i.test(file.name)) { toast("Use a .glb file (single-file glTF)"); return; }
+    file.arrayBuffer().then(buf => {
+      let an = null;
+      if (e.noProbe) { try { an = packAnalyse(buf); } catch (err) { an = null; } }
+      // A piece cut from a pack: pick it (and its lost shelf-mates) from the pack again.
+      if (an && an.pieces >= 3) return openPackSheet(file, buf, an, shelfOf(e));
+      return copyToImports(buf, fileSlug(file.name)).then(path => restoreModel(e, buf, path).then(() => {
+        afterRestore();
+        toast("Reimported " + e.name + "." + importCopyNote(path), null, 7000);
+      }));
+    }).catch(err => toast("Reimport failed: " + (err && err.message ? err.message : err)));
   }
 
   // Real-world dims for one instance from the single entered dimension.
@@ -4221,17 +4320,19 @@
   }
 
   let pack = null;      // the pack being picked apart (open sheet)
-  function openPackSheet(file, buf, an) {
+  // relinkShelf: reopened to bring back lost pieces of that shelf (pieces with the same names are restored).
+  function openPackSheet(file, buf, an, relinkShelf) {
     toast("Reading " + file.name + "…");
     gltfLoader.parse(buf, "", g => {
       fixModelColors(g.scene);
       const obj = [];
       g.scene.traverse(o => { const a = g.parser.associations.get(o); if (a && a.type === "nodes") obj[a.index] = o; });
-      pack = { file: file, buf: buf, an: an, obj: obj, scene: g.scene, thumbs: {}, open: {} };
+      pack = { file: file, buf: buf, an: an, obj: obj, scene: g.scene, thumbs: {}, open: {}, relink: relinkShelf || null };
       const sh = document.getElementById("packSheet");
       document.getElementById("pkTitle").textContent = "Pick pieces from " + file.name.replace(/\.glb$/i, "");
       document.getElementById("pkSub").textContent = plural(an.pieces, "piece") + " found · " + (buf.byteLength / 1048576).toFixed(1) + " MB file. Untick what you don't need; tick a part to split it off as its own piece.";
-      document.getElementById("pkShelf").value = file.name.replace(/\.glb$/i, "").replace(/[_-]+/g, " ").trim().replace(/^./, c => c.toUpperCase());
+      document.getElementById("pkShelf").value = relinkShelf || file.name.replace(/\.glb$/i, "").replace(/[_-]+/g, " ").trim().replace(/^./, c => c.toUpperCase());
+      if (relinkShelf) document.getElementById("pkSub").textContent += " Reimporting “" + relinkShelf + "”: pieces picked as before come back in place of the lost ones.";
       renderPackList();
       sh.classList.remove("hidden");
       packFocus(an.reg.find(it => it.instances) || null);
@@ -4411,6 +4512,7 @@
     if (!gs.length) return;
     go.disabled = true;
     const used = {}, made = [], tag = Date.now().toString(36), maxTex = +document.getElementById("pkTex").value || 0;
+    let relinked = 0, copied = 0, packDir = null;
     let small = {};
     try {
       small = await shrinkPackImages(an.src, maxTex, (k, n) => { go.textContent = "Resizing textures " + k + " of " + n + "…"; });
@@ -4425,10 +4527,21 @@
         const thumb = subjectToThumb(s), tris = packTris(s);
         s.parent && s.parent.remove(s);
         let name = u.it.name; used[name] = (used[name] || 0) + 1; if (used[name] > 1) name += " " + used[name];
-        const assetId = "glb_" + Date.now().toString(36) + k.toString(36);
+        // Reimporting a shelf: a lost piece of the same name takes these bytes under its own id.
+        const lost = p.relink && config.customModels.find(x => missingModels.has(x.assetId) && shelfOf(x) === p.relink && x.name === name);
+        const assetId = lost ? lost.assetId : "glb_" + Date.now().toString(36) + k.toString(36);
         await modelDbOp("readwrite", st => { st.put(glb, assetId); if (thumb) st.put(thumb, "thumb:" + assetId); });
         if (thumb) thumbMem["thumb:" + assetId] = thumb;
+        const path = await copyToImports(glb, fileSlug(lost ? shelfOf(lost) : shelf) + "/" + fileSlug(name) + ".glb");
+        if (path) { copied++; packDir = path.slice(0, path.lastIndexOf("/") + 1); }
+        if (lost) {
+          Object.assign(lost, { native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: glb.byteLength });
+          if (path) lost.file = path;
+          missingModels.delete(assetId); delete customModelCache[assetId]; relinked++;
+          continue;
+        }
         const entry = { assetId: assetId, name: name, category: "imported", custom: true, shelf: shelf, noProbe: true, native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: glb.byteLength };
+        if (path) entry.file = path;
         config.customModels.push(entry);
         made.push({ entry: entry, g: g, c: c, minY: bb.min.y });
       }
@@ -4437,9 +4550,13 @@
       toast("Stopped: " + (err && err.message ? err.message : err));
     }
     closePackSheet();
+    if (relinked) rebuildPlaced();
     buildLibrary(); scheduleAutosave();
     const mb = made.reduce((a, m) => a + (m.entry.bytes || 0), 0) / 1048576;
-    if (made.length) toast("Added " + plural(made.length, "piece") + " to “" + shelf + "” (" + mb.toFixed(1) + " MB)" + (arrange ? " and laid them out on the stage as one group (double-click a piece to move it on its own)" : ""), { label: "Library", fn: openLibManager });
+    const n = made.length + relinked, note = !n ? "" : importCopyNote(copied === n ? packDir : null, "pack file");
+    if (made.length) toast("Added " + plural(made.length, "piece") + " to “" + shelf + "” (" + mb.toFixed(1) + " MB)" + (arrange ? " and laid them out on the stage as one group (double-click a piece to move it on its own)" : "") +
+      (relinked ? "; reimported " + plural(relinked, "lost piece") : "") + "." + note, { label: "Library", fn: openLibManager }, 10000);
+    else if (relinked) toast("Reimported " + plural(relinked, "lost piece") + " into “" + p.relink + "”." + note, null, 9000);
   }
   // Textures bigger than `max` px (0 = keep) are redrawn smaller once, before the pieces are cut,
   // in their own format (PNG keeps alpha). Returns { imageIndex: { bytes, mime } }.
@@ -4496,15 +4613,16 @@
       const holder = new THREE.Group(); holder.add(sceneObj);
       const thumb = subjectToThumb(holder);
       holder.remove(sceneObj); if (holder.parent) holder.parent.remove(holder);
-      return modelDbOp("readwrite", s => { s.put(buf, assetId); if (thumb) s.put(thumb, "thumb:" + assetId); }).then(() => {
+      return Promise.all([modelDbOp("readwrite", s => { s.put(buf, assetId); if (thumb) s.put(thumb, "thumb:" + assetId); }), copyToImports(buf, fileSlug(fileName))]).then(([, path]) => {
         if (thumb) thumbMem["thumb:" + assetId] = thumb;
         customModelCache[assetId] = Promise.resolve(sceneObj);
         const entry = { assetId: assetId, name: fileName.replace(/\.glb$/i, ""), category: "imported", custom: true, shelf: shelf || "Imported",
           native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: buf.byteLength };
+        if (path) entry.file = path;
         config.customModels.push(entry);
         buildLibrary();
         addToScene(assetId, null);
-        toast("Imported " + entry.name + " — set its real length/width/height in the Inspector" + (tris > MODEL_TRI_WARN ? " (heavy: ~" + Math.round(tris / 1000) + "k tris)" : ""));
+        toast("Imported " + entry.name + ": set its real length/width/height in the Inspector" + (tris > MODEL_TRI_WARN ? " (heavy: ~" + Math.round(tris / 1000) + "k tris)" : "") + "." + importCopyNote(path), null, 9000);
       });
     }).catch(err => toast("Import failed: " + (err && err.message ? err.message : err)));
   }
@@ -4560,7 +4678,7 @@
     const sh = document.getElementById("libSheet"), body = document.getElementById("lmBody");
     document.getElementById("lmClose").addEventListener("click", closeLibManager);
     document.getElementById("lmFind").addEventListener("input", e => { libMan.q = e.target.value; renderLibManager(); });
-    document.getElementById("lmImport").addEventListener("click", () => document.getElementById("glbInput").click());
+    document.getElementById("lmImport").addEventListener("click", () => openGlbPicker(null));
     body.addEventListener("change", e => {
       const t = e.target, card = t.closest(".lmCard"), e2 = card && (config.customModels || []).find(x => x.assetId === card.dataset.aid);
       if (t.classList.contains("lmName") && e2) { e2.name = t.value.trim().slice(0, 48) || e2.name; }
@@ -12347,7 +12465,7 @@
     body.appendChild(find);
     const models = config.customModels || [];
     const tools = el("div", "btnRow libTools");
-    const imp = el("button", null, "Import a .glb…"); imp.addEventListener("click", () => document.getElementById("glbInput").click());
+    const imp = el("button", null, "Import a .glb…"); imp.addEventListener("click", () => openGlbPicker(null));
     imp.title = "One model comes straight in. A pack (a furnished room, a prop kit) opens a picker to choose its pieces.";
     tools.appendChild(imp);
     if (models.length) { const man = el("button", "ghost", "Manage uploads…"); man.addEventListener("click", openLibManager); man.title = "Rename, file on a shelf or delete your uploads"; tools.appendChild(man); }
@@ -12401,6 +12519,16 @@
     // An upload's row: real size comes from the file; one real dimension typed in the Inspector rescales a copy.
     const mineRow = (gb, e) => {
       const n = e.native, sub = fmtLen(Math.max(n.x, n.z) * FT_PER_M) + " × " + fmtLen(Math.min(n.x, n.z) * FT_PER_M) + " · " + fmtLen(n.y * FT_PER_M) + " high";
+      if (missingModels.has(e.assetId)) {
+        const t = tracedFile(e), row = item(gb, e.name, "Requires reimport before use", e.assetId), it = row.parentNode;
+        it.classList.add("mine", "missing");
+        it.querySelector(".name small").insertAdjacentHTML("afterend", '<small class="path">' + (t && t.found ? "From " + escapeHtml(t.path)
+          : t ? escapeHtml(t.path) + " isn't there: pick the file" : "Not in assets/imports: pick the file" + (e.noProbe ? " or its pack" : "")) + '</small>');
+        it.title = "This browser no longer has the model. Click to reimport it" + (t && t.found ? " from " + t.path : "");
+        it.addEventListener("click", ev => { if (!ev.target.closest("button")) relinkModel(e); });
+        addBtn(row, () => relinkModel(e), "Reimport");
+        return;
+      }
       const row = item(gb, e.name, "Yours · " + sub, e.assetId);
       row.parentNode.classList.add("mine");
       addBtn(row, () => addToScene(e.assetId, null));
@@ -13824,6 +13952,7 @@
     buildFixed();
     rebuildPlaced();
     buildLibrary();
+    checkMissingModels();
     renderInspector();
     refreshShotUI();
     syncSettingsUI();
@@ -14249,7 +14378,10 @@
     document.getElementById("houseBtn").addEventListener("click", () => setHouseLights(!houseLightsOn()));
     wireBoard();
     wirePackSheet(); wireLibManager();
-    document.getElementById("glbInput").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importGlbFile(f); });
+    document.getElementById("glbInput").addEventListener("change", e => {
+      const f = e.target.files[0], re = relinkId && catalogEntry(relinkId); e.target.value = ""; relinkId = null;
+      if (f) { if (re) relinkFromFile(f, re); else importGlbFile(f); }
+    });
     wireScriptSide();
     applyHouseLights();
     document.getElementById("helpClose").addEventListener("click", () => setHelp(false));

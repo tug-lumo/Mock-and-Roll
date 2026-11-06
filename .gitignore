@@ -1,6 +1,9 @@
 # Build output (Cloudflare Pages builds its own copy)
 dist/
 
+# Copies of imported .glbs (serve.py writes them; large, per-machine)
+assets/imports/
+
 # Phone-viewer publishes from this PC — local data, not source
 published/
 

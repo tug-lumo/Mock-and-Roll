@@ -6,6 +6,10 @@ Serves ONLY the app (index.html, vendor/, brand/, assets/, layouts/, environment
 published layout/models (published/) — never the rest of the project folder (docs, .claude,
 reference). Byte-range requests are supported so 360° proxy videos stream and loop.
 
+Imports: every .glb brought into the app is also POSTed to api/imports/<name> and kept in
+assets/imports/, so the browser's stored copy can be rebuilt from the project (GET api/imports
+lists them). Like publishing, only this PC may write.
+
 Publishing (the desktop app's "Publish to phone" button) writes published/layout.json and
 published/models/<id>.glb. Publishing is accepted only from this PC directly: requests that
 arrive through Tailscale Serve carry Tailscale identity / forwarding headers and are refused,
@@ -19,6 +23,7 @@ import os
 import re
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import unquote
 
 # Under pythonw (no console) stderr is None and the request logger would crash every request.
 if sys.stderr is None:
@@ -28,12 +33,14 @@ if sys.stdout is None:
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUB = os.path.join(ROOT, "published")
+IMPORTS = os.path.join(ROOT, "assets", "imports")   # every imported .glb is copied here (see do_POST)
 PORT = 8137
 MAX_LAYOUT = 5 * 1024 * 1024        # 5 MB of JSON is far beyond any real layout
 MAX_MODEL = 200 * 1024 * 1024       # imported .glb cap
 ALLOWED = re.compile(r"^/(?:index\.html|published/[\w.\-/]+|assets/[\w.\-/]+|vendor/[\w.\-/]+|brand/[\w.\-/]+|layouts/[\w.\-/]+|environments/[\w.\-/]+)?$")
 RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 MODEL_ID = re.compile(r"^glb_[a-z0-9]{1,24}$")
+SEGMENT = re.compile(r"[^\w.\-]+")
 REMOTE_HEADERS = ("Tailscale-User-Login", "Tailscale-User-Name", "X-Forwarded-For", "X-Forwarded-Host")
 
 
@@ -53,6 +60,9 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         p = self._path()
+        if p == "/api/imports":
+            self._reply(200, {"files": self._list_imports()})
+            return
         if ".." in p or not ALLOWED.match(p):
             self.send_error(404)
             return
@@ -111,6 +121,45 @@ class Handler(SimpleHTTPRequestHandler):
     def _is_local(self):
         return self.client_address[0] in ("127.0.0.1", "::1") and not any(self.headers.get(h) for h in REMOTE_HEADERS)
 
+    def _list_imports(self):
+        """Every .glb under assets/imports, as app paths with sizes (to trace older imports by name)."""
+        out = []
+        for d, _, names in os.walk(IMPORTS):
+            for nm in names:
+                if nm.lower().endswith(".glb"):
+                    fs = os.path.join(d, nm)
+                    rel = os.path.relpath(fs, ROOT).replace(os.sep, "/")
+                    out.append({"path": rel, "size": os.path.getsize(fs)})
+        return out
+
+    def _save_import(self, rel, buf):
+        """Write an imported .glb to assets/imports/<rel>. The same bytes already there are reused;
+        a different file of that name gets -2, -3... Returns the app path."""
+        segs = [SEGMENT.sub("_", s).strip("._") or "model" for s in rel.split("/") if s]
+        if not segs:
+            segs = ["model.glb"]
+        if not segs[-1].lower().endswith(".glb"):
+            segs[-1] += ".glb"
+        d = os.path.join(IMPORTS, *segs[:-1])
+        stem, ext = segs[-1][:-4].rstrip("_") or "model", ".glb"
+        os.makedirs(d, exist_ok=True)
+        k = 1
+        while True:
+            nm = stem + ("" if k == 1 else "-%d" % k) + ext
+            fs = os.path.join(d, nm)
+            if not os.path.exists(fs):
+                tmp = fs + ".tmp"
+                with open(tmp, "wb") as f:
+                    f.write(buf)
+                os.replace(tmp, fs)
+                break
+            if os.path.getsize(fs) == len(buf):
+                with open(fs, "rb") as f:
+                    if f.read() == buf:
+                        break
+            k += 1
+        return os.path.relpath(fs, ROOT).replace(os.sep, "/")
+
     def _reply(self, code, obj):
         body = json.dumps(obj).encode()
         self.send_response(code)
@@ -143,6 +192,20 @@ class Handler(SimpleHTTPRequestHandler):
                 json.dump(data, f)
             os.replace(tmp, os.path.join(PUB, "layout.json"))
             self._reply(200, {"ok": True})
+            return
+        if p.startswith("/api/imports/"):
+            if n <= 0 or n > MAX_MODEL:
+                self._reply(413, {"error": "model size out of range"})
+                return
+            buf = self.rfile.read(n)
+            if buf[:4] != b"glTF":
+                self._reply(400, {"error": "not a .glb"})
+                return
+            rel = unquote(p[len("/api/imports/"):])
+            if ".." in rel:
+                self._reply(400, {"error": "bad path"})
+                return
+            self._reply(200, {"ok": True, "path": self._save_import(rel, buf)})
             return
         m = re.match(r"^/api/publish/model/([\w]+)$", p)
         if m and MODEL_ID.match(m.group(1)):
