@@ -3964,7 +3964,7 @@
   // render target (no second WebGL context), kept in memory and in IndexedDB next to the models
   // ("thumb:<key>"). Imported models get theirs when they come in. Hovering a library row shows a
   // larger, slowly turning view of the same piece.
-  const THUMB_VER = 1, TH_W = 160, TH_H = 120;
+  const THUMB_VER = 2, TH_W = 160, TH_H = 120;
   const thumbMem = {};                        // key -> data URL ("" = nothing to show)
   const thumbPending = {};
   let thumbStage = null, thumbChain = Promise.resolve();
@@ -5364,17 +5364,26 @@
     return g;
   }
 
-  // Corner piece that joins two glass walls at a 90° building corner. One object: the inner-corner
-  // faces read as frame, the outward reverse is a brick facade (BoxGeometry face order px,nx,py,ny,pz,nz).
-  // Rides its own 2ft deck so its top lines up with the decked glass walls.
+  // Corner piece that joins two glass walls at a 90° building corner (photo 04): two 10ft flats meeting
+  // in an L along the deck's +X and +Z edges, open on the inside corner. The inner faces are painted;
+  // the outward reverse (+X, +Z) is a brick facade. Rides its own 2ft deck so its top lines up with the
+  // decked glass walls. Arms as [x0, x1, z0, z1] in the piece's frame (shared with the plan drawings).
+  const CORNER_T = 0.33;                                   // flat thickness, ~4"
+  function cornerArms(entry) {
+    const L = entry.lengthFt || 4, W = entry.widthFt || 4, t = Math.min(CORNER_T, L / 2, W / 2);
+    return [[-L / 2, L / 2, W / 2 - t, W / 2], [L / 2 - t, L / 2, -W / 2, W / 2 - t]];
+  }
   function buildGlassCorner(entry) {
-    const L = entry.lengthFt || 4, W = entry.widthFt || 4, H = entry.heightFt || 10;
+    const H = entry.heightFt || 10;
     const g = new THREE.Group(); g.userData.baseY = 0;
     const deckTop = addGlassDeck(g, entry);
-    const frame = makeStandardMat(0xe8e8e8), brick = makeStandardMat(0x7a3b2e);
-    const mats = [brick, frame, frame, frame, brick, frame]; // +X and +Z = outward brick faces
-    const box = new THREE.Mesh(new THREE.BoxGeometry(L, H, W), mats);
-    box.position.y = deckTop + H / 2; g.add(box);
+    const paint = makeStandardMat(0xd3dbe0), brick = makeStandardMat(0x7a3b2e);
+    // BoxGeometry face order px, nx, py, ny, pz, nz: the +Z arm's outer face is pz, the +X arm's is px.
+    const faces = [[paint, paint, paint, paint, brick, paint], [brick, paint, paint, paint, paint, paint]];
+    cornerArms(entry).forEach(([x0, x1, z0, z1], i) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, H, z1 - z0), faces[i]);
+      m.position.set((x0 + x1) / 2, deckTop + H / 2, (z0 + z1) / 2); g.add(m);
+    });
     return g;
   }
 
@@ -9229,7 +9238,7 @@
         } else if (e.deck && (pa.assetId === "glassWall" || pa.assetId === "cornerPillar")) {
           const dk = e.deck, deck = [[-dk.lengthFt / 2, -dk.widthFt / 2], [dk.lengthFt / 2, -dk.widthFt / 2], [dk.lengthFt / 2, dk.widthFt / 2], [-dk.lengthFt / 2, dk.widthFt / 2]].map(v => planW(g, v[0], v[1]));
           out.push('<polygon points="' + pts(deck) + '" fill="#eef0f2" stroke="#5a6270" stroke-width="0.8"/>');
-          if (pa.assetId === "cornerPillar") out.push('<polygon points="' + pts(deck) + '" fill="url(#hatchW)" stroke="' + INK + '" stroke-width="1.2"/>');
+          if (pa.assetId === "cornerPillar") cornerArms(e).forEach(([x0, x1, z0, z1]) => out.push('<polygon points="' + pts([[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(v => planW(g, v[0], v[1]))) + '" fill="url(#hatchW)" stroke="' + INK + '" stroke-width="1.2"/>'));
           else {
             const D = e.widthFt || 0.25, zW = -dk.widthFt / 2 + D / 2;
             const wl = [[-e.lengthFt / 2, zW - D / 2], [e.lengthFt / 2, zW - D / 2], [e.lengthFt / 2, zW + D / 2], [-e.lengthFt / 2, zW + D / 2]].map(v => planW(g, v[0], v[1]));
@@ -12937,7 +12946,7 @@
       } else if (e.deck && (pa.assetId === "glassWall" || pa.assetId === "setFlat" || pa.assetId === "cornerPillar")) {
         const dk = e.deck, D = e.widthFt || 0.25, zW = -dk.widthFt / 2;
         fpRect(fp, -dk.lengthFt / 2, dk.lengthFt / 2, -dk.widthFt / 2, dk.widthFt / 2, 0x6f7a86, 0.85, 2, 0x2b3038);
-        if (pa.assetId === "cornerPillar") fpRect(fp, -dk.lengthFt / 2, dk.lengthFt / 2, -dk.widthFt / 2, dk.widthFt / 2, 0x7a3b2e, 0.9, 3, 0x1d2124);
+        if (pa.assetId === "cornerPillar") cornerArms(e).forEach(([x0, x1, z0, z1]) => fpRect(fp, x0, x1, z0, z1, 0x7a3b2e, 0.9, 3, 0x1d2124));
         else fpRect(fp, -e.lengthFt / 2, e.lengthFt / 2, zW, zW + Math.max(D, 0.35), pa.assetId === "setFlat" ? parseInt((pa.paint || FLAT_PAINTS[0][0]).slice(1), 16) : 0x9cc7e6, 1, 4, 0x1d2124);
       } else if (e.platform) {
         const d = platformDims(e, pa), hx = d.W / 2, hz = d.L / 2;
