@@ -3287,6 +3287,7 @@
   }
   const rigCache = {};       // rig url -> Promise<{ scene, bones: {name: Bone}, rest: {name: Quaternion} } | null>
   function loadRig(url) {
+    if (/^glb:/.test(url)) return loadImportedRig(url.slice(4));
     if (!rigCache[url]) rigCache[url] = new Promise(res => {
       if (!gltfLoader) return res(null);
       gltfLoader.load(url, gl => {
@@ -3298,10 +3299,106 @@
     return rigCache[url];
   }
   const boneKey = n => "bip_" + n.replace(/ /g, "_");       // pack names → the loader's sanitised node names
+
+  // ---- Imported rigs: any humanoid skeleton takes the same stock poses --------------------------
+  // Bones are matched to body parts by name (Mixamo, Unreal, Rigify, Unity/VRM, 3ds Max Biped...).
+  // A pose is worked out on a pack figure, then copied limb by limb: each matched bone is turned so
+  // it points the way the pack's bone points (in the figure's own frame), parents first. Fingers
+  // and twist bones follow their parents. The figure faces wherever its skeleton says (left leg on
+  // its left), so a model that faces -Z still sits and walks the right way round.
+  const RIG_REF = "assets/rigs/man-walking.glb";
+  const HUMANOID_KEYS = {
+    hips: ["hips", "hip", "pelvis"], neck: ["neck"], head: ["head"],
+    clavicle: ["clavicle", "shoulder", "collar", "collarbone"], upperarm: ["upperarm", "arm", "uparm"],
+    forearm: ["forearm", "lowerarm", "elbow"], hand: ["hand", "wrist"],
+    thigh: ["thigh", "upleg", "upperleg"], calf: ["calf", "leg", "lowerleg", "shin", "knee"],
+    foot: ["foot", "ankle"], toe: ["toe", "toes", "toebase", "ball"]
+  };
+  const RIG_SKIP_TOKENS = { bip: 1, biped: 1, def: 1, org: 1, mch: 1, mixamorig: 1, armature: 1, cc: 1, base: 1, rig: 1, jnt: 1, bn: 1, b: 1 };
+  function boneParts(name) {
+    const toks = String(name || "").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/([a-zA-Z])(\d)/g, "$1 $2").replace(/(\d)([a-zA-Z])/g, "$1 $2")
+      .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    let side = "";
+    const rest = toks.filter(t => {
+      if (t === "l" || t === "left") { side = "L"; return false; }
+      if (t === "r" || t === "right") { side = "R"; return false; }
+      return !RIG_SKIP_TOKENS[t] && !/^\d+$/.test(t);
+    });
+    return { side: side, key: rest.join("") };
+  }
+  // { canonical part ("L thigh", "spine", ...): Bone }, the shallowest bone of each part.
+  function humanoidMap(bones) {
+    const depth = b => { let d = 0; for (let n = b.parent; n; n = n.parent) d++; return d; };
+    const map = {}, at = {};
+    bones.forEach(b => {
+      const { side, key } = boneParts(b.name), d = depth(b);
+      let part = /^(spine|chest|abdomen|torso)/.test(key) ? "spine" : null;
+      if (!part) Object.keys(HUMANOID_KEYS).some(k => HUMANOID_KEYS[k].indexOf(key) !== -1 && (part = k));
+      if (!part) return;
+      const sided = ["clavicle", "upperarm", "forearm", "hand", "thigh", "calf", "foot", "toe"].indexOf(part) !== -1;
+      if (sided && !side) return;
+      const k = sided ? side + " " + part : part;
+      if (!(k in at) || d < at[k]) { map[k] = b; at[k] = d; }
+    });
+    return map;
+  }
+  const HUMANOID_NEED = ["L thigh", "R thigh", "L calf", "R calf", "L upperarm", "R upperarm", "L forearm", "R forearm", "head"];
+  // What an imported model's skeleton is: { bones, humanoid, missing: [parts] }.
+  function rigInfoOf(obj) {
+    const bones = []; obj.traverse(n => { if (n.isBone) bones.push(n); });
+    let skinned = false; obj.traverse(n => { if (n.isSkinnedMesh) skinned = true; });
+    if (!bones.length || !skinned) return { bones: 0, humanoid: false };
+    const m = humanoidMap(bones), missing = HUMANOID_NEED.filter(k => !m[k]);
+    if (!m.spine && !m.neck) missing.push("spine");
+    return { bones: bones.length, humanoid: !missing.length, missing: missing };
+  }
+  const RIG_SEGS = [["spine", "neck"], ["neck", "head"]].concat(...["L", "R"].map(sd =>
+    [["clavicle", "upperarm"], ["upperarm", "forearm"], ["forearm", "hand"], ["thigh", "calf"], ["calf", "foot"], ["foot", "toe"]].map(([a, b]) => [sd + " " + a, sd + " " + b])));
+  function modelBytesFor(e) {
+    return modelDbOp("readonly", st => st.get(e.assetId)).catch(() => null)
+      .then(buf => buf || (e.file ? fetch(e.file).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null) : null));
+  }
+  function loadImportedRig(assetId) {
+    const url = "glb:" + assetId;
+    if (!rigCache[url]) rigCache[url] = Promise.all([(function () { const e = catalogEntry(assetId); return e ? modelBytesFor(e) : null; })(), loadRig(RIG_REF)]).then(([buf, ref]) => {
+      if (!buf || !ref || !gltfLoader) return null;
+      return new Promise(res => gltfLoader.parse(buf, "", gl => {
+        const scene = fixModelColors(gl.scene), bones = {}, rest = {}, list = [];
+        scene.traverse(n => { if (n.isBone) { bones[n.uuid] = n; rest[n.uuid] = n.quaternion.clone(); list.push(n); } });
+        const map = humanoidMap(list);
+        if (map.head) bones[boneKey("Head")] = map.head;          // bakeRig reads the head from here
+        if (!ref.map) ref.map = humanoidMap(Object.keys(ref.bones).map(k => ref.bones[k]));
+        // The figure's frame from its rest pose: left = from the right thigh to the left, up = +Y.
+        scene.updateMatrixWorld(true);
+        const lt = map["L thigh"].getWorldPosition(new THREE.Vector3()), rt = map["R thigh"].getWorldPosition(new THREE.Vector3());
+        const left = lt.sub(rt).setY(0).normalize(), up = new THREE.Vector3(0, 1, 0), fwd = new THREE.Vector3().crossVectors(left, up);
+        res({ scene: scene, bones: bones, rest: rest, map: map, ref: ref, frame: new THREE.Matrix4().makeBasis(left, up, fwd), rigid: true });
+      }, err => { console.warn("Lumostage: couldn't read the rig of " + assetId + " — " + (err && err.message ? err.message : err)); res(null); }));
+    });
+    return rigCache[url];
+  }
+  // Turn rig's matched bones to point the way the (already posed) pack figure's do.
+  const _rtA = new THREE.Vector3(), _rtB = new THREE.Vector3(), _rtD = new THREE.Vector3(), _rtQ = new THREE.Quaternion(), _rtW = new THREE.Quaternion(), _rtP = new THREE.Quaternion();
+  function retargetPose(rig) {
+    const src = rig.ref.map, dst = rig.map;
+    rig.ref.scene.updateMatrixWorld(true); rig.scene.updateMatrixWorld(true);
+    RIG_SEGS.forEach(([a, b]) => {
+      const sa = src[a], sb = src[b], da = dst[a], db = dst[b];
+      if (!sa || !sb || !da || !db || !da.parent) return;
+      _rtD.subVectors(sb.getWorldPosition(_rtA), sa.getWorldPosition(_rtB)).transformDirection(rig.frame);   // where the pack's bone points
+      const cur = db.getWorldPosition(new THREE.Vector3()).sub(da.getWorldPosition(_rtA));
+      if (cur.lengthSq() < 1e-12 || _rtD.lengthSq() < 1e-12) return;
+      _rtQ.setFromUnitVectors(cur.normalize(), _rtD.normalize());
+      da.getWorldQuaternion(_rtW); da.parent.getWorldQuaternion(_rtP);
+      da.quaternion.copy(_rtP.invert().multiply(_rtQ.multiply(_rtW)));
+      da.updateMatrixWorld(true);
+    });
+  }
   const POSE_AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
   // frame: { "bip L Thigh": [x, y, z, w], … }
   function applyRigPose(rig, lib, pose, gender, frameOverride) {
     Object.keys(rig.rest).forEach(k => rig.bones[k].quaternion.copy(rig.rest[k]));
+    if (rig.ref) { applyRigPose(rig.ref, lib, pose, gender, frameOverride); retargetPose(rig); return; }
     // "idle" / "walk" follow the figure's gender; any other base is that clip for everyone (the sitting
     // and kneeling poses all start from the male idle, whose arms hang at the sides).
     const clipId = pose.base === "idle" ? (gender === "f" ? "idle_f" : "idle_m") : pose.base === "walk" ? (gender === "f" ? "walk_f" : "walk_m") : pose.base;
@@ -3357,6 +3454,11 @@
       if (g.index) geo.setIndex(g.index);
       geo.computeBoundingBox(); geo.computeBoundingSphere();
       const mesh = new THREE.Mesh(geo, m.material); mesh.name = m.name;
+      out.add(mesh);
+    });
+    if (rig.rigid) rig.scene.traverse(m => {                  // imported rigs: unskinned parts (gear on a bone) too
+      if (!m.isMesh || m.isSkinnedMesh) return;
+      const mesh = new THREE.Mesh(m.geometry.clone().applyMatrix4(m.matrixWorld), m.material); mesh.name = m.name;
       out.add(mesh);
     });
     // Where the head is in this pose (rig units), for a headshot card pinned over the face.
@@ -4617,7 +4719,7 @@
         if (thumb) thumbMem["thumb:" + assetId] = thumb;
         customModelCache[assetId] = Promise.resolve(sceneObj);
         const entry = { assetId: assetId, name: fileName.replace(/\.glb$/i, ""), category: "imported", custom: true, shelf: shelf || "Imported",
-          native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: buf.byteLength };
+          native: { x: sz.x, y: sz.y, z: sz.z }, tris: tris, bytes: buf.byteLength, skel: rigInfoOf(sceneObj) };
         if (path) entry.file = path;
         config.customModels.push(entry);
         buildLibrary();
@@ -5746,7 +5848,7 @@
     if (!entry) { console.warn("Lumostage: placedAsset references unknown assetId '" + pa.assetId + "' — skipped."); return null; }
     if (entry.category === "camera") return buildCameraRig(pa);
     let g, modelSrc = entry;   // where to read model/modelReady from (variant overrides entry)
-    if (entry.custom) {
+    if (entry.custom && !entry.rig) {
       return buildCustomModel(entry, pa);
     } else if (entry.category === "person" && entry.heart) {
       return buildHeartCharacter(entry, pa);
@@ -6678,6 +6780,7 @@
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
       grpHTML("size", "Real-world size", cur.fitFt ? fmtLen(cur.fitFt) + " " + (cur.fitAxis || "length") : "", customFitHTML(cur)) +
       grpHTML("seating", "Seating", cur.car ? "car" : "off", carFlagHTML(cur)) +
+      grpHTML("posable", "Posing", (function () { const e = catalogEntry(cur.assetId); return !e || !e.custom ? "" : e.rig ? "person" : e.skel && e.skel.humanoid ? "rigged" : e.skel ? "no rig" : ""; })(), posableHTML(cur)) +
       (spots ? grpHTML("cast", "Cast", castN + " of " + spots.length, castHTML(cur), true) : "") +
       grpHTML("refl", "Reflections", reflSummary(cur), reflectHTML(cur)) +
       (selected.kind === "rollingWall"
@@ -7101,7 +7204,7 @@
   }
   function figureHTML(pa) {
     const e = catalogEntry(pa.assetId);
-    const people = config.assetCatalog.filter(x => x.category === "person");
+    const people = config.assetCatalog.filter(x => x.category === "person").concat((config.customModels || []).filter(x => x.rig));
     const figOpts = people.map(x => '<option value="' + x.assetId + '"' + (x.assetId === pa.assetId ? " selected" : "") + '>' + escapeHtml(x.name) + '</option>').join("");
     return '<div class="field"><label for="personFig">Model</label><select id="personFig">' + figOpts + '</select></div>' +
       fieldHTML("personH", "Height", toDisplay(personHeight(e, pa)));
@@ -7192,6 +7295,13 @@
     if (up) up.addEventListener("click", () => { const pa = cur(); if (pa) redo(pa, () => { delete pa.pin; pa.noAnchor = true; pa.x = snap(pa.x + 1.5); }); });
     const bh = $("backHost");
     if (bh) bh.addEventListener("click", () => { const s = pinnedSpot(cur()), hg = s && placedGroupByUid[s.host._uid]; if (hg) selectObject(hg); });
+    // Imported model → posable person (and its stance)
+    const pc = $("posableChk");
+    if (pc) pc.addEventListener("change", () => { const pa = cur(), e = pa && catalogEntry(pa.assetId); if (!e) return; redo(pa, () => { setPosable(e, pc.checked, pa); }); buildLibrary(); renderInspector(); });
+    document.querySelectorAll("#inspectorBody [data-stance]").forEach(b => b.addEventListener("click", () => {
+      const pa = cur(), e = pa && catalogEntry(pa.assetId); if (!e || !e.rig) return;
+      redo(pa, () => { e.gender = b.dataset.stance; Object.keys(posedCache).forEach(k => { if (k.indexOf(e.rig + "|") === 0) delete posedCache[k]; }); delete standCache[e.rig]; });
+    }));
     // Host: car seating for imported models, nose direction, RHD
     const cs = $("carSeats");
     if (cs) cs.addEventListener("change", () => { const pa = cur(); if (!pa) return; redo(pa, () => { if (cs.checked) pa.car = { front: -1, rhd: false }; else { castOf(pa).forEach(p => setCastSpot(pa, p.pin.spot, false)); delete pa.car; } }); });
@@ -7263,9 +7373,57 @@
   }
 
   // Imported models can be flagged as a car to get the five standard seats.
-  function carFlagHTML(pa) {
+  // An imported model with a humanoid skeleton can become a posable person: it moves to People and
+  // takes the stock poses (the rig is matched to the pack's, see retargetPose).
+  function posableHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
     if (!e || !e.custom) return "";
+    if (!e.skel) { detectSkeleton(e); return '<div class="hint">Looking for a skeleton…</div>'; }
+    const sk = e.skel, ok = sk.humanoid || !!e.rig;
+    let h = '<label class="setToggle"><input type="checkbox" id="posableChk" ' + (e.rig ? "checked " : "") + (ok ? "" : "disabled ") + '><span>It\'s a person — give it the stock poses</span></label>';
+    if (!sk.bones) h += '<div class="hint">No skeleton in this file, so it can\'t bend. Rig it first (Mixamo\'s free auto-rigger does this), then import the rigged .glb.</div>';
+    else if (!ok) h += '<div class="hint">It has a skeleton (' + sk.bones + ' bones), but I can\'t match ' + escapeHtml((sk.missing || []).join(", ")) + ' to arms and legs.</div>';
+    else if (!e.rig) h += '<div class="hint">Skeleton found (' + sk.bones + ' bones). Ticking moves it to People and gives every copy the poses: standing, walking, seated, kneeling…</div>';
+    else h += '<div class="rowSeg"><span id="stanceLbl">Stance</span><div class="seg" role="group" aria-labelledby="stanceLbl">' +
+      [["m", "Masculine"], ["f", "Feminine"]].map(g => '<button data-stance="' + g[0] + '" class="' + ((e.gender || "m") === g[0] ? "active" : "") + '" aria-pressed="' + ((e.gender || "m") === g[0]) + '">' + g[1] + '</button>').join("") + '</div></div>';
+    return h;
+  }
+  // Older imports were stored before skeletons were recorded: read it from the file once.
+  const skelPending = {};
+  function detectSkeleton(e) {
+    if (skelPending[e.assetId]) return;
+    skelPending[e.assetId] = modelBytesFor(e).then(buf => buf ? parseGlb(buf) : null).then(obj => {
+      e.skel = obj ? rigInfoOf(obj) : { bones: 0, humanoid: false };
+      if (obj) disposeObject3D(obj);
+      scheduleAutosave(); renderInspector();
+    }).catch(() => { e.skel = { bones: 0, humanoid: false }; renderInspector(); });
+  }
+  const POSABLE_KEYS = ["rig", "pose", "defPose", "gender", "heightFt", "widthFt", "depthFt"];
+  function setPosable(e, on, pa) {
+    if (on) {
+      // Files authored in centimetres (or at any odd scale) come in giant: a person gets a person's height.
+      const n = e.native, ft = FT_PER_M, plaus = v => v > 1.5 && v < 9;
+      let h = pa && pa.heightFt > 0 ? pa.heightFt : n.y * ft;
+      if (!plaus(h)) h = 5.75;
+      const k = h / (n.y * ft);
+      config.placedAssets.forEach(p => { if (p.assetId === e.assetId && !plaus(p.heightFt)) p.heightFt = h; });
+      e.posable = { shelf: e.shelf, category: e.category };
+      Object.assign(e, { category: "person", shelf: "People", rig: "glb:" + e.assetId, pose: "standing", defPose: "standing", gender: e.gender || "m",
+        heightFt: round2(h), widthFt: round2(Math.max(n.x, n.z) * ft * k), depthFt: round2(Math.min(n.x, n.z) * ft * k) });
+    } else {
+      const was = e.posable || {};
+      POSABLE_KEYS.forEach(k => { delete e[k]; });
+      e.category = was.category || "imported"; e.shelf = was.shelf || "Imported"; delete e.posable;
+      config.placedAssets.forEach(p => { if (p.assetId === e.assetId) { delete p.pose; delete p.pin; } });
+    }
+    Object.keys(posedCache).forEach(k => { if (k.indexOf("glb:" + e.assetId + "|") === 0) delete posedCache[k]; });
+    delete standCache["glb:" + e.assetId];
+    delete thumbMem["thumb:" + e.assetId];
+    modelDbOp("readwrite", st => st.delete("thumb:" + e.assetId)).catch(() => {});
+  }
+  function carFlagHTML(pa) {
+    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
+    if (!e || !e.custom || e.rig) return "";
     let h = '<label class="setToggle"><input type="checkbox" id="carSeats" ' + (pa.car ? "checked" : "") + '><span>It\'s a car — give it five seats</span></label>';
     if (pa.car) h += '<div class="rowSeg"><span id="noseLbl">Nose points</span><div class="seg" role="group" aria-labelledby="noseLbl">' +
       '<button data-front="-1" class="' + (pa.car.front !== 1 ? "active" : "") + '" aria-pressed="' + (pa.car.front !== 1) + '">Left</button>' +
@@ -7331,7 +7489,7 @@
 
   function customFitHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
-    if (!e || !e.custom) return "";
+    if (!e || !e.custom || e.rig) return "";
     const axis = pa.fitAxis || "length", key = { length: "lengthFt", width: "widthFt", height: "heightFt" }[axis] || "lengthFt";
     const opt = a => '<option value="' + a + '"' + (a === axis ? " selected" : "") + '>' + a[0].toUpperCase() + a.slice(1) + '</option>';
     return '<div class="field"><label for="fitAxis">Known dimension</label><select id="fitAxis">' + ["length", "width", "height"].map(opt).join("") + '</select></div>' +
