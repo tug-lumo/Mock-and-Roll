@@ -3176,10 +3176,14 @@
 
   // Ghost box at the true size straight away (so it can be placed/selected), swapped for the
   // real model once it's read back from IndexedDB.
+  // An import people stand on top of, like a deck (walking pads, risers): its whole footprint at its
+  // top. Set per model (e.floor); a walking pad / treadmill is one until switched off.
+  function standsOnTop(e) { return !!e && !e.rig && (e.floor != null ? !!e.floor : /walk(ing)?[\s_-]*pad|treadmill/i.test(e.name || "")); }
   function buildCustomModel(entry, pa) {
     const d = customDims(entry, pa);
     pa.lengthFt = d.lengthFt; pa.widthFt = d.widthFt; pa.heightFt = d.heightFt;
     const g = buildBox(d, 0x7a8494);
+    if (standsOnTop(entry)) g.userData.walk = [{ x0: -d.lengthFt / 2, x1: d.lengthFt / 2, z0: -d.widthFt / 2, z1: d.widthFt / 2, y: d.heightFt }];
     g.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.35; o.material.depthWrite = false; } });
     getCustomModel(entry.assetId).then(tpl => {
       if (!tpl || !g.parent) return;                       // missing file, or group rebuilt mid-load
@@ -3837,11 +3841,15 @@
     return pa.elevFt != null && pa.elevFt !== "" ? +pa.elevFt : floorHeightAt(g.position.x, g.position.z, g);
   }
   // Re-settle every free person/prop (after a deck or vehicle moved underneath them).
-  function refreshElevations() {
-    config.placedAssets.forEach(pa => {
+  // Props first, then people: a person on a walking pad on a deck needs the pad settled already.
+  function settleAll() {
+    [false, true].forEach(people => config.placedAssets.forEach(pa => {
       const g = placedGroupByUid[pa._uid];
-      if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g);
-    });
+      if (g && isElevatable(pa) && isPersonPA(pa) === people) g.position.y = elevationFor(pa, g);
+    }));
+  }
+  function refreshElevations() {
+    settleAll();
     config.placedAssets.forEach(pa => { if (pa.key) syncCastTo(pa); });
   }
 
@@ -6036,7 +6044,7 @@
     });
     // Free people/props settle on decks and floors; then cast members take their spots
     // (spots whose vehicle or spot is gone release the person to stand free).
-    config.placedAssets.forEach(pa => { const g = placedGroupByUid[pa._uid]; if (g && isElevatable(pa)) g.position.y = elevationFor(pa, g); });
+    settleAll();
     config.placedAssets.forEach(pa => { if (pa.pin && !placeCast(pa)) delete pa.pin; });
     refreshCamPicker();
     refreshSetsMenu();
@@ -6860,6 +6868,7 @@
       (isPerson && !cur.pin ? grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "auto" : fmtLen(+cur.elevFt), placementHTML(cur)) : "") +
       grpHTML("size", "Real-world size", cur.fitFt ? fmtLen(cur.fitFt) + " " + (cur.fitAxis || "length") : "", customFitHTML(cur)) +
       grpHTML("seating", "Seating", cur.car ? "car" : "off", carFlagHTML(cur)) +
+      grpHTML("standOn", "Stand on top", standsOnTop(catalogEntry(cur.assetId)) ? "on" : "off", floorFlagHTML(cur)) +
       grpHTML("posable", "Posing", (function () { const e = catalogEntry(cur.assetId); return !e || !e.custom ? "" : e.rig ? "person" : e.skel && e.skel.humanoid ? "rigged" : e.skel ? "no rig" : ""; })(), posableHTML(cur)) +
       (spots ? grpHTML("cast", "Cast", castN + " of " + spots.length, castHTML(cur), true) : "") +
       grpHTML("refl", "Reflections", reflSummary(cur), reflectHTML(cur)) +
@@ -7420,6 +7429,16 @@
       const pa = cur(), e = pa && catalogEntry(pa.assetId); if (!e || !e.rig) return;
       redo(pa, () => { e.gender = b.dataset.stance; Object.keys(posedCache).forEach(k => { if (k.indexOf(e.rig + "|") === 0) delete posedCache[k]; }); delete standCache[e.rig]; });
     }));
+    // Imported model people stand on (walking pad, riser)
+    const ft = $("floorTop");
+    if (ft) ft.addEventListener("change", () => { const pa = cur(), e = pa && catalogEntry(pa.assetId); if (!e) return;
+      redo(pa, () => {
+        e.floor = ft.checked;
+        if (ft.checked) return;                               // switched off: whoever stood on one steps down
+        const hosts = config.placedAssets.filter(h => h.assetId === e.assetId && h.key).map(h => h.key);
+        config.placedAssets.forEach(p => { if (p.pin && p.pin.floor && hosts.indexOf(p.pin.host) !== -1) { delete p.pin; p.noAnchor = true; } });
+      });
+    });
     // Host: car seating for imported models, nose direction, RHD
     const cs = $("carSeats");
     if (cs) cs.addEventListener("change", () => { const pa = cur(); if (!pa) return; redo(pa, () => { if (cs.checked) pa.car = { front: -1, rhd: false }; else { castOf(pa).forEach(p => setCastSpot(pa, p.pin.spot, false)); delete pa.car; } }); });
@@ -7538,6 +7557,12 @@
     delete standCache["glb:" + e.assetId];
     delete thumbMem["thumb:" + e.assetId];
     modelDbOp("readwrite", st => st.delete("thumb:" + e.assetId)).catch(() => {});
+  }
+  function floorFlagHTML(pa) {
+    const e = selected.kind === "placed" && catalogEntry(pa.assetId);
+    if (!e || !e.custom || e.rig) return "";
+    return '<label class="setToggle"><input type="checkbox" id="floorTop" ' + (standsOnTop(e) ? "checked" : "") + '><span>People stand on top of it, like a deck</span></label>' +
+      '<div class="hint">Its whole footprint, at its top. Anyone dropped on it rides with it. Applies to every ' + escapeHtml(e.name) + '.</div>';
   }
   function carFlagHTML(pa) {
     const e = selected.kind === "placed" && catalogEntry(pa.assetId);
