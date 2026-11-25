@@ -2122,6 +2122,11 @@
       // 2' deck of the same length or straight on the floor (pa.lengthFt / pa.heightFt / pa.onDeck).
       { assetId: "setFlat", name: "Set flat / wall", category: "set-wall",
         lengthFt: 4, widthFt: 0.23, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 } },
+      // Chroma screen: a plain green or blue rectangle at any size, 1" thick, from a full backing to a small
+      // flag. It sits on the floor (or a deck) until given a height, then hangs there as if on stands, a frame
+      // or flown (pa.lengthFt / pa.heightFt / pa.chroma "green"|"blue" / pa.tiltDeg / pa.elevFt = lowest edge).
+      { assetId: "chromaPanel", name: "Chroma screen", category: "set-wall", lengthFt: 8, widthFt: 1 / 12, heightFt: 8, settles: true,
+        libSub: "any size · green or blue" },
       { assetId: "cornerPillar", name: "Glass Wall Corner Piece", category: "glass-wall", parentSet: "glassPropWalls",
         lengthFt: 4, widthFt: 4, heightFt: 10, deck: { lengthFt: 4, widthFt: 4, heightFt: 2 },
         dualMaterial: { front: "glass/frame", reverse: "brick", note: "one object — inner-corner faces read as frame, the outward reverse is a brick facade" },
@@ -5482,6 +5487,22 @@
     const out = []; for (let x0 = -L / 2; x0 < L / 2 - 1e-6; x0 += 4) { const x1 = Math.min(L / 2, x0 + 4); out.push({ x0: x0, x1: x1, c: (x0 + x1) / 2 }); }
     return out;
   }
+  // Chroma screen: the same chroma green / blue the flats are painted with.
+  const CHROMA = { green: ["#3dbb3f", "Green"], blue: ["#2b52d9", "Blue"] };
+  function chromaDims(entry, pa) {
+    pa = pa || {};
+    return { L: Math.max(0.25, +pa.lengthFt || entry.lengthFt || 8), H: Math.max(0.25, +pa.heightFt || entry.heightFt || 8), T: entry.widthFt || 1 / 12,
+             key: pa.chroma === "blue" ? "blue" : "green", tilt: clamp(+pa.tiltDeg || 0, 0, 90) };
+  }
+  function buildChromaPanel(entry, pa) {
+    const d = chromaDims(entry, pa), t = degToRad(d.tilt);
+    const g = new THREE.Group(); g.userData.baseY = 0;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(d.L, d.H, d.T), new THREE.MeshStandardMaterial({ color: parseInt(CHROMA[d.key][0].slice(1), 16), roughness: 0.95 }));
+    m.rotation.x = t;                                         // tilts back about its centre (90° = flat overhead)
+    m.position.y = (d.H / 2) * Math.cos(t) + (d.T / 2) * Math.sin(t);   // lowest edge at the group's height
+    g.add(m);
+    return g;
+  }
   function buildSetFlat(entry, pa) {
     pa = pa || {};
     const fd = flatDims(entry, pa), L = fd.L, H = fd.H, D = fd.D;
@@ -5923,6 +5944,8 @@
       g = buildRailing(entry, pa);
     } else if (entry.assetId === "setFlat") {
       g = buildSetFlat(entry, pa);
+    } else if (entry.assetId === "chromaPanel") {
+      g = buildChromaPanel(entry, pa);
     } else if (entry.assetId === "glassWall") {
       g = buildGlassWall(entry, pa);
     } else if (entry.assetId === "cornerPillar") {
@@ -6828,6 +6851,8 @@
       doorsHTML(cur) +
       platformHTML(cur) + railingHTML(cur) + lowerPanelHTML(cur) +
       (selected.kind === "placed" && cur.assetId === "setFlat" ? flatWallHTML(cur) + grpHTML("paint", "Paint", escapeHtml(paintName(cur.paint)), paintHTML(cur), true) : "") +
+      (selected.kind === "placed" && cur.assetId === "chromaPanel" ? chromaHTML(cur) +
+        grpHTML("place", "Height off floor", cur.elevFt == null || cur.elevFt === "" ? "on the floor" : fmtLen(+cur.elevFt), placementHTML(cur, true), true) : "") +
       (isPerson ? grpHTML("role", "Role", escapeHtml(cur.role ? cur.role.name || roleColorName(cur.role.color) : "Background"), roleHTML(cur), true) : "") +
       (isPerson && personPoseId(cur) ? grpHTML("pose", "Pose", escapeHtml(poseDef(catalogEntry(cur.assetId), personPoseId(cur)).name), poseHTML(cur), true) : "") +
       (isPerson && catalogEntry(cur.assetId).heart ? grpHTML("expr", "Expression", escapeHtml((HEART_EXPRESSIONS.find(x => x[0] === heartExpr(cur)) || [])[1] || ""), heartExprHTML(cur), true) : "") +
@@ -7015,6 +7040,14 @@
       '<label class="setToggle"><input type="checkbox" id="flatDeck" ' + (fd.onDeck ? "checked" : "") + '><span>On a ' + fmtLen(fd.deckH) + ' deck (' + fmtLen(fd.L) + ' × ' + fmtLen(fd.deckW) + ')</span></label>' +
       '<div class="hint">Built from ' + fmtLen(4) + ' flats (the last one cut to fit), a stage jack behind each. Off the deck it stands on the floor.</div>', true);
   }
+  function chromaHTML(pa) {
+    const d = chromaDims(catalogEntry("chromaPanel"), pa);
+    return grpHTML("chroma", "Screen", fmtLen(d.L) + " × " + fmtLen(d.H) + " · " + CHROMA[d.key][1].toLowerCase(),
+      '<div class="rowSeg"><span id="chromaLbl">Colour</span><div class="seg" role="group" aria-labelledby="chromaLbl">' +
+        Object.keys(CHROMA).map(k => '<button data-chroma="' + k + '" class="' + (d.key === k ? "active" : "") + '" aria-pressed="' + (d.key === k) + '">' + CHROMA[k][1] + '</button>').join("") + '</div></div>' +
+      fieldHTML("chromaL", "Width", toDisplay(d.L)) + fieldHTML("chromaH", "Height", toDisplay(d.H)) + fieldHTML("chromaTilt", "Tilt back (°)", d.tilt, true) +
+      '<div class="hint">' + fmtLen(d.T) + ' thick. Tilt 0° stands upright; 90° lies flat, for an overhead.</div>', true);
+  }
   function lowerPanelHTML(pa) {
     if (selected.kind !== "placed" || pa.assetId !== "glassWall") return "";
     const lp = pa.lowerPanel || {}, side = lp.side || "", fin = lp.finish || FLAT_PAINTS[0][0];
@@ -7046,6 +7079,11 @@
     if (fl) fl.addEventListener("change", () => redo(pa => { pa.lengthFt = clamp(round2(fromDisplay(parseFloat(fl.value) || 4)), 1, 120); }));
     if (fh) fh.addEventListener("change", () => redo(pa => { pa.heightFt = clamp(round2(fromDisplay(parseFloat(fh.value) || 10)), 2, 30); }));
     if (fdk) fdk.addEventListener("change", () => redo(pa => { pa.onDeck = fdk.checked; }));
+    document.querySelectorAll("#inspectorBody [data-chroma]").forEach(b => b.addEventListener("click", () => redo(pa => { pa.chroma = b.dataset.chroma; })));
+    const cl = document.getElementById("chromaL"), ch = document.getElementById("chromaH"), ct = document.getElementById("chromaTilt");
+    if (cl) cl.addEventListener("change", () => redo(pa => { pa.lengthFt = clamp(round2(fromDisplay(parseFloat(cl.value) || 8)), 0.25, 200); }));
+    if (ch) ch.addEventListener("change", () => redo(pa => { pa.heightFt = clamp(round2(fromDisplay(parseFloat(ch.value) || 8)), 0.25, 100); }));
+    if (ct) ct.addEventListener("change", () => redo(pa => { pa.tiltDeg = clamp(Math.round(parseFloat(ct.value) || 0), 0, 90); }));
     document.querySelectorAll("#inspectorBody .paintSw").forEach(b => b.addEventListener("click", () => redo(pa => { pa.paint = b.dataset.c; })));
     // Glass wall lower panel: which side (the finish is kept while it's off), and its finish
     document.querySelectorAll("#inspectorBody [data-lpside]").forEach(b => b.addEventListener("click", () => redo(pa => { pa.lowerPanel = Object.assign({ finish: FLAT_PAINTS[0][0] }, pa.lowerPanel, { side: b.dataset.lpside }); })));
@@ -7285,8 +7323,12 @@
     return '<div class="field"><label for="personFig">Model</label><select id="personFig">' + figOpts + '</select></div>' +
       fieldHTML("personH", "Height", toDisplay(personHeight(e, pa)));
   }
-  function placementHTML(pa) {
+  function placementHTML(pa, hangs) {
     const auto = pa.elevFt == null || pa.elevFt === "";
+    if (hangs) return '<div class="field"><label for="elevFt">Lowest edge at</label><div class="inl">' + (auto ? "" : '<button id="elevAuto" class="ghost">Floor</button>') +
+      '<input type="number" id="elevFt" step="0.25" placeholder="floor" value="' + (auto ? "" : Math.round(toDisplay(+pa.elevFt) * 100) / 100) + '"></div></div>' +
+      '<div class="hint">' + (auto ? "On the floor, or on a deck it's moved over. Type a height to hang it there: on stands, a frame or flown."
+                                   : "Hangs at this height wherever it's moved. Floor puts it back down.") + '</div>';
     return '<div class="field"><label for="elevFt">Raise by</label><div class="inl">' + (auto ? "" : '<button id="elevAuto" class="ghost">Auto</button>') +
       '<input type="number" id="elevFt" step="0.25" placeholder="auto" value="' + (auto ? "" : Math.round(toDisplay(+pa.elevFt) * 100) / 100) + '"></div></div>' +
       '<div class="hint">' + (auto ? "Auto: stands on decks, rolling-wall bases and the subway floor when moved over them. Type a height to fix it."
@@ -7587,6 +7629,11 @@
       const d = platformDims(e, pa);
       return "Deck " + fmtLen(d.W) + " across × " + fmtLen(d.L) + " along the track × " + fmtLen(PLATFORM.deckH) +
         (pa.columns === false ? "<br>no columns" : "<br>4 pillars " + fmtLen(PLATFORM.pillarH) + " (tops at " + fmtLen(PLATFORM.deckH + PLATFORM.pillarH) + ")");
+    }
+    if (e.assetId === "chromaPanel") {
+      const d = chromaDims(e, pa), up = pa.elevFt != null && pa.elevFt !== "";
+      return "Screen " + fmtLen(d.L) + " × " + fmtLen(d.H) + " × " + fmtLen(d.T) + " · chroma " + CHROMA[d.key][1].toLowerCase() + (d.tilt ? " · tilted " + d.tilt + "°" : "") +
+        "<br>" + (up ? "lowest edge " + fmtLen(+pa.elevFt) + " up" : "on the floor");
     }
     if (e.assetId === "setFlat") {
       const fd = flatDims(e, pa);
@@ -9308,6 +9355,7 @@
   function planLabel(pa, e) {
     if (pa.assetId === "stageDeck") return { name: "Stage deck", dims: ftIn(pa.lengthFt) + " × " + ftIn(pa.widthFt) };
     if (e.platform) { const d = platformDims(e, pa); return { name: "Station platform", dims: ftIn(d.W) + " × " + ftIn(d.L) + (pa.columns === false ? "" : ", 4 pillars") }; }
+    if (pa.assetId === "chromaPanel") { const d = chromaDims(e, pa); return { name: "Chroma " + CHROMA[d.key][1].toLowerCase(), dims: ftIn(d.L) + " × " + ftIn(d.H) + (pa.elevFt ? ", " + ftIn(+pa.elevFt) + " up" : "") }; }
     if (pa.assetId === "setFlat") { const fd = flatDims(e, pa); return { name: "Set wall", dims: ftIn(fd.L) + " × " + ftIn(fd.H) + (fd.onDeck ? " on deck" : " on floor") + " · " + paintName(pa.paint).toLowerCase() }; }
     if (pa.assetId === "glassWall") return { name: "Glass wall", dims: "12′ × 10′ on 12×4 deck" + (lowerPanelSides(pa.lowerPanel).length ? " · lower panel " + (PANEL_TEXTURES.find(f => f[0] === pa.lowerPanel.finish) || [0, paintName(pa.lowerPanel.finish)])[1].toLowerCase() : "") };
     if (pa.assetId === "cornerPillar") return { name: "Glass corner", dims: "4′ × 4′ × 10′" };
@@ -9502,7 +9550,7 @@
           centroid = planW(g, 0, 0);
         } else if (fp) {
           const veh = e.category === "vehicle" || pa.car || pa.assetId === "subwayCar" || e.nose;
-          out.push('<polygon points="' + pts(fp) + '" fill="' + (veh ? "#dfe3e7" : pa.assetId === "stageDeck" ? "#eef0f2" : "#e6e2da") + '" stroke="#4b525a" stroke-width="0.9"/>');
+          out.push('<polygon points="' + pts(fp) + '" fill="' + (pa.assetId === "chromaPanel" ? CHROMA[chromaDims(e, pa).key][0] : veh ? "#dfe3e7" : pa.assetId === "stageDeck" ? "#eef0f2" : "#e6e2da") + '" stroke="#4b525a" stroke-width="0.9"/>');
           const lb = localBoxOfGroup(g);
           if (veh && lb) {                                     // nose marker: chevron at the front end
             const front = pa.assetId === "subwayCar" ? -1 : ((pa.car && pa.car.front) || (e.car && e.car.front) || -1);
@@ -12790,7 +12838,7 @@
       if (!entries.length && !mine.length) return;
       const gb = group(cat.key, cat.label, entries.length + mine.length);
       entries.forEach(e => {
-        const sub = e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : "");
+        const sub = e.libSub || (e.category === "person" ? (e.pose || "figure") + " · " + fmtLen(e.heightFt) : e.lengthFt ? ftx(+(+e.lengthFt).toFixed(1), +(+(e.deck ? e.deck.widthFt : e.widthFt)).toFixed(1)) : (e.heightFt ? fmtLen(e.heightFt) + " tall" : ""));
         const row = item(gb, e.name.replace(/\s*\(.*\)$/, ""), sub, e.assetId, e.variants ? e.variants[0].variant : null);
         let sel = null;
         if (e.variants) {
@@ -13181,6 +13229,10 @@
         if (fd.onDeck) fpRect(fp, -fd.L / 2, fd.L / 2, -fd.deckW / 2, fd.deckW / 2, 0x6f7a86, 0.85, 2, 0x2b3038);
         fpRect(fp, -fd.L / 2, fd.L / 2, zW, zW + Math.max(fd.D, 0.35), parseInt((pa.paint || FLAT_PAINTS[0][0]).slice(1), 16), 1, 4, 0x1d2124);
         flatPanels(fd.L).forEach(pn => fpPoly(fp, [[pn.c, zW + 0.35], [pn.c, zW + 2.6]], 0x8a6a3f, 3.5, false));
+      } else if (pa.assetId === "chromaPanel") {                       // drawn at least as thick as a flat, to read
+        const lb = localBoxOfGroup(g); if (!lb) return fp;
+        const zc = (lb.min.z + lb.max.z) / 2, hz = Math.max((lb.max.z - lb.min.z) / 2, 0.175);
+        fpRect(fp, lb.min.x, lb.max.x, zc - hz, zc + hz, parseInt(CHROMA[chromaDims(e, pa).key][0].slice(1), 16), 1, 4, 0x1d2124);
       } else if (e.deck && (pa.assetId === "glassWall" || pa.assetId === "setFlat" || pa.assetId === "cornerPillar")) {
         const dk = e.deck, D = e.widthFt || 0.25, zW = -dk.widthFt / 2;
         fpRect(fp, -dk.lengthFt / 2, dk.lengthFt / 2, -dk.widthFt / 2, dk.widthFt / 2, 0x6f7a86, 0.85, 2, 0x2b3038);
